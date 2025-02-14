@@ -1,0 +1,14 @@
+**/target/
+/.idea/
+*.iml
+**/*.jar
+.DS_Store
+*.p12
+*_pw.txt
+
+port_forward_*.sh
+*/ProdKonnektors.java
+.vscode/
+pom.xml.versionsBackup
+.flattened-pom.xml
+/epa4all-client/src/test/java/com/oviva/telematik/epa4all/client/internal/prod/

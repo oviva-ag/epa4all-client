@@ -1,0 +1,5 @@
+<jaxws:bindings
+        wsdlLocation="../resources/schemas/XDSDocumentService.wsdl"
+        xmlns:jaxws="https://jakarta.ee/xml/ns/jaxws">
+    <jaxws:package name="telematik.ws.phr.wsdl"/>
+</jaxws:bindings>

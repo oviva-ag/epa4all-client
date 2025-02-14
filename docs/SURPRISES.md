@@ -1,0 +1,16 @@
+- information service
+    - hard-coded list of endpoints to ping? what if a provider is decommissioned? what if one is added?
+- vau channel
+    - custom pqc protocol?! very limited support in most language ecosystems
+    - vau protocol is message based though the mapping to HTTP request/response is not well defined. Can one HTTP
+      request span multiple VAU messages? Can multiple HTTP requests be fit into one VAU message?
+    - custom x-useragent header, which is enforced?!
+    - x-insurant in headers?
+    - signed_vau_keys needs only ROOT certificates for verifying the chain, but TSL for OCSP?!?
+- idp:
+    - the discovery document is a self-signed JWT, why though? linked JWK/JWKS are not though?!
+    - uri_puk_idp_enc & uri_puk_idp_sig are non-standard and not a set (JWKS) -> key rotation?
+    - uri_puk_idp_sig has no `kid` claim?
+    - discovery document comes with a lot of non-standard claims
+    - `ES256` should be done with brainpool curve? ¯\_(ツ)_/¯
+    - server certificate is not in the TSL or ROOT, requiring yet another truststore (cross signing?)

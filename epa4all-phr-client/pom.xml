@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.oviva.telematik</groupId>
+    <artifactId>epa4all-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>epa4all-phr-client</artifactId>
+
+  <properties>
+    <generated.sources.path>${project.build.directory}/generated-sources</generated.sources.path>
+    <schema.root.path>${project.basedir}/src/main/resources/schemas</schema.root.path>
+    <binding.path>${project.basedir}/src/main/binding</binding.path>
+    <wsdl.github.url>https://github.com/gematik/ePA-XDS-Document/blob/ePA-3.0/src/schema/PHR_Common.xsd</wsdl.github.url>
+  </properties>
+
+  <dependencies>
+
+    <!-- SOAP -->
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-rs-client</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-features-logging</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-frontend-jaxws</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- model & codegen -->
+    <dependency>
+      <groupId>de.gematik.epa</groupId>
+      <artifactId>lib-ihe-xds</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cxf.xjc-utils</groupId>
+      <artifactId>cxf-xjc-runtime</artifactId>
+      <version>${cxf-xjc.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-codegen-plugin</artifactId>
+        <version>${apache-cxf.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.jvnet.jaxb2_commons</groupId>
+            <artifactId>jaxb2-fluent-api</artifactId>
+            <version>${jaxb.fluent.api.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>wsdl2java-plus</id>
+            <goals>
+              <goal>wsdl2java</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <additionalJvmArgs>-Djavax.xml.accessExternalDTD=file</additionalJvmArgs>
+              <sourceRoot>${generated.sources.path}</sourceRoot>
+              <defaultOptions>
+                <extraargs>
+                  <extraarg>-xjc-Xfluent-api</extraarg>
+                </extraargs>
+              </defaultOptions>
+              <wsdlOptions>
+                <wsdlOption>
+                  <wsdl>${schema.root.path}/XDSDocumentService.wsdl</wsdl>
+                  <bindingFiles>
+                    <bindingFile>${binding.path}/XDSDocumentService.jaxws.xjb</bindingFile>
+                  </bindingFiles>
+                  <extraargs></extraargs>
+                </wsdlOption>
+              </wsdlOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.cxf</groupId>
+        <artifactId>cxf-xjc-plugin</artifactId>
+        <version>${cxf-xjc.version}</version>
+        <configuration>
+          <additionalJvmArgs>-Djavax.xml.accessExternalDTD=file</additionalJvmArgs>
+          <extensions>
+            <extension>org.apache.cxf.xjcplugins:cxf-xjc-ts:${cxf-xjc.version}</extension>
+            <extension>org.jvnet.jaxb2_commons:jaxb2-fluent-api:${jaxb.fluent.api.version}</extension>
+            <extension>org.jvnet.jaxb2_commons:jaxb2-basics:0.13.1</extension>
+            <extension>javax.xml.bind:jaxb-api:${xml.bind.jaxb.version}</extension>
+            <extension>com.sun.xml.bind:jaxb-impl:${xml.bind.jaxb.version}</extension>
+          </extensions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <goals>
+              <goal>xsdtojava</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+              <sourceRoot>${generated.sources.path}</sourceRoot>
+              <xsdOptions>
+                <xsdOption>
+                  <xsd>${schema.root.path}/PHR_Common.xsd</xsd>
+                  <extensionArgs>
+                    <extensionArg>-Xfluent-api</extensionArg>
+                    <extensionArg>-XsimpleEquals</extensionArg>
+                    <extensionArg>-XsimpleHashCode</extensionArg>
+                    <extensionArg>-Xts</extensionArg>
+                  </extensionArgs>
+                  <bindingFiles>
+                    <bindingFile>${binding.path}/PHR_Common.jaxb.xjb</bindingFile>
+                  </bindingFiles>
+                </xsdOption>
+              </xsdOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

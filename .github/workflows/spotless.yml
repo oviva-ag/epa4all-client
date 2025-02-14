@@ -1,0 +1,31 @@
+name: Spotless Linter
+
+on:
+  push:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      checks: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: run spotless
+        id: spotless
+        run: mvn -B spotless:check
+      - name: check spotless
+        if: always()
+        uses: oviva-ag/checks-action@v2.0.0
+        with:
+          name: Check spotless output
+          token: ${{ secrets.GITHUB_TOKEN }}
+          conclusion: ${{ steps.spotless.outcome }}
