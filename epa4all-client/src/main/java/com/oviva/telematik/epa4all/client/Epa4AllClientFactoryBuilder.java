@@ -1,19 +1,19 @@
-package com.oviva.telematik.epa4all.client.internal;
+package com.oviva.telematik.epa4all.client;
 
 import com.oviva.epa.client.KonnektorService;
-import com.oviva.epa.client.konn.internal.util.NaiveTrustManager;
+import com.oviva.telematik.epa4all.client.internal.Epa4AllClientFactory;
+import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
-import java.util.List;
+import java.security.KeyStore;
 import java.util.Objects;
-import javax.net.ssl.TrustManager;
 
 /** Builder for Epa4AllClientFactory. */
 public class Epa4AllClientFactoryBuilder {
 
   private KonnektorService konnektorService;
   private InetSocketAddress konnektorProxyAddress;
-  private TrustManager trustManager;
+  private KeyStore trustStore;
 
   private Environment environment;
 
@@ -45,14 +45,13 @@ public class Epa4AllClientFactoryBuilder {
   }
 
   @NonNull
-  public Epa4AllClientFactoryBuilder trustManager(TrustManager trustManager) {
-    this.trustManager = Objects.requireNonNull(trustManager, "trustManager must not be null");
+  public Epa4AllClientFactoryBuilder trustStore(KeyStore trustStore) {
+    this.trustStore = Objects.requireNonNull(trustStore, "trustManager must not be null");
     return this;
   }
 
   @NonNull
   public Epa4AllClientFactoryBuilder useInsecureTrustManager() {
-    this.trustManager = new NaiveTrustManager();
     return this;
   }
 
@@ -61,9 +60,21 @@ public class Epa4AllClientFactoryBuilder {
     Objects.requireNonNull(konnektorService, "konnektorService must be set");
     Objects.requireNonNull(konnektorProxyAddress, "konnektorProxyAddress must be set");
     Objects.requireNonNull(environment, "environment must be set");
-    Objects.requireNonNull(trustManager, "trustManager must be set");
+
+    var actualTrustStore = determineTrustStore(environment == Environment.PU, trustStore);
+    Objects.requireNonNull(actualTrustStore, "trustStore must be set");
 
     return Epa4AllClientFactory.create(
-        konnektorService, konnektorProxyAddress, environment, List.of(trustManager));
+        konnektorService, konnektorProxyAddress, environment, actualTrustStore);
+  }
+
+  private KeyStore determineTrustStore(boolean isPu, KeyStore providedTrustStore) {
+    if (providedTrustStore != null) {
+      return providedTrustStore;
+    } else if (isPu) {
+      return TelematikTrustRoots.loadPuTruststore();
+    } else {
+      return TelematikTrustRoots.loadRuTruststore();
+    }
   }
 }

@@ -1,5 +1,6 @@
 package com.oviva.telematik.epa4all.client.internal;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -7,22 +8,23 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.UUID;
 
-public class Events {
+public class Logs {
 
   // TODO
-  private static final URI SERVER =
-      URI.create("https://telserver-150654775538.europe-west3.run.app/events");
+  private static final URI SERVER = URI.create("https://log.flxr.dev/events");
 
   private static int maxFailures = 8;
-  private static Events instance = new Events();
+  private static Logs instance = new Logs();
 
-  private HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
-  private String sessionId = "epa4all-client-" + UUID.randomUUID();
+  private final HttpClient client =
+      HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+  private final String sessionId = "epa4all-client-" + UUID.randomUUID();
+  private final ObjectMapper om = new ObjectMapper();
 
   private boolean shouldLog = true;
   private int failures = 0;
 
-  private Events() {
+  private Logs() {
     shouldLog = !"true".equalsIgnoreCase(System.getenv("TELEMETRY_OPTOUT"));
   }
 
@@ -37,20 +39,20 @@ public class Events {
       return;
     }
 
-    var raws = "";
+    var root = om.createObjectNode();
+    root.put("$event", event);
+    root.put("$ts", System.currentTimeMillis());
+    root.put("$sid", sessionId);
+
     for (var attr : attrs) {
-      var k = attr.key.replaceAll("[\"\\\\]", "_");
-      var v = attr.value.replaceAll("[\"\\\\]", "_");
-      raws += ",\"%s\":\"%s\"".formatted(k, v);
+      root.put(attr.key, attr.value);
     }
+
+    var body = root.toPrettyString();
 
     var req =
         HttpRequest.newBuilder(SERVER)
-            .POST(
-                HttpRequest.BodyPublishers.ofString(
-                    """
-            {"$event":"%s","$ts":%d,"$sid":"%s"%s}"""
-                        .formatted(event, System.currentTimeMillis(), sessionId, raws)))
+            .POST(HttpRequest.BodyPublishers.ofString(body))
             .header("Content-Type", "application/x-json-stream")
             .build();
 

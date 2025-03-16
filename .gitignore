@@ -5,20 +5,10 @@
 .DS_Store
 *.p12
 *_pw.txt
-ePA-Basic
-ePA-XDS-Document
-api-telematik/
-epa4all-e2e-test/ca.pem
-epa4all-e2e-test/cert.pem
-epa4all-e2e-test/chain.pem
-epa4all-e2e-test/ocsp.der
-epa4all-e2e-test/root-ca-test.txt
-epa4all-e2e-test/truststore-test.txt
-testaccounts_epa.txt
 
 port_forward_*.sh
 */ProdKonnektors.java
-pom.xml.versionsBackup
 .vscode/
+pom.xml.versionsBackup
 .flattened-pom.xml
-dot_git/
+/epa4all-client/src/test/java/com/oviva/telematik/epa4all/client/internal/prod/

@@ -2,6 +2,8 @@ package com.oviva.telematik.epa4all.client.internal;
 
 import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.model.SmcbCard;
+import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.Environment;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
 import com.oviva.telematik.epaapi.ClientConfiguration;
 import com.oviva.telematik.epaapi.SoapClientFactory;
@@ -15,16 +17,23 @@ import com.oviva.telematik.vau.proxy.VauProxy;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.http.HttpClient;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.time.Duration;
 import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Epa4AllClientFactory implements AutoCloseable {
+
+  static {
+    Security.addProvider(new BouncyCastlePQCProvider());
+    Security.addProvider(new BouncyCastleProvider());
+  }
 
   private static final String LOCALHOST = "127.0.0.1";
 
@@ -52,14 +61,16 @@ public class Epa4AllClientFactory implements AutoCloseable {
       KonnektorService konnektorService,
       InetSocketAddress konnektorProxyAddress,
       Environment environment,
-      List<TrustManager> trustManagers) {
+      KeyStore trustStore) {
 
-    var outerHttpClient =
-        buildOuterHttpClient(konnektorProxyAddress, buildSslContext(trustManagers));
+    var telematikSslContext = buildSslContext(trustStore);
+    //    telematikSslContext = buildSslContextFromTrustManager(new NaiveTrustManager());
+    var outerHttpClientTelematik = buildOuterHttpClient(konnektorProxyAddress, telematikSslContext);
 
-    var informationService = buildInformationService(environment, outerHttpClient);
+    var informationService = buildInformationService(environment, outerHttpClientTelematik);
 
-    var proxyServer = buildVauProxy(environment, konnektorProxyAddress);
+    var proxyServer =
+        buildVauProxy(environment, konnektorProxyAddress, trustStore, telematikSslContext);
 
     var serverInfo = proxyServer.start();
     var vauProxyServerListener = serverInfo.listenAddress();
@@ -70,6 +81,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
 
     var card = findSmcBCard(konnektorService);
 
+    var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
     var signer = new RsaSignatureAdapter(konnektorService, card);
     var authorizationService = new AuthorizationService(innerVauClient, outerHttpClient, signer);
 
@@ -98,11 +110,16 @@ public class Epa4AllClientFactory implements AutoCloseable {
   }
 
   private static VauProxy buildVauProxy(
-      Environment environment, InetSocketAddress konnektorProxyAddress) {
+      Environment environment,
+      InetSocketAddress konnektorProxyAddress,
+      KeyStore trustStore,
+      SSLContext sslContext) {
 
     var isPu = environment == Environment.PU;
     var xUserAgent = isPu ? "GEMOvivepa4fA734EBIP/0.1.0" : "GEMOvivepa4fA1d5W8sR/0.1.0";
-    return new VauProxy(new VauProxy.Configuration(konnektorProxyAddress, 0, isPu, xUserAgent));
+    return new VauProxy(
+        new VauProxy.Configuration(
+            konnektorProxyAddress, 0, isPu, xUserAgent, sslContext, trustStore));
   }
 
   private static InformationService buildInformationService(
@@ -139,6 +156,14 @@ public class Epa4AllClientFactory implements AutoCloseable {
     return new DowngradeHttpClient(JavaHttpClient.from(innerHttpClient));
   }
 
+  private static HttpClient buildOuterHttpClient(InetSocketAddress konnektorProxyAddress) {
+    try {
+      return buildOuterHttpClient(konnektorProxyAddress, SSLContext.getDefault());
+    } catch (NoSuchAlgorithmException e) {
+      throw new ClientException("failed creating client", e);
+    }
+  }
+
   private static HttpClient buildOuterHttpClient(
       InetSocketAddress konnektorProxyAddress, SSLContext sslContext) {
 
@@ -151,13 +176,27 @@ public class Epa4AllClientFactory implements AutoCloseable {
         .build();
   }
 
-  private static SSLContext buildSslContext(List<TrustManager> tms) {
+  private static SSLContext buildSslContext(KeyStore trustStore) {
+    return buildSslContextFromTrustManager(buildTrustManager(trustStore));
+  }
+
+  private static SSLContext buildSslContextFromTrustManager(TrustManager trustManager) {
     try {
       SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
-      sslContext.init(null, tms.toArray(tms.toArray(new TrustManager[0])), null);
+      sslContext.init(null, new TrustManager[] {trustManager}, null);
       return sslContext;
     } catch (NoSuchAlgorithmException | KeyManagementException e) {
       throw new IllegalStateException("failed to initialise ssl context", e);
+    }
+  }
+
+  private static TrustManager buildTrustManager(KeyStore trustStore) {
+    try {
+      var tmf = TrustManagerFactory.getInstance("PKIX");
+      tmf.init(trustStore);
+      return tmf.getTrustManagers()[0];
+    } catch (KeyStoreException | NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
     }
   }
 

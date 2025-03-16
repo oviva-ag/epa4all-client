@@ -806,8 +806,6 @@ public class ExportFixture {
                     "",
                     // professionOID for DiGA:
                     // https://gemspec.gematik.de/docs/gemSpec/gemSpec_OID/gemSpec_OID_V3.19.0/#3.5.1.3
-                    // TODO read this from the SMC-B, see
-                    // com.oviva.epa.client.internal.svc.utils.CertificateUtils::getProfessionInfoFromCertificate
                     "1.2.276.0.76.4.282", // OID
                     // Der identifier in AuthorInstitution muss eine gültige TelematikId sein, so
                     // wie sie z. B. auf der SMC-B-Karte enthalten ist
@@ -816,7 +814,7 @@ public class ExportFixture {
                     List.of("25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO"),
                     List.of("^^Internet^telematik-infrastructure@oviva.com"))),
             "AVAILABLE",
-            List.of(),
+            null,
             ClassCode.DURCHFUEHRUNGSPROTOKOLL.getValue(),
             "DiGA MIO-Beispiel eines Dokument von Referenzimplementierung geschickt (Simple Roundtrip)",
             LocalDateTime.now().minusHours(3),

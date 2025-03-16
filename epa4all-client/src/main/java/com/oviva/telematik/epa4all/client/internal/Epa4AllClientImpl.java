@@ -31,16 +31,16 @@ public class Epa4AllClientImpl implements Epa4AllClient {
     this.card = card;
     this.soapClientFactory = soapClientFactory;
 
-    Events.log(
+    Logs.log(
         "create_client",
-        new Events.Attr("telematik_id", card.telematikId()),
-        new Events.Attr("telematik_name", card.holderName()));
+        new Logs.Attr("telematik_id", card.telematikId()),
+        new Logs.Attr("telematik_name", card.holderName()));
   }
 
   @NonNull
   @Override
   public AuthorInstitution authorInstitution() {
-    Events.log("get_author_institution");
+    Logs.log("get_author_institution");
     return new AuthorInstitution(card.holderName(), card.telematikId());
   }
 
@@ -48,7 +48,7 @@ public class Epa4AllClientImpl implements Epa4AllClient {
   public @NonNull WriteDocumentResponse writeDocument(
       @NonNull String insurantId, @NonNull Document document) {
 
-    Events.log("write_document");
+    Logs.log("write_document");
     var phrService = openPhrServiceForInsurant(insurantId);
     var requestId = phrService.writeDocument(insurantId, document);
     return new WriteDocumentResponse(requestId);
@@ -59,7 +59,7 @@ public class Epa4AllClientImpl implements Epa4AllClient {
   public WriteDocumentResponse replaceDocument(
       @NonNull String insurantId, @NonNull Document document, @NonNull UUID documentToReplaceId) {
 
-    Events.log("replace_document");
+    Logs.log("replace_document");
     var phrService = openPhrServiceForInsurant(insurantId);
     var requestId = phrService.replaceDocument(insurantId, document, documentToReplaceId);
     return new WriteDocumentResponse(requestId);

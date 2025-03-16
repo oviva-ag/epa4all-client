@@ -3,6 +3,7 @@ package com.oviva.telematik.vau.httpclient.internal.cert;
 import static org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers.id_isismtt_at_admission;
 import static org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers.id_isismtt_at_certHash;
 
+import com.oviva.telematik.vau.httpclient.VauClientException;
 import de.gematik.vau.lib.exceptions.VauException;
 import java.io.IOException;
 import java.security.*;
@@ -10,10 +11,12 @@ import java.security.cert.*;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.isismtt.ocsp.CertHash;
 import org.bouncycastle.asn1.isismtt.x509.AdmissionSyntax;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.ocsp.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -24,56 +27,51 @@ import org.slf4j.LoggerFactory;
 
 public class TrustStoreValidator implements TrustValidator {
 
-  private static final String JCE_PROVIDER = BouncyCastleProvider.PROVIDER_NAME;
   private static final Logger log = LoggerFactory.getLogger(TrustStoreValidator.class);
 
   private static final ASN1ObjectIdentifier OID_EPA_VAU =
       new ASN1ObjectIdentifier("1.2.276.0.76.4.209");
 
   // for test/mock purposed
-  static Clock clock;
+  static Clock clock = Clock.systemUTC();
 
   // A_24624-01/1
   private static final Duration ocspResponseAge = Duration.ofHours(24);
 
-  private final KeyStore rootCertificates;
+  private final KeyStore trustStore;
 
-  public TrustStoreValidator(KeyStore rootCertificates) {
-    this.rootCertificates = rootCertificates;
+  public TrustStoreValidator(KeyStore trustStore) {
+    this.trustStore = trustStore;
   }
 
   @Override
-  public ValidationResult validate(
+  public void validate(
       X509Certificate vauInstanceCertificate,
       X509Certificate vauIssuerCertificate,
       List<X509Certificate> certificateChain,
-      byte[] ocspResponseDer) {
+      byte[] ocspResponseDer)
+      throws CertificateValidationException {
 
     // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Krypt/latest/#A_24624-01
-    try {
+    verifyEndUserCertificate(vauInstanceCertificate, vauIssuerCertificate, certificateChain);
 
-      verifyEndUserCertificate(vauInstanceCertificate, vauIssuerCertificate, certificateChain);
-      verifyOcspResponse(
-          vauInstanceCertificate, vauIssuerCertificate, certificateChain, ocspResponseDer);
-      verifyRole(vauInstanceCertificate);
+    verifyOcspResponse(vauInstanceCertificate, ocspResponseDer);
 
-    } catch (ValidationException e) {
-      return new ValidationResult(false, e.getMessage(), e);
-    }
-    return new ValidationResult(true, null, null);
+    verifyRole(vauInstanceCertificate);
   }
 
   private void verifyEndUserCertificate(
       X509Certificate vauInstanceCertificate,
       X509Certificate vauIssuerCertificate,
       List<X509Certificate> certificateChain)
-      throws ValidationException {
+      throws CertificateValidationException {
     var instanceIntermediates =
         Stream.concat(Stream.of(vauIssuerCertificate), certificateChain.stream()).toList();
     verifyTrustChainAgainstRoot(vauInstanceCertificate, instanceIntermediates);
   }
 
-  private void verifyRole(X509Certificate endUserCertificate) throws ValidationException {
+  private void verifyRole(X509Certificate endUserCertificate)
+      throws CertificateValidationException {
     try {
       var asn1Admission =
           new X509CertificateHolder(endUserCertificate.getEncoded())
@@ -84,14 +82,14 @@ public class TrustStoreValidator implements TrustValidator {
 
       var contents = admissionInstance.getContentsOfAdmissions();
       if (contents.length != 1) {
-        throw new ValidationException(
+        throw new CertificateValidationException(
             "expected exactly one admission content, got %d".formatted(contents.length));
       }
 
       var content = contents[0];
       var profInfos = content.getProfessionInfos();
       if (profInfos.length != 1) {
-        throw new ValidationException(
+        throw new CertificateValidationException(
             "expected exactly one profession info, got %d".formatted(profInfos.length));
       }
 
@@ -99,14 +97,15 @@ public class TrustStoreValidator implements TrustValidator {
 
       var oids = profInfo.getProfessionOIDs();
       if (oids.length != 1) {
-        throw new ValidationException(
+        throw new CertificateValidationException(
             "expected exactly one profession oid, got %d".formatted(oids.length));
       }
 
       var oid = oids[0];
 
       if (!oid.equals(OID_EPA_VAU)) {
-        throw new ValidationException("expected OID %s, got %s".formatted(OID_EPA_VAU, oid));
+        throw new CertificateValidationException(
+            "expected OID %s, got %s".formatted(OID_EPA_VAU, oid));
       }
 
     } catch (IOException | CertificateEncodingException e) {
@@ -116,7 +115,7 @@ public class TrustStoreValidator implements TrustValidator {
 
   private void verifyTrustChainAgainstRoot(
       X509Certificate endUserCertificate, List<X509Certificate> certificateChain)
-      throws ValidationException {
+      throws CertificateValidationException {
 
     try {
       var intermediates = new CollectionCertStoreParameters(certificateChain);
@@ -124,89 +123,109 @@ public class TrustStoreValidator implements TrustValidator {
       var target = new X509CertSelector();
       target.setCertificate(endUserCertificate);
 
-      var params = new PKIXBuilderParameters(rootCertificates, target);
+      var params = new PKIXBuilderParameters(trustStore, target);
       params.addCertStore(CertStore.getInstance("Collection", intermediates));
 
       // we'll check the OCSP/CRL response separately
       params.setRevocationEnabled(false);
 
-      try {
-        var builder = CertPathBuilder.getInstance("PKIX", JCE_PROVIDER);
+      var builder = CertPathBuilder.getInstance("PKIX", BouncyCastleProvider.PROVIDER_NAME);
 
-        var result = (PKIXCertPathBuilderResult) builder.build(params);
-        log.atDebug().log(
-            "certificate '{}' verified with trust anchor: '{}'",
-            endUserCertificate.getSubjectX500Principal().getName(),
-            result.getTrustAnchor().getTrustedCert().getSubjectX500Principal().getName());
-      } catch (CertPathBuilderException e) {
-        var name = endUserCertificate.getSubjectX500Principal().getName();
-        throw new ValidationException(
-            "failed to validate VAU server certificate, bad certificate: " + name, e);
-      }
+      var result = (PKIXCertPathBuilderResult) builder.build(params);
+      log.atDebug().log(
+          "certificate '{}' verified with trust anchor: '{}'",
+          endUserCertificate.getSubjectX500Principal().getName(),
+          result.getTrustAnchor().getTrustedCert().getSubjectX500Principal().getName());
 
-    } catch (NoSuchProviderException
+    } catch (CertPathBuilderException
         | NoSuchAlgorithmException
-        | KeyStoreException
         | InvalidAlgorithmParameterException e) {
+      var name = endUserCertificate.getSubjectX500Principal().getName();
+      throw new CertificateValidationException(
+          "failed to validate VAU server certificate, bad certificate: " + name, e);
+    } catch (NoSuchProviderException | KeyStoreException e) {
       throw new VauException("unexpected crypto exception", e);
     }
   }
 
-  private void verifyOcspResponse(
-      X509Certificate vauInstanceCertificate,
-      X509Certificate vauIssuerCertificate,
-      List<X509Certificate> certificateChain,
-      byte[] ocspResponseDer)
-      throws ValidationException {
+  private void verifyOcspResponse(X509Certificate vauInstanceCertificate, byte[] ocspResponseDer)
+      throws CertificateValidationException {
 
     if (ocspResponseDer == null || ocspResponseDer.length == 0) {
-      throw new ValidationException("empty OCSP response");
+      throw new CertificateValidationException("empty OCSP response");
     }
-
-    // can we trust the issuer of the OCSP response?
-    verifyTrustChainAgainstRoot(vauIssuerCertificate, certificateChain);
 
     var ocspResp = toOcspResponse(ocspResponseDer);
     if (ocspResp.getStatus() != OCSPResp.SUCCESSFUL) {
-      throw new ValidationException(
+      throw new CertificateValidationException(
           "invalid OCSP response status: %d".formatted(ocspResp.getStatus()), null);
     }
 
     var basicOcspResp = getBasicOcspResp(ocspResp);
 
+    var responderX500Name = basicOcspResp.getResponderId().toASN1Primitive().getName();
+
     // is the OCSP response valid?
-    verifyOcspResponseSignature(vauIssuerCertificate, basicOcspResp);
+    var ocspResponderCertificate =
+        findTrustedCertificate(responderX500Name)
+            .orElseThrow(
+                () ->
+                    new VauClientException(
+                        "no OCSP responder certificate found for %s".formatted(responderX500Name)));
+    verifyOcspResponseSignature(ocspResponderCertificate, basicOcspResp);
     verifyOcspResponseAge(basicOcspResp);
 
     // has exactly one response?
     var responses = basicOcspResp.getResponses();
     if (responses.length != 1) {
-      throw new ValidationException("expected 1 OCSP response, got %d".formatted(responses.length));
+      throw new CertificateValidationException(
+          "expected 1 OCSP response, got %d".formatted(responses.length));
     }
     var response = responses[0];
 
     // status for our cert good?
     if (response.getCertStatus() != CertificateStatus.GOOD) {
-      throw new ValidationException(
+      throw new CertificateValidationException(
           "invalid OCSP response certificate status: %s".formatted(response.getCertStatus()));
     }
 
     verifyCertHash(vauInstanceCertificate, response);
   }
 
-  void verifyOcspResponseAge(BasicOCSPResp ocspResponse) throws ValidationException {
+  Optional<X509Certificate> findTrustedCertificate(X500Name subject) {
+    try {
+      var enumeration = trustStore.aliases();
+      while (enumeration.hasMoreElements()) {
+        var alias = enumeration.nextElement();
+        var cert = (X509Certificate) trustStore.getCertificate(alias);
+
+        // making sure we have the bouncycastle X500Name for both
+        var certPrincipal =
+            new org.bouncycastle.asn1.x500.X500Name(cert.getSubjectX500Principal().getName());
+        if (certPrincipal.equals(subject)) {
+          return Optional.of(cert);
+        }
+      }
+      return Optional.empty();
+    } catch (KeyStoreException e) {
+      throw new VauClientException(
+          "cannot find certificate for %s in truststore".formatted(subject.toString()), e);
+    }
+  }
+
+  void verifyOcspResponseAge(BasicOCSPResp ocspResponse) throws CertificateValidationException {
     var now = clock.instant();
 
     var producedAt = ocspResponse.getProducedAt().toInstant();
 
     if (Duration.between(producedAt, now).compareTo(ocspResponseAge) > 0) {
-      throw new ValidationException("OCSP response too old");
+      throw new CertificateValidationException("OCSP response too old");
     }
   }
 
   /** Verifies teh cert hash of the parameterized OCSP Response against the certificate. */
   private void verifyCertHash(X509Certificate endUserCertificate, SingleResp ocspResponseEntry)
-      throws ValidationException {
+      throws CertificateValidationException {
     try {
       var singleOcspRespAsn1 =
           ocspResponseEntry.getExtension(id_isismtt_at_certHash).getParsedValue();
@@ -214,10 +233,11 @@ public class TrustStoreValidator implements TrustValidator {
       var eeCertHashBytes = sha256(endUserCertificate.getEncoded());
 
       if (!MessageDigest.isEqual(ocspCertHashBytes, eeCertHashBytes)) {
-        throw new ValidationException("ocsp cert hash does not match end user cert hash");
+        throw new CertificateValidationException(
+            "ocsp cert hash does not match end user cert hash");
       }
     } catch (CertificateEncodingException e) {
-      throw new ValidationException("invalid end user certificate", e);
+      throw new CertificateValidationException("invalid end user certificate", e);
     }
   }
 
@@ -231,17 +251,18 @@ public class TrustStoreValidator implements TrustValidator {
   }
 
   protected void verifyOcspResponseSignature(
-      X509Certificate vauIssuerCertificate, BasicOCSPResp ocspResponse) throws ValidationException {
+      X509Certificate vauIssuerCertificate, BasicOCSPResp ocspResponse)
+      throws CertificateValidationException {
     try {
       var cvp =
           new JcaContentVerifierProviderBuilder()
               .setProvider(BouncyCastleProvider.PROVIDER_NAME)
               .build(vauIssuerCertificate.getPublicKey());
       if (!ocspResponse.isSignatureValid(cvp)) {
-        throw new ValidationException("invalid OCSP response signature");
+        throw new CertificateValidationException("invalid OCSP response signature");
       }
     } catch (final OCSPException | OperatorCreationException e) {
-      throw new ValidationException("error validating OCSP response", e);
+      throw new CertificateValidationException("error validating OCSP response", e);
     }
   }
 
@@ -258,16 +279,6 @@ public class TrustStoreValidator implements TrustValidator {
       return (BasicOCSPResp) ocspResponse.getResponseObject();
     } catch (OCSPException e) {
       throw new RuntimeException("failed to decode OCSP response", e);
-    }
-  }
-
-  private static class ValidationException extends Exception {
-    public ValidationException(String message) {
-      super(message);
-    }
-
-    public ValidationException(String message, Throwable cause) {
-      super(message, cause);
     }
   }
 }

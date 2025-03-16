@@ -11,10 +11,6 @@
     <license>
       <name>(c) 2025, Oviva</name>
     </license>
-    <license>
-      <name>Apache License 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
   </licenses>
 
   <developers>
@@ -35,7 +31,6 @@
 
   <modules>
     <module>epa4all-client</module>
-    <module>epa4all-e2e-test</module>
     <module>epa4all-phr-client</module>
     <module>epa4all-vau-client</module>
     <module>konnektor</module>

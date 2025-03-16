@@ -50,7 +50,7 @@ public class InformationService {
       log.atDebug()
           .addKeyValue("endpoint", endpoint)
           .setCause(e)
-          .log("failed to reach ePA account endpoint '%s'", endpoint);
+          .log("failed to reach ePA account endpoint '{}'", endpoint);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }

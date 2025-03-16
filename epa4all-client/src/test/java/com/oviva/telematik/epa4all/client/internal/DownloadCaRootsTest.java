@@ -1,4 +1,4 @@
-package com.oviva.telematik.epaapi;
+package com.oviva.telematik.epa4all.client.internal;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -77,7 +78,9 @@ class DownloadCaRootsTest {
   }
 
   private void saveTruststore(Path trustStorePath, KeyStore trustStore) {
-    try (var fout = Files.newOutputStream(trustStorePath)) {
+    try (var fout =
+        Files.newOutputStream(
+            trustStorePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
       trustStore.store(fout, "1234".toCharArray());
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
       throw new RuntimeException("failed to save truststore", e);

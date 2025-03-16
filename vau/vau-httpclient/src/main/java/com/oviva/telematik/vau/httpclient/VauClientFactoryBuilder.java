@@ -47,7 +47,7 @@ public class VauClientFactoryBuilder {
   }
 
   public VauClientFactoryBuilder withInsecureTrustValidator() {
-    this.trustValidator = (a, b, c, d) -> new TrustValidator.ValidationResult(true, null, null);
+    this.trustValidator = (a, b, c, d) -> {};
     return this;
   }
 

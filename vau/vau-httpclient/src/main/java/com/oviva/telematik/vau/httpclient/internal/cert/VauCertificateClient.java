@@ -8,9 +8,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
+import java.security.NoSuchProviderException;
 import java.security.cert.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
@@ -43,11 +45,7 @@ public class VauCertificateClient {
     var cert = parseDerCertificate(data.cert());
     var chain = data.rcaChain().stream().map(VauCertificateClient::parseDerCertificate).toList();
 
-    var r = trustValidator.validate(cert, ca, chain, ocspResponseDer);
-    if (!r.trusted()) {
-      throw new CertificateValidationException(
-          "VAU certificate untrusted: %s".formatted(r.message()));
-    }
+    trustValidator.validate(cert, ca, chain, ocspResponseDer);
     return new CertData(cert, ca, chain);
   }
 
@@ -95,14 +93,15 @@ public class VauCertificateClient {
 
   private static X509Certificate parseDerCertificate(byte[] certBytes) {
     try (var certInputStream = new ByteArrayInputStream(certBytes)) {
-      var certFactory = CertificateFactory.getInstance("X.509");
+      // MUST be bouncycastle to deal with the brainpool certificates
+      var certFactory = CertificateFactory.getInstance("X.509", BouncyCastleProvider.PROVIDER_NAME);
       var cert = certFactory.generateCertificate(certInputStream);
       if (cert instanceof X509Certificate x509Cert) {
         return x509Cert;
       }
       throw new VauProtocolException(
           "VAU channel certificate is not an X.509 certificate, got: %s".formatted(cert.getType()));
-    } catch (IOException | CertificateException e) {
+    } catch (IOException | CertificateException | NoSuchProviderException e) {
       throw new VauProtocolException("failed to parse VAU channel certificate", e);
     }
   }
