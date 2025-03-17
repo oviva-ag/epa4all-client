@@ -2,16 +2,21 @@ package com.oviva.telematik.vau.epa4all.client.authz.internal;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jose.proc.DefaultJOSEObjectTypeVerifier;
+import com.nimbusds.jose.jwk.KeyConverter;
+import com.nimbusds.jose.proc.*;
 import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.util.JSONObjectUtils;
 import com.nimbusds.jwt.JWTClaimNames;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationException;
 import com.oviva.telematik.vau.epa4all.client.authz.RsaSignatureService;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECDHEncrypter;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECKey;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolAlgorithms;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolJwsVerifier;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -65,18 +70,43 @@ public class AuthnChallengeResponder {
   private SignedJWT parseAndValidateChallenge(String challenge) {
     // A_20663-01
 
-    var parsedChallenge = parseChallenge(challenge);
+    var parsedChallengeJwt = parseChallenge(challenge);
+    validateChallenge(parsedChallengeJwt);
 
-    // TODO: validate signature of challenge A_20663-01
+    return parsedChallengeJwt;
+  }
+
+  private void validateChallenge(SignedJWT challenge) {
+
     try {
-      var claims = parsedChallenge.getJWTClaimsSet();
+      // Note: The challenge contains the URL to the keys, so is anyways in control of it. Not sure
+      // what validating the signature adds.
+      var claims = challenge.getJWTClaimsSet();
       var iss = claims.getIssuer();
 
-    } catch (ParseException e) {
+      var discoveryDocument = oidcClient.fetchOidcDiscoveryDocument(URI.create(iss));
+      var jwk = oidcClient.fetchJwk(discoveryDocument.uriPukIdpSig());
+
+      var jwsKeySelector = keySelector(jwk);
+
+      var jwtProcessor = new DefaultJWTProcessor<>();
+      jwtProcessor.setJWSVerifierFactory(new BrainpoolJwsVerifier.Factory());
+      jwtProcessor.setJWSKeySelector(jwsKeySelector);
+      jwtProcessor.setJWTClaimsSetVerifier(
+          new DefaultJWTClaimsVerifier<>(
+              new JWTClaimsSet.Builder().build(), Set.of(JWTClaimNames.ISSUER)));
+
+      // validate signature of challenge A_20663-01
+      jwtProcessor.process(challenge, null);
+
+    } catch (ParseException | BadJOSEException | JOSEException e) {
       throw new AuthorizationException("failed to verify challenge signature", e);
     }
+  }
 
-    return parsedChallenge;
+  private JWSKeySelector<SecurityContext> keySelector(JWK jwk) {
+    return new SingleKeyJWSKeySelector<>(
+        BrainpoolAlgorithms.BS256R1, KeyConverter.toJavaKeys(List.of(jwk)).get(0));
   }
 
   private SignedJWT parseChallenge(String challenge) {
@@ -111,28 +141,8 @@ public class AuthnChallengeResponder {
 
     try {
 
-      // TODO: fetch from discovery
-      // RU: https://idp-ref.zentral.idp.splitdns.ti-dienste.de/.well-known/openid-configuration
-      // PU: https://idp.zentral.idp.splitdns.ti-dienste.de/.well-known/openid-configuration
-      // curl https://idp-ref.app.ti-dienste.de/.well-known/openid-configuration
-      // curl https://idp-ref.app.ti-dienste.de/certs
-
       // https://gemspec.gematik.de/docs/gemILF/gemILF_PS_ePA/gemILF_PS_ePA_V3.2.3/#A_20667-02
       var idpEncKey = fetchIdpEncKey(iss);
-
-      // WTF? Brainpool curves?
-      //      var idpEncKey =
-      //          BP256ECKey.parse(
-      //              """
-      //                          {
-      //                            "kid": "puk_idp_enc",
-      //                            "use": "enc",
-      //                            "kty": "EC",
-      //                            "crv": "BP-256",
-      //                            "x": "pkU8LlTZsoGTloO7yjIkV626aGtwpelJ2Wrx7fZtOTo",
-      //                            "y": "VliGWQLNtyGuQFs9nXbWdE9O9PFtxb42miy4yaCkCi8"
-      //                          }
-      //                      """);
 
       if (!(idpEncKey instanceof BP256ECKey bp256ECKey)) {
         throw new AuthorizationException(
@@ -160,6 +170,10 @@ public class AuthnChallengeResponder {
   }
 
   private JWK fetchIdpEncKey(URI issuer) {
+
+    // examples:
+    // RU: https://idp-ref.zentral.idp.splitdns.ti-dienste.de/.well-known/openid-configuration
+    // PU: https://idp.zentral.idp.splitdns.ti-dienste.de/.well-known/openid-configuration
 
     // we do not verify the document much here, we just want the links
     var discoveryDocument = oidcClient.fetchOidcDiscoveryDocument(issuer);

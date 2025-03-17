@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.oviva.telematik.vau.epa4all.client.authz.internal;
+package com.oviva.telematik.vau.epa4all.client.authz.internal.jose;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.impl.AAD;

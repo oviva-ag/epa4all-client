@@ -1,6 +1,6 @@
-package com.oviva.telematik.vau.epa4all.client.authz.internal;
+package com.oviva.telematik.vau.epa4all.client.authz.internal.jose;
 
-import static com.oviva.telematik.vau.epa4all.client.authz.internal.BrainpoolCurve.BP_256;
+import static com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolCurve.BP_256;
 
 import com.nimbusds.jose.Algorithm;
 import com.nimbusds.jose.JOSEException;
@@ -32,7 +32,7 @@ public class BP256ECKey extends JWK implements AsymmetricJWK, CurveBasedJWK {
         encodeCoordinate(
             pub.getParams().getCurve().getField().getFieldSize(), pub.getW().getAffineY());
 
-    return new BP256ECKey(BP_256, x, y, KeyType.EC, null, null, null, null);
+    return new BP256ECKey(BP_256, x, y, KeyType.EC, null, null, BrainpoolAlgorithms.BS256R1, null);
   }
 
   public static BP256ECKey parse(String s) throws ParseException {
@@ -141,7 +141,7 @@ public class BP256ECKey extends JWK implements AsymmetricJWK, CurveBasedJWK {
 
   @Override
   public KeyPair toKeyPair() throws JOSEException {
-    throw new UnsupportedOperationException("Not supported yet.");
+    return new KeyPair(toPublicKey(), /* not supported yet*/ null);
   }
 
   @Override

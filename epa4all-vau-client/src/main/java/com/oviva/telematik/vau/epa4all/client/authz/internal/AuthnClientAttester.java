@@ -43,7 +43,7 @@ public class AuthnClientAttester {
     try {
       var x5c = Base64.encode(cert.getEncoded());
 
-      // TODO: use ES256 but with the brainpoolP256r curve
+      // TODO: We can also sign with the brainpoolP256r curve and pretend its ES256
       // this is not according to the official RFC, this is the intended way for this use-case
       // though ¯\_(ツ)_/¯
 

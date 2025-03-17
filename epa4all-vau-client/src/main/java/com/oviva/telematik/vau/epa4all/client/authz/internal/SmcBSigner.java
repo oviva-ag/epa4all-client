@@ -37,9 +37,8 @@ public class SmcBSigner implements JWSSigner {
 
   @Override
   public Set<JWSAlgorithm> supportedJWSAlgorithms() {
-    // TODO
-    // For clientAttest could use "ES256" with actual "BS256R1" algo!
-    // still is VERY wrong, but is what is 'intended'
+    // TODO: We can also advertise and support elliptic-curve algorithms, though only with brainpool
+    // curves while advertising ES256 (non-standard).
     return Set.of(JWSAlgorithm.PS256);
   }
 

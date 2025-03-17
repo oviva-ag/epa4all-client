@@ -9,6 +9,7 @@ import com.nimbusds.oauth2.sdk.GeneralException;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationException;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.JwkParser;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.net.URI;

@@ -10,7 +10,6 @@ import java.util.UUID;
 
 public class Logs {
 
-  // TODO
   private static final URI SERVER = URI.create("https://log.flxr.dev/events");
 
   private static int maxFailures = 8;

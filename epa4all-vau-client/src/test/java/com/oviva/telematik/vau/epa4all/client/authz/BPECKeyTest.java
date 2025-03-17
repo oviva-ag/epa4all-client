@@ -3,9 +3,9 @@ package com.oviva.telematik.vau.epa4all.client.authz;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.nimbusds.jose.*;
-import com.oviva.telematik.vau.epa4all.client.authz.internal.BP256ECDHEncrypter;
-import com.oviva.telematik.vau.epa4all.client.authz.internal.BP256ECKey;
-import com.oviva.telematik.vau.epa4all.client.authz.internal.BrainpoolCurve;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECDHEncrypter;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECKey;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolCurve;
 import java.security.Security;
 import java.text.ParseException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -20,7 +20,6 @@ class BPECKeyTest {
   @Test
   void parse() throws ParseException, JOSEException {
 
-    // TODO: fetch from discovery
     var idpEncKey =
         BP256ECKey.parse(
             """

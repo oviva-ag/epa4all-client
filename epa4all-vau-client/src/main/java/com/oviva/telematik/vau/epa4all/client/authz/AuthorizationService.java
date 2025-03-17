@@ -36,8 +36,6 @@ public class AuthorizationService {
 
   private static final Logger log = LoggerFactory.getLogger(AuthorizationService.class);
 
-  private static final JWSAlgorithm JWS_ALG_BS256R1 = new JWSAlgorithm("BP256R1");
-
   private final HttpClient innerHttpClient;
   private final java.net.http.HttpClient outerHttpClient;
   private final AuthnChallengeResponder authnChallengeResponder;
@@ -97,7 +95,7 @@ public class AuthorizationService {
           "unexpected status '%s %s' %d".formatted(method, path, res.status()));
     }
     var location = parseLocationHeader(res);
-    // TODO: check error in redirect URI
+    // TODO: more error checking in redirect_uri
 
     return followRedirect(location);
   }

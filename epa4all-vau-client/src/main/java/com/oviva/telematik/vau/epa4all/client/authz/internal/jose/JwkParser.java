@@ -1,4 +1,4 @@
-package com.oviva.telematik.vau.epa4all.client.authz.internal;
+package com.oviva.telematik.vau.epa4all.client.authz.internal.jose;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKParameterNames;
