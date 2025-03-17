@@ -22,6 +22,10 @@ public class BrainpoolJwsVerifier implements JWSVerifier {
     this.publicKey = publicKey;
   }
 
+  /**
+   * closely resembles {@link com.nimbusds.jose.crypto.ECDSAVerifier}, which does not support the
+   * brainpool curves
+   */
   @Override
   public boolean verify(JWSHeader header, byte[] signingInput, Base64URL signature)
       throws JOSEException {

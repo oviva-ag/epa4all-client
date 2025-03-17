@@ -18,6 +18,7 @@
 package com.oviva.telematik.vau.epa4all.client.authz.internal.jose;
 
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.ECDHEncrypter;
 import com.nimbusds.jose.crypto.impl.AAD;
 import com.nimbusds.jose.crypto.impl.ECDH;
 import com.nimbusds.jose.crypto.impl.ECDHCryptoProvider;
@@ -82,15 +83,8 @@ public class BP256ECDHEncrypter extends ECDHCryptoProvider implements JWEEncrypt
   /** The supported EC JWK curves by the ECDH crypto provider class. */
   public static final Set<Curve> SUPPORTED_ELLIPTIC_CURVES = Set.of(BrainpoolCurve.BP_256);
 
-  /** The public EC key. */
   private final ECPublicKey publicKey;
 
-  /**
-   * Creates a new Elliptic Curve Diffie-Hellman encrypter.
-   *
-   * @param publicKey The public EC key. Must not be {@code null}.
-   * @throws JOSEException If the elliptic curve is not supported.
-   */
   public BP256ECDHEncrypter(final ECPublicKey publicKey) throws JOSEException {
     super(BrainpoolCurve.BP_256, null);
     this.publicKey = publicKey;
@@ -102,6 +96,7 @@ public class BP256ECDHEncrypter extends ECDHCryptoProvider implements JWEEncrypt
     return SUPPORTED_ELLIPTIC_CURVES;
   }
 
+  /** Closely follows {@link ECDHEncrypter}, which does not support brainpool curves */
   @Override
   public JWECryptoParts encrypt(final JWEHeader header, final byte[] clearText, final byte[] aad)
       throws JOSEException {

@@ -1,7 +1,6 @@
 package com.oviva.telematik.vau.epa4all.client.authz.internal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Map;
 
 /* example:
   {
@@ -21,6 +20,4 @@ import java.util.Map;
   }
 }
    */
-public record AuthorizationRequestResponse(
-    @JsonProperty("challenge") String challenge,
-    @JsonProperty("user_consent") Map<String, Object> userConsent) {}
+public record AuthorizationRequestResponse(@JsonProperty("challenge") String challenge) {}
