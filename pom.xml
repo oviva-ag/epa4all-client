@@ -44,6 +44,7 @@
     <maven.compiler.target>${maven.compiler.release}</maven.compiler.target>
 
     <version.maven-surefire-plugin>3.5.1</version.maven-surefire-plugin>
+    <jacoco.version>0.8.12</jacoco.version>
 
     <spotless.version>2.43.0</spotless.version>
     <slf4j.version>2.0.16</slf4j.version>
@@ -53,6 +54,15 @@
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>
     <!-- does not work with post-quantum-crypto   <bouncycastle.version>1.80</bouncycastle.version>-->
     <bouncycastle.version>1.78.1</bouncycastle.version>
+
+    <sonar.organization>oviva-ag</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.projectName>${project.artifactId}</sonar.projectName>
+    <sonar.projectKey>oviva-ag_epa4all-client</sonar.projectKey>
+    <sonar.moduleKey>${project.groupId}_${project.artifactId}</sonar.moduleKey>
+    <sonar.cpd.exclusions></sonar.cpd.exclusions>
+    <sonar.coverage.exclusions></sonar.coverage.exclusions>
+    <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco-ut/jacoco.xml,${project.build.directory}/site/jacoco-it/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
   </properties>
 
   <dependencyManagement>
@@ -191,6 +201,11 @@
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>3.4.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>${jacoco.version}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -204,6 +219,54 @@
               <goal>add-source</goal>
             </goals>
             <phase>generate-sources</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- code coverage reporting -->
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-agent-ut</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>prepare-agent-it</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <phase>pre-integration-test</phase>
+            <configuration>
+              <destFile>${project.build.directory}/jacoco-it.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-ut</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>test</phase>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-ut.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-ut</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-it</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>post-integration-test</phase>
+            <configuration>
+              <dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-it</outputDirectory>
+            </configuration>
           </execution>
         </executions>
       </plugin>
