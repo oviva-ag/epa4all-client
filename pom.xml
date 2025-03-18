@@ -165,6 +165,12 @@
         <scope>import</scope>
       </dependency>
 
+      <dependency>
+        <groupId>io.undertow</groupId>
+        <artifactId>undertow-core</artifactId>
+        <version>2.3.18.Final</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
   <build>
