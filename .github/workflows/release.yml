@@ -1,0 +1,43 @@
+name: Build and Publish package to GitHub Packages
+on:
+  push:
+    tags:
+      - 'epa4all-client/v[0-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
+      - 'epa4all-client/v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  release:
+    env:
+      NAMESPACE: 'epa4all-client'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+          cache: 'maven'
+      - name: Get version
+        id: version
+        run: |
+          echo "parsing version from ref '$GITHUB_REF'"
+
+          VERSION=$(echo "$GITHUB_REF"  | sed -e "s|refs/tags/$NAMESPACE/||g" | sed -E 's/v?([0-9]+)\.([0-9]+)\.([0-9]+)(-[a-zA-Z]+(\.[0-9]+)?)?/\1.\2.\3\4/g')
+          echo "version: '$VERSION'"
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Update Version
+        run: |
+          echo "updating version to '$VERSION'"
+          mvn -B versions:set "-DnewVersion=$VERSION"
+      - name: Publish package
+        run: |
+          echo -n "$MAVEN_GPG_KEY" | gpg --import --batch
+          mvn --batch-mode -Prelease deploy
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_TR_PASSPHRASE }}
+          MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_TR_KEY }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
