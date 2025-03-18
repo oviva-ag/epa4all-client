@@ -33,17 +33,14 @@ public class BrainpoolCurve {
 
   public static boolean isBP256(ECParameterSpec spec) {
 
-    if (spec.getCurve().getField().getFieldSize()
+    return spec != null
+        && spec.getCurve().getField().getFieldSize()
             == BP_256_SPEC.getCurve().getField().getFieldSize()
         && spec.getCurve().getA().equals(BP_256_SPEC.getCurve().getA())
         && spec.getCurve().getB().equals(BP_256_SPEC.getCurve().getB())
         && spec.getGenerator().getAffineX().equals(BP_256_SPEC.getGenerator().getAffineX())
         && spec.getGenerator().getAffineY().equals(BP_256_SPEC.getGenerator().getAffineY())
         && spec.getOrder().equals(BP_256_SPEC.getOrder())
-        && spec.getCofactor() == BP_256_SPEC.getCofactor()) {
-      return true;
-    }
-
-    return false;
+        && spec.getCofactor() == BP_256_SPEC.getCofactor();
   }
 }

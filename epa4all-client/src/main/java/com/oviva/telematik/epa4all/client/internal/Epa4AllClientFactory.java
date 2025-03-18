@@ -9,6 +9,9 @@ import com.oviva.telematik.epaapi.ClientConfiguration;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.Epa4AllClientException;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.AuthnChallengeResponder;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.AuthnClientAttester;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.OidcClient;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.RsaSignatureAdapter;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import com.oviva.telematik.vau.httpclient.internal.DowngradeHttpClient;
@@ -82,8 +85,9 @@ public class Epa4AllClientFactory implements AutoCloseable {
     var card = findSmcBCard(konnektorService);
 
     var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
-    var signer = new RsaSignatureAdapter(konnektorService, card);
-    var authorizationService = new AuthorizationService(innerVauClient, outerHttpClient, signer);
+
+    var authorizationService =
+        buildAuthorizationService(innerVauClient, outerHttpClient, konnektorService, card);
 
     var client =
         new SoapClientFactory(
@@ -96,6 +100,21 @@ public class Epa4AllClientFactory implements AutoCloseable {
 
   public Epa4AllClient newClient() {
     return new Epa4AllClientImpl(informationService, authorizationService, card, client);
+  }
+
+  private static AuthorizationService buildAuthorizationService(
+      com.oviva.telematik.vau.httpclient.HttpClient innerVauClient,
+      HttpClient outerHttpClient,
+      KonnektorService konnektorService,
+      SmcbCard card) {
+
+    var signer = new RsaSignatureAdapter(konnektorService, card);
+
+    var authnChallengeResponder =
+        new AuthnChallengeResponder(signer, new OidcClient(outerHttpClient));
+    var authnClientAttester = new AuthnClientAttester(signer);
+    return new AuthorizationService(
+        innerVauClient, outerHttpClient, authnChallengeResponder, authnClientAttester);
   }
 
   private static SmcbCard findSmcBCard(KonnektorService konnektorService) {

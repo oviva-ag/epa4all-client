@@ -44,12 +44,12 @@ public class AuthorizationService {
   public AuthorizationService(
       HttpClient innerHttpClient,
       java.net.http.HttpClient outerHttpClient,
-      RsaSignatureService rsaSignatureService) {
+      AuthnChallengeResponder authnChallengeResponder,
+      AuthnClientAttester authnClientAttester) {
     this.innerHttpClient = innerHttpClient;
     this.outerHttpClient = outerHttpClient;
-    this.authnChallengeResponder =
-        new AuthnChallengeResponder(rsaSignatureService, new OidcClient(outerHttpClient));
-    this.authnClientAttester = new AuthnClientAttester(rsaSignatureService);
+    this.authnChallengeResponder = authnChallengeResponder;
+    this.authnClientAttester = authnClientAttester;
   }
 
   public void authorizeVauWithSmcB(URI vauEndpoint, String insurantId) {
