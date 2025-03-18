@@ -62,7 +62,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
     var message1 = VauMessage1.fromClientKey(clientKey1);
     byte[] message1Encoded = encodeUsingCbor(message1);
 
-    log.debug("Generated message1: {}", Hex.toHexString(message1Encoded));
+    log.atDebug().log(() -> "Generated message1: " + Hex.toHexString(message1Encoded));
     transcriptClient = message1Encoded;
     return message1Encoded;
   }
@@ -84,7 +84,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
       vauMessage2 = decodeCborMessageToClass(message2Encoded, VauMessage2.class);
     } catch (Exception e) {
       throw new IllegalArgumentException(
-          "Could not CBOR decode Message 2 when receiving it at client. " + e.getMessage());
+          "Could not CBOR decode Message 2 when receiving it at client. " + e.getMessage(), e);
     }
 
     var clientKemResult1 = KEM.decapsulateMessages(vauMessage2, clientKey1);
@@ -167,7 +167,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
       message4 = decodeCborMessageToClass(message4Encoded, VauMessage4.class);
     } catch (Exception e) {
       throw new IllegalArgumentException(
-          "Could not CBOR decode Message 4 when receiving it at client. " + e.getMessage());
+          "Could not CBOR decode Message 4 when receiving it at client. " + e.getMessage(), e);
     }
     byte[] vauTranscript =
         KEM.decryptAead(

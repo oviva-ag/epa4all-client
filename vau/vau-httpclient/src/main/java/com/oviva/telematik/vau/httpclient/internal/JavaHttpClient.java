@@ -1,6 +1,7 @@
 package com.oviva.telematik.vau.httpclient.internal;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -23,7 +24,8 @@ public class JavaHttpClient implements HttpClient {
   }
 
   @Override
-  public Response call(Request req) {
+  public com.oviva.telematik.vau.httpclient.HttpResponse call(
+      com.oviva.telematik.vau.httpclient.HttpRequest req) {
 
     var builder = HttpRequest.newBuilder().uri(req.uri());
 
@@ -49,14 +51,16 @@ public class JavaHttpClient implements HttpClient {
     return null;
   }
 
-  private Response toResponse(HttpResponse<byte[]> response) {
+  private com.oviva.telematik.vau.httpclient.HttpResponse toResponse(
+      HttpResponse<byte[]> response) {
 
     var headers =
         response.headers().map().entrySet().stream()
-            .map(e -> new Header(e.getKey(), e.getValue().get(0)))
+            .map(e -> new HttpHeader(e.getKey(), e.getValue().get(0)))
             .toList();
 
-    return new Response(response.statusCode(), headers, response.body());
+    return new com.oviva.telematik.vau.httpclient.HttpResponse(
+        response.statusCode(), headers, response.body());
   }
 
   public static HttpException httpFailBadStatus(String method, URI uri, int status) {

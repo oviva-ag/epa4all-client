@@ -21,6 +21,7 @@ import de.gematik.vau.lib.crypto.KyberKeys;
 import java.security.PublicKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 
+@SuppressWarnings("java:S6218")
 public record VauMessage1(
     @JsonProperty("ECDH_PK") VauEccPublicKey ecdhPublicKey,
     @JsonProperty("Kyber768_PK") byte[] kyberPublicKeyBytes,

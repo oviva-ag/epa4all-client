@@ -38,7 +38,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -58,10 +57,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 class VauHandshakeTest {
-
-  // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Krypt/latest/#A_24608
-  private static final int VAU_CID_MAX_BYTE_LENGTH = 200;
-  private static final Pattern VAU_CID_PATTERN = Pattern.compile("/[A-Za-z0-9-/]+");
 
   private static final int KYBER_768_BYTE_LENGTH = 1184;
   private static final String TGR_FILENAME = "target/vau3traffic.tgr";

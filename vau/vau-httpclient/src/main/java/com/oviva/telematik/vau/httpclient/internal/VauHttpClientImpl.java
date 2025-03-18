@@ -3,6 +3,9 @@ package com.oviva.telematik.vau.httpclient.internal;
 import static java.util.function.Predicate.*;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +25,10 @@ public class VauHttpClientImpl implements HttpClient {
   }
 
   @Override
-  public Response call(Request req) {
+  public HttpResponse call(HttpRequest req) {
     // https://datatracker.ietf.org/doc/html/rfc2616
 
-    List<Header> headers = new ArrayList<>();
+    List<HttpHeader> headers = new ArrayList<>();
     if (req.headers() != null) {
       headers.addAll(req.headers());
     }
@@ -35,7 +38,7 @@ public class VauHttpClientImpl implements HttpClient {
     var length = req.body() != null ? req.body().length : 0;
     headers = adjustContentLengthHeader(headers, length);
 
-    req = new Request(req.uri(), req.method(), headers, req.body());
+    req = new HttpRequest(req.uri(), req.method(), headers, req.body());
 
     var requestBytes = HttpCodec.encode(req);
 
@@ -58,29 +61,29 @@ public class VauHttpClientImpl implements HttpClient {
     return HttpCodec.decode(rxBytes);
   }
 
-  private List<Header> adjustContentLengthHeader(List<Header> headers, int actualSize) {
+  private List<HttpHeader> adjustContentLengthHeader(List<HttpHeader> headers, int actualSize) {
 
     var newHeaders =
         headers.stream()
             .filter(this::hasValidHeaderName)
             .filter(not(this::isContentLength))
             .filter(not(this::isTransferEncodingChunked))
-            .collect(Collectors.toCollection(ArrayList<Header>::new));
+            .collect(Collectors.toCollection(ArrayList<HttpHeader>::new));
 
-    newHeaders.add(new Header("Content-Length", String.valueOf(actualSize)));
+    newHeaders.add(new HttpHeader("Content-Length", String.valueOf(actualSize)));
 
     return newHeaders;
   }
 
-  private boolean hasValidHeaderName(Header h) {
+  private boolean hasValidHeaderName(HttpHeader h) {
     return h != null && h.name() != null;
   }
 
-  private boolean isContentLength(Header h) {
+  private boolean isContentLength(HttpHeader h) {
     return h.name().equalsIgnoreCase("Content-Length");
   }
 
-  private boolean isTransferEncodingChunked(Header h) {
+  private boolean isTransferEncodingChunked(HttpHeader h) {
     if (!h.name().equalsIgnoreCase("Transfer-Encoding")) {
       return false;
     }

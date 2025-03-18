@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
-import com.oviva.telematik.vau.httpclient.HttpClient.Header;
-import com.oviva.telematik.vau.httpclient.HttpClient.Request;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +21,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class HeaderDecoratorHttpClientTest {
 
   @Mock private HttpClient mockDelegate;
-  @Mock private HttpClient.Response mockResponse;
+  @Mock private HttpResponse mockResponse;
 
-  private List<HttpClient.Header> extraHeaders;
+  private List<HttpHeader> extraHeaders;
 
   private HeaderDecoratorHttpClient client;
 
@@ -30,8 +31,8 @@ class HeaderDecoratorHttpClientTest {
   void setUp() {
     extraHeaders =
         List.of(
-            new Header("X-Extra-Header", "extra-value"),
-            new Header("Content-Type", "application/json"));
+            new HttpHeader("X-Extra-Header", "extra-value"),
+            new HttpHeader("Content-Type", "application/json"));
     client = new HeaderDecoratorHttpClient(mockDelegate, extraHeaders);
   }
 
@@ -39,16 +40,16 @@ class HeaderDecoratorHttpClientTest {
   void shouldAddExtraHeadersToRequest() {
     // Given
     var originalRequest =
-        new HttpClient.Request(
+        new HttpRequest(
             URI.create("https://example.com"),
             "GET",
-            List.of(new HttpClient.Header("Accept", "text/html")),
+            List.of(new HttpHeader("Accept", "text/html")),
             null);
 
     var expectedHeaders = new ArrayList<>(extraHeaders);
-    expectedHeaders.add(new Header("Accept", "text/html"));
+    expectedHeaders.add(new HttpHeader("Accept", "text/html"));
 
-    var captor = ArgumentCaptor.forClass(Request.class);
+    var captor = ArgumentCaptor.forClass(HttpRequest.class);
     when(mockDelegate.call(captor.capture())).thenReturn(mockResponse);
 
     // When
@@ -61,7 +62,7 @@ class HeaderDecoratorHttpClientTest {
     assertEquals(expectedHeaders.size(), capturedRequest.headers().size());
 
     // Verify all expected headers are present
-    for (Header expected : expectedHeaders) {
+    for (HttpHeader expected : expectedHeaders) {
       boolean found =
           capturedRequest.headers().stream()
               .anyMatch(
@@ -74,16 +75,16 @@ class HeaderDecoratorHttpClientTest {
   void shouldReplaceExistingHeadersWithExtraHeaders() {
     // Given
     var originalRequest =
-        new Request(
+        new HttpRequest(
             URI.create("https://example.com"),
             "GET",
             List.of(
-                new Header("Content-Type", "text/plain"), // Should be replaced
-                new Header("Accept", "text/html") // Should be kept
+                new HttpHeader("Content-Type", "text/plain"), // Should be replaced
+                new HttpHeader("Accept", "text/html") // Should be kept
                 ),
             null);
 
-    var captor = ArgumentCaptor.forClass(Request.class);
+    var captor = ArgumentCaptor.forClass(HttpRequest.class);
     when(mockDelegate.call(captor.capture())).thenReturn(mockResponse);
 
     // When
@@ -115,15 +116,15 @@ class HeaderDecoratorHttpClientTest {
   void shouldHandleCaseInsensitiveHeaderReplacement() {
     // Given
     var originalRequest =
-        new Request(
+        new HttpRequest(
             URI.create("https://example.com"),
             "GET",
             List.of(
-                new Header("content-type", "text/plain"), // lowercase version
-                new Header("Accept", "text/html")),
+                new HttpHeader("content-type", "text/plain"), // lowercase version
+                new HttpHeader("Accept", "text/html")),
             null);
 
-    var captor = ArgumentCaptor.forClass(Request.class);
+    var captor = ArgumentCaptor.forClass(HttpRequest.class);
     when(mockDelegate.call(captor.capture())).thenReturn(mockResponse);
 
     // When
@@ -145,9 +146,9 @@ class HeaderDecoratorHttpClientTest {
   @Test
   void shouldHandleNullHeaders() {
     // Given
-    var originalRequest = new Request(URI.create("https://example.com"), "GET", null, null);
+    var originalRequest = new HttpRequest(URI.create("https://example.com"), "GET", null, null);
 
-    var captor = ArgumentCaptor.forClass(Request.class);
+    var captor = ArgumentCaptor.forClass(HttpRequest.class);
     when(mockDelegate.call(captor.capture())).thenReturn(mockResponse);
 
     // When
@@ -159,7 +160,7 @@ class HeaderDecoratorHttpClientTest {
     assertEquals(extraHeaders.size(), capturedRequest.headers().size());
 
     // Verify all extra headers are present
-    for (Header expected : extraHeaders) {
+    for (HttpHeader expected : extraHeaders) {
       boolean found =
           capturedRequest.headers().stream()
               .anyMatch(

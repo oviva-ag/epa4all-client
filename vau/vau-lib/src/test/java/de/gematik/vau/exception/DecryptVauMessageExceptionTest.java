@@ -43,7 +43,7 @@ class DecryptVauMessageExceptionTest {
   private VauClientStateMachine client;
 
   @BeforeEach
-  public void doHandShake() throws Exception {
+  void doHandShake() throws Exception {
     Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 

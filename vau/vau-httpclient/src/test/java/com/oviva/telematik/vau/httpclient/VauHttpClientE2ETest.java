@@ -36,7 +36,6 @@ class VauHttpClientE2ETest {
                 JavaHttpClient.from(
                     java.net.http.HttpClient.newBuilder()
                         .proxy(ProxySelector.of(new InetSocketAddress("localhost", 3128)))
-                        // TODO add SSL .sslContext(...)
                         .connectTimeout(Duration.ofSeconds(5))
                         .build()))
             .isPu(false)
@@ -46,7 +45,7 @@ class VauHttpClientE2ETest {
     var conn = client.connect(vauUri);
 
     // get status
-    var statusRes = conn.call(new HttpClient.Request(URI.create("/VAU-Status"), "GET", null, null));
+    var statusRes = conn.call(new HttpRequest(URI.create("/VAU-Status"), "GET", null, null));
     assertEquals(200, statusRes.status());
 
     // authenticate VAU tunnel
@@ -54,13 +53,13 @@ class VauHttpClientE2ETest {
 
     var nonceRes =
         conn.call(
-            new HttpClient.Request(
+            new HttpRequest(
                 URI.create("/epa/authz/v1/getNonce"),
                 "GET",
                 List.of(
-                    new HttpClient.Header("host", "e4a-rt15931.deine-epa.de"),
+                    new HttpHeader("host", "e4a-rt15931.deine-epa.de"),
                     //                    new HttpClient.Header("x-insurantid", "Z987654321"),
-                    new HttpClient.Header("accept", "application/json")),
+                    new HttpHeader("accept", "application/json")),
                 null));
 
     assertEquals(200, nonceRes.status());

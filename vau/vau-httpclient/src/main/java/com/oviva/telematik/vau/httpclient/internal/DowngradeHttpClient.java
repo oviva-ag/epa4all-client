@@ -1,6 +1,8 @@
 package com.oviva.telematik.vau.httpclient.internal;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import java.net.URI;
 
 public class DowngradeHttpClient implements HttpClient {
@@ -12,7 +14,7 @@ public class DowngradeHttpClient implements HttpClient {
   }
 
   @Override
-  public Response call(Request req) {
+  public HttpResponse call(HttpRequest req) {
 
     var port = req.uri().getPort();
     var scheme = req.uri().getScheme();
@@ -23,7 +25,7 @@ public class DowngradeHttpClient implements HttpClient {
     if (((port == 443) || (port == -1)) && "https".equals(scheme)) {
       var downgradedUri =
           URI.create("http://%s%s".formatted(req.uri().getHost(), req.uri().getPath()));
-      var downgraded = new Request(downgradedUri, req.method(), req.headers(), req.body());
+      var downgraded = new HttpRequest(downgradedUri, req.method(), req.headers(), req.body());
       return delegate.call(downgraded);
     }
 

@@ -72,8 +72,7 @@ public class VauClientFactoryBuilder {
 
     var userAgentHeaders =
         List.of(
-            new HttpClient.Header("X-Useragent", xUserAgent),
-            new HttpClient.Header("User-Agent", xUserAgent));
+            new HttpHeader("X-Useragent", xUserAgent), new HttpHeader("User-Agent", xUserAgent));
     outerClient = new HeaderDecoratorHttpClient(outerClient, userAgentHeaders);
 
     var clientFactory =

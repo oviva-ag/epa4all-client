@@ -54,7 +54,7 @@ public class EllipticCurve {
     } catch (NoSuchAlgorithmException
         | NoSuchProviderException
         | InvalidAlgorithmParameterException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 

@@ -1,7 +1,6 @@
 package com.oviva.telematik.vau.proxy;
 
-import com.oviva.telematik.vau.httpclient.HttpClient;
-import com.oviva.telematik.vau.httpclient.VauClientFactory;
+import com.oviva.telematik.vau.httpclient.*;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
@@ -53,7 +52,7 @@ public class VauProxyHandler implements HttpHandler {
               // open or re-use a VAU tunnel
               var httpClient = getOrCreateUpstream(fbex);
               var req = prepareRequest(fbex, requestBytes);
-              HttpClient.Response res = null;
+              HttpResponse res = null;
               try {
                 res = httpClient.call(req);
               } catch (HttpClient.HttpException e) {
@@ -92,7 +91,7 @@ public class VauProxyHandler implements HttpHandler {
         });
   }
 
-  private void sendResponse(HttpServerExchange exchange, HttpClient.Response res) {
+  private void sendResponse(HttpServerExchange exchange, HttpResponse res) {
 
     for (var h : res.headers()) {
       exchange.getResponseHeaders().add(HttpString.tryFromString(h.name()), h.value());
@@ -106,7 +105,7 @@ public class VauProxyHandler implements HttpHandler {
     exchange.endExchange();
   }
 
-  private HttpClient.Request prepareRequest(HttpServerExchange exchange, byte[] body) {
+  private HttpRequest prepareRequest(HttpServerExchange exchange, byte[] body) {
     var method = exchange.getRequestMethod().toString();
     var headers = exchange.getRequestHeaders();
 
@@ -115,15 +114,15 @@ public class VauProxyHandler implements HttpHandler {
     // we just use the same path, no upstream host set
     var requestUri = URI.create(path);
 
-    var requestHeaders = new ArrayList<HttpClient.Header>();
+    var requestHeaders = new ArrayList<HttpHeader>();
     for (var h : headers) {
       var name = h.getHeaderName().toString();
       for (var v : h) {
-        requestHeaders.add(new HttpClient.Header(name, v));
+        requestHeaders.add(new HttpHeader(name, v));
       }
     }
 
-    return new HttpClient.Request(requestUri, method, requestHeaders, body);
+    return new HttpRequest(requestUri, method, requestHeaders, body);
   }
 
   record CacheKey(URI uri, String insurantId) {}

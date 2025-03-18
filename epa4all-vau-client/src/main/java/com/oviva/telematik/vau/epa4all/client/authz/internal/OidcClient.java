@@ -46,7 +46,7 @@ public class OidcClient {
               .uri(discoveryUrl)
               .GET()
               .timeout(Duration.ofSeconds(10))
-              .header("Accept", "application/jwt,application/json")
+              .header("Accept", MimeTypes.APPLICATION_JSON)
               .build();
 
       var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -72,7 +72,7 @@ public class OidcClient {
 
     if (contentType.equals("application/jwt")) {
       return parseFromJwt(response.body());
-    } else if (contentType.equals("application/json")) {
+    } else if (contentType.equals(MimeTypes.APPLICATION_JSON)) {
       return JsonCodec.readString(response.body(), OidcDiscoveryResponse.class);
     }
     throw new AuthorizationException(
@@ -97,13 +97,13 @@ public class OidcClient {
               .uri(uri)
               .GET()
               .timeout(Duration.ofSeconds(10))
-              .header("Accept", "application/json")
+              .header("Accept", MimeTypes.APPLICATION_JSON)
               .build();
 
       var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       verifyOk(response);
-      verifyContentType(response, "application/json");
+      verifyContentType(response, MimeTypes.APPLICATION_JSON);
 
       return JwkParser.parseJwk(response.body());
 

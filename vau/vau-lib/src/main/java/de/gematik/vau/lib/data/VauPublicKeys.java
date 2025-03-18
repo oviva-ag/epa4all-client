@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 
+@SuppressWarnings("java:S6218")
 public record VauPublicKeys(
     @JsonProperty("iat") int iat,
     @JsonProperty("exp") int exp,

@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.oviva.telematik.vau.httpclient.HttpClient;
-import com.oviva.telematik.vau.httpclient.HttpClient.Header;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpHeaders;
@@ -28,8 +27,8 @@ class JavaHttpClientTest {
 
   @InjectMocks private JavaHttpClient client;
 
-  private final URI TEST_URI = URI.create("https://example.com/api");
-  private final byte[] TEST_BODY = "test body".getBytes();
+  private static final URI TEST_URI = URI.create("https://example.com/api");
+  private static final byte[] TEST_BODY = "test body".getBytes();
 
   @Test
   void from_returnsNewInstance() {
@@ -45,12 +44,12 @@ class JavaHttpClientTest {
   void call_sendsGetRequestWithHeaders() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
             TEST_URI,
             "GET",
             List.of(
-                new Header("Content-Type", "application/json"),
-                new Header("Authorization", "Bearer token")),
+                new HttpHeader("Content-Type", "application/json"),
+                new HttpHeader("Authorization", "Bearer token")),
             null);
 
     // Mock response
@@ -89,8 +88,11 @@ class JavaHttpClientTest {
   void call_sendsPostRequestWithBody() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "POST", List.of(new Header("Content-Type", "application/json")), TEST_BODY);
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
+            TEST_URI,
+            "POST",
+            List.of(new HttpHeader("Content-Type", "application/json")),
+            TEST_BODY);
 
     // Mock response
     when(mockResponse.statusCode()).thenReturn(201);
@@ -128,10 +130,10 @@ class JavaHttpClientTest {
   void call_handlesEmptyBody() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
             TEST_URI,
             "POST",
-            List.of(new Header("Content-Type", "application/json")),
+            List.of(new HttpHeader("Content-Type", "application/json")),
             new byte[0] // Empty body
             );
 
@@ -161,8 +163,11 @@ class JavaHttpClientTest {
   void call_handlesNullBody() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "GET", List.of(new Header("Accept", "application/json")), null // Null body
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
+            TEST_URI,
+            "GET",
+            List.of(new HttpHeader("Accept", "application/json")),
+            null // Null body
             );
 
     // Mock response
@@ -191,7 +196,7 @@ class JavaHttpClientTest {
   void call_handlesNullHeaders() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
             TEST_URI, "GET", null, // Null headers
             null);
 
@@ -220,8 +225,8 @@ class JavaHttpClientTest {
   void call_handlesIOException() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "GET", List.of(new Header("Accept", "application/json")), null);
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
+            TEST_URI, "GET", List.of(new HttpHeader("Accept", "application/json")), null);
 
     // Mock IOException
     when(mockJavaClient.send(any(), any())).thenThrow(new IOException("Network error"));
@@ -241,8 +246,8 @@ class JavaHttpClientTest {
   void call_handlesInterruptedException() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "GET", List.of(new Header("Accept", "application/json")), null);
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
+            TEST_URI, "GET", List.of(new HttpHeader("Accept", "application/json")), null);
 
     // Mock InterruptedException
     when(mockJavaClient.send(any(), any())).thenThrow(new InterruptedException("Interrupted"));
@@ -259,8 +264,8 @@ class JavaHttpClientTest {
   void call_convertsResponseHeaders() throws IOException, InterruptedException {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "GET", List.of(new Header("Accept", "application/json")), null);
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
+            TEST_URI, "GET", List.of(new HttpHeader("Accept", "application/json")), null);
 
     // Mock response with multiple headers
     HttpHeaders mockHeaders =

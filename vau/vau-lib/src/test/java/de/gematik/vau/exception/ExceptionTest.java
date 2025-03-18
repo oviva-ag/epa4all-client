@@ -51,7 +51,7 @@ import org.mockito.Mockito;
 
 class ExceptionTest {
   @BeforeEach
-  public void removeBCProviders() {
+  void removeBCProviders() {
     removeBCProvider(new BouncyCastlePQCProvider());
     removeBCProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
   }

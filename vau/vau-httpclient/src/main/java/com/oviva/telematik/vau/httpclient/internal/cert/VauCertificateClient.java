@@ -2,6 +2,7 @@ package com.oviva.telematik.vau.httpclient.internal.cert;
 
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
 import com.oviva.telematik.vau.httpclient.VauClientException;
 import de.gematik.vau.lib.exceptions.VauProtocolException;
 import java.io.ByteArrayInputStream;
@@ -71,7 +72,7 @@ public class VauCertificateClient {
     var hex = HexFormat.of();
     var certIdentifier = "%s-%d".formatted(hex.formatHex(certHash), cdv);
     var certEndpoint = endpoint.resolve("/CertData.%s".formatted(certIdentifier));
-    var res = outerHttpClient.call(new HttpClient.Request(certEndpoint, "GET", List.of(), null));
+    var res = outerHttpClient.call(new HttpRequest(certEndpoint, "GET", List.of(), null));
     if (res.status() != 200) {
       throw new VauClientException(
           "invalid code %d, expected 200: GET %s".formatted(res.status(), certEndpoint));

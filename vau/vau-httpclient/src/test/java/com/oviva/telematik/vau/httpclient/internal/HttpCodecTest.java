@@ -3,6 +3,8 @@ package com.oviva.telematik.vau.httpclient.internal;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -19,8 +21,8 @@ class HttpCodecTest {
   void encode_shouldCreateValidHttpRequest_forGetWithNoBody() {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "GET", List.of(new HttpClient.Header("Accept", "application/json")), null);
+        new HttpRequest(
+            TEST_URI, "GET", List.of(new HttpHeader("Accept", "application/json")), null);
 
     // When
     var encoded = HttpCodec.encode(request);
@@ -40,8 +42,8 @@ class HttpCodecTest {
     // Given
     var body = "test body".getBytes(StandardCharsets.UTF_8);
     var request =
-        new HttpClient.Request(
-            TEST_URI, "POST", List.of(new HttpClient.Header("Content-Type", "text/plain")), body);
+        new HttpRequest(
+            TEST_URI, "POST", List.of(new HttpHeader("Content-Type", "text/plain")), body);
 
     // When
     var encoded = HttpCodec.encode(request);
@@ -58,12 +60,12 @@ class HttpCodecTest {
   void encode_shouldCanonicalizeHeaderNames() {
     // Given
     var request =
-        new HttpClient.Request(
+        new HttpRequest(
             TEST_URI,
             "GET",
             List.of(
-                new HttpClient.Header("accept", "application/json"),
-                new HttpClient.Header("CONTENT-TYPE", "text/plain")),
+                new HttpHeader("accept", "application/json"),
+                new HttpHeader("CONTENT-TYPE", "text/plain")),
             null);
 
     // When
@@ -83,12 +85,12 @@ class HttpCodecTest {
   void encode_shouldThrowExceptionForUnsupportedHeaders() {
     // Given
     var request =
-        new HttpClient.Request(
+        new HttpRequest(
             TEST_URI,
             "GET",
             List.of(
-                new HttpClient.Header("Accept", "application/json"),
-                new HttpClient.Header("transfer-coding", "chunked")),
+                new HttpHeader("Accept", "application/json"),
+                new HttpHeader("transfer-coding", "chunked")),
             null);
 
     // Then
@@ -102,10 +104,10 @@ class HttpCodecTest {
   void encode_shouldSkipContentLengthHeader_whenAddedManually() {
     // Given
     var request =
-        new HttpClient.Request(
+        new HttpRequest(
             TEST_URI,
             "GET",
-            List.of(new HttpClient.Header("Content-Length", "1000")),
+            List.of(new HttpHeader("Content-Length", "1000")),
             "test".getBytes(StandardCharsets.UTF_8));
 
     // When
@@ -125,7 +127,7 @@ class HttpCodecTest {
   @ValueSource(strings = {"PATCH", "OPTIONS", "HEAD", "CONNECT", "TRACE"})
   void encode_shouldThrowException_forUnsupportedMethods(String method) {
     // Given
-    var request = new HttpClient.Request(TEST_URI, method, Collections.emptyList(), null);
+    var request = new HttpRequest(TEST_URI, method, Collections.emptyList(), null);
 
     // Then
     assertThrows(
@@ -138,8 +140,7 @@ class HttpCodecTest {
   void encode_shouldThrowException_forInvalidHeaderName() {
     // Given
     var request =
-        new HttpClient.Request(
-            TEST_URI, "GET", List.of(new HttpClient.Header("Invalid Header", "value")), null);
+        new HttpRequest(TEST_URI, "GET", List.of(new HttpHeader("Invalid Header", "value")), null);
 
     // Then
     assertThrows(
@@ -169,7 +170,7 @@ class HttpCodecTest {
 
     // Verify Content-Type header
     boolean hasContentTypeHeader = false;
-    for (HttpClient.Header header : response.headers()) {
+    for (HttpHeader header : response.headers()) {
       if ("Content-Type".equals(header.name()) && "application/json".equals(header.value())) {
         hasContentTypeHeader = true;
         break;
@@ -229,7 +230,7 @@ class HttpCodecTest {
     var customHeaderValues =
         response.headers().stream()
             .filter(h -> "X-Custom-Header".equals(h.name()))
-            .map(HttpClient.Header::value)
+            .map(HttpHeader::value)
             .toList();
     assertEquals(2, customHeaderValues.size(), "Should keep duplicate headers");
     assertTrue(customHeaderValues.contains("value1"), "Should contain first custom header value");
@@ -316,18 +317,9 @@ class HttpCodecTest {
   }
 
   @Test
-  void encode_decode_shouldRoundtrip() {
+  void encode_decode() {
     // Given
     var body = "{\"test\":\"value\"}".getBytes(StandardCharsets.UTF_8);
-    var originalRequest =
-        new HttpClient.Request(
-            TEST_URI,
-            "POST",
-            List.of(new HttpClient.Header("Content-Type", "application/json")),
-            body);
-
-    // When - simulate request-response cycle
-    var encodedRequest = HttpCodec.encode(originalRequest);
 
     var responseBytes =
         """
@@ -347,7 +339,7 @@ class HttpCodecTest {
 
     // Check Content-Type header
     boolean hasCorrectContentType = false;
-    for (HttpClient.Header header : decodedResponse.headers()) {
+    for (HttpHeader header : decodedResponse.headers()) {
       if ("Content-Type".equals(header.name()) && "application/json".equals(header.value())) {
         hasCorrectContentType = true;
         break;

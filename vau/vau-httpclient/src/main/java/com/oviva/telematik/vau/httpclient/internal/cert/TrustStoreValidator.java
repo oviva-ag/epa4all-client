@@ -109,7 +109,7 @@ public class TrustStoreValidator implements TrustValidator {
       }
 
     } catch (IOException | CertificateEncodingException e) {
-      throw new RuntimeException(e);
+      throw new CertificateValidationException("bad certificate", e);
     }
   }
 
@@ -266,19 +266,21 @@ public class TrustStoreValidator implements TrustValidator {
     }
   }
 
-  public static OCSPResp toOcspResponse(byte[] ocspResponseDer) {
+  public static OCSPResp toOcspResponse(byte[] ocspResponseDer)
+      throws CertificateValidationException {
     try {
       return new OCSPResp(ocspResponseDer);
     } catch (IOException e) {
-      throw new RuntimeException("failed to decode OCSP response", e);
+      throw new CertificateValidationException("failed to decode OCSP response", e);
     }
   }
 
-  public static BasicOCSPResp getBasicOcspResp(OCSPResp ocspResponse) {
+  public static BasicOCSPResp getBasicOcspResp(OCSPResp ocspResponse)
+      throws CertificateValidationException {
     try {
       return (BasicOCSPResp) ocspResponse.getResponseObject();
     } catch (OCSPException e) {
-      throw new RuntimeException("failed to decode OCSP response", e);
+      throw new CertificateValidationException("failed to decode OCSP response", e);
     }
   }
 }

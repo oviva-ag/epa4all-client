@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.security.*;
 import java.util.HexFormat;
 
+@SuppressWarnings("java:S6218")
 public record SignedPublicVauKeys(
     @JsonProperty("signed_pub_keys") byte[] signedPubKeys,
     @JsonProperty("signature-ES256") byte[] signatureEs256,

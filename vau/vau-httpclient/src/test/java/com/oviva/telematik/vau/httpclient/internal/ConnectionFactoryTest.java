@@ -5,6 +5,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import de.gematik.vau.lib.VauClientStateMachine;
 import de.gematik.vau.lib.exceptions.VauProtocolException;
 import java.net.URI;
@@ -16,13 +19,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class ConnectionFactoryTest {
-
-  private static final Logger log = LoggerFactory.getLogger(ConnectionFactoryTest.class);
 
   @Mock private HttpClient mockHttpClient;
 
@@ -66,12 +65,11 @@ class ConnectionFactoryTest {
     when(mockTrustValidatorFactory.create(any())).thenReturn(mockVauClientStateMachine);
 
     // Mock HTTP responses - we need to be specific about the URIs and sequence
-    HttpClient.Response mockMsg2Response =
-        new HttpClient.Response(
-            200, List.of(new HttpClient.Header("VAU-CID", "/test-cid")), "msg2-body".getBytes());
+    HttpResponse mockMsg2Response =
+        new HttpResponse(
+            200, List.of(new HttpHeader("VAU-CID", "/test-cid")), "msg2-body".getBytes());
 
-    HttpClient.Response mockMsg4Response =
-        new HttpClient.Response(200, Collections.emptyList(), mockMsg4Body);
+    HttpResponse mockMsg4Response = new HttpResponse(200, Collections.emptyList(), mockMsg4Body);
 
     // Setup HTTP client to return expected responses in sequence
     // First setup a general response pattern for all requests
@@ -84,7 +82,7 @@ class ConnectionFactoryTest {
     assertNotNull(result, "The returned HttpClient should not be null");
 
     // Verify factory was called to create the client state machine with correct URI
-    verify(mockTrustValidatorFactory).create(eq(testVauUri));
+    verify(mockTrustValidatorFactory).create(testVauUri);
 
     // Verify the expected methods were called on the VauClientStateMachine
     verify(mockVauClientStateMachine).generateMessage1();
@@ -92,21 +90,20 @@ class ConnectionFactoryTest {
     verify(mockVauClientStateMachine).receiveMessage4(any());
 
     // Verify HTTP client was called twice with appropriate requests
-    ArgumentCaptor<HttpClient.Request> requestCaptor =
-        ArgumentCaptor.forClass(HttpClient.Request.class);
+    ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
     verify(mockHttpClient, times(2)).call(requestCaptor.capture());
 
-    List<HttpClient.Request> capturedRequests = requestCaptor.getAllValues();
+    List<HttpRequest> capturedRequests = requestCaptor.getAllValues();
     assertEquals(2, capturedRequests.size(), "Should have made exactly 2 HTTP requests");
 
     // Verify first request (msg1)
-    HttpClient.Request firstRequest = capturedRequests.get(0);
+    HttpRequest firstRequest = capturedRequests.get(0);
     assertNotNull(firstRequest, "First request should not be null");
     assertTrue(
         firstRequest.uri().toString().endsWith("/VAU"), "First request should be to VAU endpoint");
 
     // Verify second request (msg3)
-    HttpClient.Request secondRequest = capturedRequests.get(1);
+    HttpRequest secondRequest = capturedRequests.get(1);
     assertNotNull(secondRequest, "Second request should not be null");
     assertTrue(
         secondRequest.uri().toString().contains("/test-cid"),
@@ -125,8 +122,8 @@ class ConnectionFactoryTest {
     when(mockTrustValidatorFactory.create(any())).thenReturn(mockVauClientStateMachine);
 
     // Mock HTTP response without VAU-CID header
-    HttpClient.Response mockResponse =
-        new HttpClient.Response(
+    HttpResponse mockResponse =
+        new HttpResponse(
             200,
             Collections.emptyList(), // No VAU-CID header
             "msg2-body".getBytes());
@@ -158,11 +155,9 @@ class ConnectionFactoryTest {
     }
 
     // Mock HTTP response with too long VAU-CID header
-    HttpClient.Response mockResponse =
-        new HttpClient.Response(
-            200,
-            List.of(new HttpClient.Header("VAU-CID", longCid.toString())),
-            "msg2-body".getBytes());
+    HttpResponse mockResponse =
+        new HttpResponse(
+            200, List.of(new HttpHeader("VAU-CID", longCid.toString())), "msg2-body".getBytes());
 
     when(mockHttpClient.call(any())).thenReturn(mockResponse);
 
@@ -185,10 +180,10 @@ class ConnectionFactoryTest {
     when(mockTrustValidatorFactory.create(any())).thenReturn(mockVauClientStateMachine);
 
     // Mock HTTP response with invalid VAU-CID header format
-    HttpClient.Response mockResponse =
-        new HttpClient.Response(
+    HttpResponse mockResponse =
+        new HttpResponse(
             200,
-            List.of(new HttpClient.Header("VAU-CID", "invalid*cid")), // Contains invalid character
+            List.of(new HttpHeader("VAU-CID", "invalid*cid")), // Contains invalid character
             "msg2-body".getBytes());
 
     when(mockHttpClient.call(any())).thenReturn(mockResponse);
@@ -212,8 +207,8 @@ class ConnectionFactoryTest {
     when(mockTrustValidatorFactory.create(any())).thenReturn(mockVauClientStateMachine);
 
     // Mock HTTP response with non-200 status
-    HttpClient.Response mockResponse =
-        new HttpClient.Response(404, Collections.emptyList(), "not found".getBytes());
+    HttpResponse mockResponse =
+        new HttpResponse(404, Collections.emptyList(), "not found".getBytes());
 
     when(mockHttpClient.call(any())).thenReturn(mockResponse);
 
@@ -235,19 +230,18 @@ class ConnectionFactoryTest {
     when(mockTrustValidatorFactory.create(any())).thenReturn(mockVauClientStateMachine);
 
     // Mock HTTP responses for successful connection
-    HttpClient.Response mockMsg2Response =
-        new HttpClient.Response(
-            200, List.of(new HttpClient.Header("VAU-CID", "/test-cid")), "msg2-body".getBytes());
+    HttpResponse mockMsg2Response =
+        new HttpResponse(
+            200, List.of(new HttpHeader("VAU-CID", "/test-cid")), "msg2-body".getBytes());
 
-    HttpClient.Response mockMsg4Response =
-        new HttpClient.Response(200, Collections.emptyList(), "msg4".getBytes());
+    HttpResponse mockMsg4Response =
+        new HttpResponse(200, Collections.emptyList(), "msg4".getBytes());
 
     // Setup HTTP client to return expected responses
     when(mockHttpClient.call(any())).thenReturn(mockMsg2Response, mockMsg4Response);
 
     // Capture the request to verify headers
-    ArgumentCaptor<HttpClient.Request> requestCaptor =
-        ArgumentCaptor.forClass(HttpClient.Request.class);
+    ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
 
     // When
     connectionFactory.connect(testVauUri);
@@ -256,8 +250,8 @@ class ConnectionFactoryTest {
     verify(mockHttpClient, atLeastOnce()).call(requestCaptor.capture());
 
     // Verify user agent headers were correctly set
-    List<HttpClient.Request> capturedRequests = requestCaptor.getAllValues();
-    HttpClient.Request firstRequest = capturedRequests.get(0);
+    List<HttpRequest> capturedRequests = requestCaptor.getAllValues();
+    HttpRequest firstRequest = capturedRequests.get(0);
 
     boolean hasUserAgentHeader =
         firstRequest.headers().stream()

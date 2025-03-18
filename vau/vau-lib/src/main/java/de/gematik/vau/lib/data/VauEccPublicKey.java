@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.util.HexFormat;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 
+@SuppressWarnings("java:S6218")
 public record VauEccPublicKey(
     @JsonProperty("crv") String crv,
     @JsonDeserialize(using = ForceByteArrayDeserializer.class) @JsonProperty("x") byte[] x,

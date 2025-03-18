@@ -27,7 +27,6 @@ class ConnectionFactoryTest {
   void establishVauTunnel() {
 
     var vauUri = URI.create("https://e4a-rt.deine-epa.de/VAU");
-    //    var vauUri = URI.create("http://localhost:8081/VAU");
 
     var tvf = mock(SignedPublicKeysTrustValidatorFactory.class);
 
@@ -37,18 +36,14 @@ class ConnectionFactoryTest {
 
     var res =
         httpClient.call(
-            new com.oviva.telematik.vau.httpclient.HttpClient.Request(
+            new HttpRequest(
                 URI.create("/epa/authz/v1/getNonce"),
                 "GET",
                 List.of(
-                    new com.oviva.telematik.vau.httpclient.HttpClient.Header(
-                        "host", "e4a-rt15931.deine-epa.de"),
-                    new com.oviva.telematik.vau.httpclient.HttpClient.Header(
-                        "accept", "application/json"),
-                    new com.oviva.telematik.vau.httpclient.HttpClient.Header(
-                        "x-insurantid", "Z987654321"),
-                    new com.oviva.telematik.vau.httpclient.HttpClient.Header(
-                        "x-useragent", "Oviva/0.0.1")),
+                    new HttpHeader("host", "e4a-rt15931.deine-epa.de"),
+                    new HttpHeader("accept", "application/json"),
+                    new HttpHeader("x-insurantid", "Z987654321"),
+                    new HttpHeader("x-useragent", "Oviva/0.0.1")),
                 null));
     assertEquals(200, res.status());
   }

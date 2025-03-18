@@ -25,8 +25,6 @@ public class TestKonnektors {
       var proxyAdress = "127.0.0.1";
       var proxyPort = 3128;
 
-      var userAgent = "TEST/0.0.1";
-      //      var userAgent = "GEMOvivepa4fA1d5W8sR/0.0.1";
       var tiKonnektorUri = "https://10.156.145.103:443";
       var keystoreFile = "keys/konnektor_keys.p12";
       var keystorePassword = "0000";
@@ -55,7 +53,6 @@ public class TestKonnektors {
           .clientSystemId(clientSystemId)
           .mandantId(mandantId)
           .userId(userId)
-          .userAgent(userAgent)
           .build();
     } catch (Exception e) {
       fail("failed to create KonnektorService", e);

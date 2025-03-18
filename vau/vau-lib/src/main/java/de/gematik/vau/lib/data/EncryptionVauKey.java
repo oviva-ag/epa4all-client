@@ -16,4 +16,5 @@
 
 package de.gematik.vau.lib.data;
 
+@SuppressWarnings("java:S6218")
 public record EncryptionVauKey(byte[] appData) {}

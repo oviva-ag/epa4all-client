@@ -18,6 +18,7 @@ package de.gematik.vau.lib.data;
 
 import java.security.PrivateKey;
 
+@SuppressWarnings("java:S6218")
 public record KdfMessage(
     VauEccPublicKey ecdhCt,
     PrivateKey ecdhPrivateKey, // for development only!

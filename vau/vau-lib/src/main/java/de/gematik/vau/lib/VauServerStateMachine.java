@@ -121,7 +121,7 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
         KEM.encryptAead(kdfServerKey1.serverToClient(), encodedSignedPublicVauKeys);
     VauMessage2 message2 =
         VauMessage2.create(kemResult1.ecdhCt(), kemResult1.kyberCt(), aeadCiphertextMessage2);
-    log.debug("Generated message1: {}", Hex.toHexString(message1Encoded));
+    log.atDebug().log(() -> "Generated message1: " + Hex.toHexString(message1Encoded));
     byte[] message2Encoded = encodeUsingCbor(message2);
     serverTranscript = ArrayUtils.addAll(serverTranscript, message2Encoded);
     return message2Encoded;
@@ -152,7 +152,8 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
     } catch (Exception e) {
       throw new IllegalArgumentException(
           "Could not CBOR decode KEM certificates (inner layer of message 3) when receiving it at client. "
-              + e.getMessage());
+              + e.getMessage(),
+          e);
     }
 
     kemResult2 = KEM.decapsulateMessages(kemCertificates, serverVauKeys);

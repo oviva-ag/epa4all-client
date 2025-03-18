@@ -11,6 +11,7 @@ public interface SignedPublicKeysTrustValidator {
    * href="https://gemspec.gematik.de/docs/gemSpec/gemSpec_Krypt/gemSpec_Krypt_V2.37.0/#A_24425-01">A_24425-01</a>
    * *
    */
+  @SuppressWarnings("java:S6218")
   record SignedPublicKeys(
       byte[] signedPubKeys, byte[] signatureEs256, byte[] certHash, int cdv, byte[] ocspResponse) {
     @Override

@@ -1,6 +1,8 @@
 package com.oviva.telematik.vau.httpclient.internal;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 
@@ -15,7 +17,7 @@ public class LoggingHttpClient implements HttpClient {
   }
 
   @Override
-  public Response call(Request req) {
+  public HttpResponse call(HttpRequest req) {
 
     if (!logger.isDebugEnabled()) {
       return delegate.call(req);
@@ -37,7 +39,7 @@ public class LoggingHttpClient implements HttpClient {
     return res;
   }
 
-  private String stringify(Response response) {
+  private String stringify(HttpResponse response) {
     var sb = new StringBuilder();
     sb.append("status=").append(response.status()).append('\n');
     response.headers().stream()

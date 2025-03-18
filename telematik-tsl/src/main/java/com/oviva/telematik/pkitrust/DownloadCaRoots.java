@@ -34,13 +34,13 @@ class DownloadCaRoots {
       "https://download.tsl.ti-dienste.de/ECC/ROOT-CA/roots.json";
   private static final Logger log = LoggerFactory.getLogger(DownloadCaRoots.class);
 
-  public void downloadTrustedCertificatesTEST(Path dst) throws Exception {
+  public void downloadTrustedCertificatesTEST(Path dst) throws CertificateException, IOException, NoSuchProviderException {
 
     var certs = downloadCertificates(ROOTS_URL_TEST);
     updateKeystore(dst, certs);
   }
 
-  public void downloadTrustedCertificatesPU(Path dst) throws Exception {
+  public void downloadTrustedCertificatesPU(Path dst) throws CertificateException, IOException, NoSuchProviderException {
 
     var certs = downloadCertificates(ROOTS_URL_PU);
     updateKeystore(dst, certs);
@@ -68,7 +68,7 @@ class DownloadCaRoots {
                     "added root certificate {}", cert.getSubjectX500Principal().getName());
                 return cert;
               } catch (CertificateException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
               }
             })
         .toList();
@@ -79,13 +79,14 @@ class DownloadCaRoots {
     saveTruststore(trustStorePath, ts);
   }
 
+  @SuppressWarnings("java:S6437")
   private void saveTruststore(Path trustStorePath, KeyStore trustStore) {
     try (var fout =
         Files.newOutputStream(
             trustStorePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
       trustStore.store(fout, "1234".toCharArray());
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
-      throw new RuntimeException("failed to save truststore", e);
+      throw new IllegalStateException("failed to save truststore", e);
     }
   }
 
@@ -101,7 +102,7 @@ class DownloadCaRoots {
 
       return trustStore;
     } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 

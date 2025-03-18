@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
-import com.oviva.telematik.vau.httpclient.HttpClient.Header;
-import com.oviva.telematik.vau.httpclient.HttpClient.Request;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -32,10 +32,7 @@ class VauHttpClientImplTest {
 
   @Test
   void constructor_shouldInitializeWithConnection() {
-    // Given & When
-    var client = new VauHttpClientImpl(mockConnection);
-
-    // Then
+    // Given & When & Then
     assertNotNull(client, "Client should be initialized");
   }
 
@@ -43,7 +40,8 @@ class VauHttpClientImplTest {
   void call_shouldProcessRequestAndReturnResponse() {
     // Given
     var request =
-        new Request(TEST_URI, "GET", List.of(new Header("Accept", "application/json")), null);
+        new HttpRequest(
+            TEST_URI, "GET", List.of(new HttpHeader("Accept", "application/json")), null);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
 
@@ -80,10 +78,10 @@ class VauHttpClientImplTest {
   void call_shouldProcessPostWithBody() {
     // Given
     var request =
-        new Request(
+        new HttpRequest(
             TEST_URI,
             "POST",
-            List.of(new Header("Content-Type", "application/json")),
+            List.of(new HttpHeader("Content-Type", "application/json")),
             TEST_REQUEST_BODY);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
@@ -109,12 +107,12 @@ class VauHttpClientImplTest {
   void call_shouldAdjustContentLengthHeader() {
     // Given
     var request =
-        new Request(
+        new HttpRequest(
             TEST_URI,
             "POST",
             List.of(
-                new Header("Content-Type", "application/json"),
-                new Header("Content-Length", "1000")),
+                new HttpHeader("Content-Type", "application/json"),
+                new HttpHeader("Content-Length", "1000")),
             TEST_REQUEST_BODY);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
@@ -122,6 +120,7 @@ class VauHttpClientImplTest {
 
     // When
     var response = client.call(request);
+    assertNotNull(response);
 
     // Then
     verify(mockConnection).call(requestBytesCaptor.capture());
@@ -141,12 +140,12 @@ class VauHttpClientImplTest {
   void call_shouldRemoveTransferEncodingChunkedHeader() {
     // Given
     var request =
-        new Request(
+        new HttpRequest(
             TEST_URI,
             "POST",
             List.of(
-                new Header("Content-Type", "application/json"),
-                new Header("Transfer-Encoding", "chunked")),
+                new HttpHeader("Content-Type", "application/json"),
+                new HttpHeader("Transfer-Encoding", "chunked")),
             TEST_REQUEST_BODY);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
@@ -154,6 +153,7 @@ class VauHttpClientImplTest {
 
     // When
     var response = client.call(request);
+    assertNotNull(response);
 
     // Then
     verify(mockConnection).call(requestBytesCaptor.capture());
@@ -167,7 +167,7 @@ class VauHttpClientImplTest {
   @Test
   void call_shouldHandleNullHeaders() {
     // Given
-    var request = new Request(TEST_URI, "GET", null, null);
+    var request = new HttpRequest(TEST_URI, "GET", null, null);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
 
@@ -183,8 +183,11 @@ class VauHttpClientImplTest {
   void call_shouldHandleEmptyBody() {
     // Given
     var request =
-        new Request(
-            TEST_URI, "POST", List.of(new Header("Content-Type", "application/json")), new byte[0]);
+        new HttpRequest(
+            TEST_URI,
+            "POST",
+            List.of(new HttpHeader("Content-Type", "application/json")),
+            new byte[0]);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
     ArgumentCaptor<byte[]> requestBytesCaptor = ArgumentCaptor.forClass(byte[].class);
@@ -208,7 +211,7 @@ class VauHttpClientImplTest {
   @Test
   void call_shouldPropagateExceptionFromConnection() {
     // Given
-    var request = new Request(TEST_URI, "GET", null, null);
+    var request = new HttpRequest(TEST_URI, "GET", null, null);
     var exception = new HttpClient.HttpException("Test exception");
     when(mockConnection.call(any())).thenThrow(exception);
 
@@ -226,10 +229,10 @@ class VauHttpClientImplTest {
   void call_shouldFilterOutNullHeaderName() {
     // Given
     var request =
-        new Request(
+        new HttpRequest(
             TEST_URI,
             "GET",
-            List.of(new Header("Accept", "application/json"), new Header(null, "value")),
+            List.of(new HttpHeader("Accept", "application/json"), new HttpHeader(null, "value")),
             null);
 
     when(mockConnection.call(any())).thenReturn(createEncodedResponse());
@@ -237,11 +240,12 @@ class VauHttpClientImplTest {
 
     // When
     var response = client.call(request);
+    assertNotNull(response);
 
     // Then
     verify(mockConnection).call(requestBytesCaptor.capture());
 
-    String encodedRequest = new String(requestBytesCaptor.getValue(), StandardCharsets.UTF_8);
+    var encodedRequest = new String(requestBytesCaptor.getValue(), StandardCharsets.UTF_8);
 
     assertTrue(
         encodedRequest.contains("Accept: application/json"), "Valid header should be included");

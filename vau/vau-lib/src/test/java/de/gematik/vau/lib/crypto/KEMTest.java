@@ -28,18 +28,18 @@ class KEMTest {
 
   @Test
   void encryptAeadThrowingIllegalArgumentException() {
-    var CipherMock = mockStatic(Cipher.class);
-    CipherMock.when(() -> Cipher.getInstance(anyString()))
-        .thenThrow(new NoSuchAlgorithmException("Cannot find any provider supporting"));
+    try (var cipherMock = mockStatic(Cipher.class)) {
+      cipherMock
+          .when(() -> Cipher.getInstance(anyString()))
+          .thenThrow(new NoSuchAlgorithmException("Cannot find any provider supporting"));
 
-    var key = new byte[32];
-    var plainText = "plaintext".getBytes();
-    assertThatThrownBy(() -> KEM.encryptAead(key, plainText))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Error while encrypting plaintext")
-        .hasMessageContaining("Cannot find any provider supporting");
-
-    CipherMock.close();
+      var key = new byte[32];
+      var plainText = "plaintext".getBytes();
+      assertThatThrownBy(() -> KEM.encryptAead(key, plainText))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Error while encrypting plaintext")
+          .hasMessageContaining("Cannot find any provider supporting");
+    }
   }
 
   @Test

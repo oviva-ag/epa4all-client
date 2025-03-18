@@ -23,6 +23,8 @@ import java.security.NoSuchAlgorithmException;
 // borrowed from apache-commons
 public class DigestUtils {
 
+  private DigestUtils() {}
+
   /**
    * Calculates the SHA-256 digest and returns the value as a {@code byte[]}.
    *

@@ -44,7 +44,7 @@ class DownloadTsl {
       var certs = downloadTsl(TSL_URL_PU);
       updateKeystore(p, certs);
     } catch (IOException e) {
-      throw new RuntimeException("failed to download tsl", e);
+      throw new IllegalStateException("failed to download tsl", e);
     }
   }
 
@@ -54,7 +54,7 @@ class DownloadTsl {
       var certs = downloadTsl(TSL_URL_TEST);
       updateKeystore(p, certs);
     } catch (IOException e) {
-      throw new RuntimeException("failed to download tsl", e);
+      throw new IllegalStateException("failed to download tsl", e);
     }
   }
 
@@ -106,7 +106,7 @@ class DownloadTsl {
       return (X509Certificate)
           cf.generateCertificate(new ByteArrayInputStream(Base64.getDecoder().decode(cert)));
     } catch (CertificateException | NoSuchProviderException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -115,13 +115,14 @@ class DownloadTsl {
     saveTruststore(trustStorePath, ts);
   }
 
+  @SuppressWarnings("java:S6437")
   private void saveTruststore(Path trustStorePath, KeyStore trustStore) {
     try (var fout =
         Files.newOutputStream(
             trustStorePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
       trustStore.store(fout, "1234".toCharArray());
     } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
-      throw new RuntimeException("failed to save truststore", e);
+      throw new IllegalStateException("failed to save truststore", e);
     }
   }
 
@@ -137,7 +138,7 @@ class DownloadTsl {
 
       return trustStore;
     } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 }

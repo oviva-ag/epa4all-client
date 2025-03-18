@@ -13,13 +13,12 @@ import org.slf4j.LoggerFactory;
 
 public class Main {
 
-  private static final Logger log = LoggerFactory.getLogger(Main.class);
-
   static {
     Security.addProvider(new BouncyCastleProvider());
   }
 
   /** Downloads the root and TSL certificates for the Telematik-Infrastruktur */
+  @SuppressWarnings("java:S5443")
   public static void main(String[] args) throws Exception {
 
     var roots = new DownloadCaRoots();
@@ -44,6 +43,7 @@ public class Main {
     mergeKeystoresTo(clientBasePath.resolve("truststore-test.p12"), pathTestTsl, pathTestRoots);
   }
 
+  @SuppressWarnings("java:S6437")
   public static void mergeKeystoresTo(Path dest, Path... src) {
 
     try (var fout =
@@ -60,7 +60,7 @@ public class Main {
       }
       ks.store(fout, "1234".toCharArray());
     } catch (CertificateException | IOException | NoSuchAlgorithmException | KeyStoreException e) {
-      throw new RuntimeException(e);
+      throw new IllegalStateException(e);
     }
   }
 

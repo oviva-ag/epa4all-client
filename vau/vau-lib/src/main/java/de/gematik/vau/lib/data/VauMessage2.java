@@ -18,6 +18,7 @@ package de.gematik.vau.lib.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@SuppressWarnings("java:S6218")
 public record VauMessage2(
     @JsonProperty("MessageType") String messageType,
     @JsonProperty("ECDH_ct") VauEccPublicKey ecdhCt,

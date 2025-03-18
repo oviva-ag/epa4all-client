@@ -1,6 +1,8 @@
 package com.oviva.telematik.vau.httpclient.internal;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
 import de.gematik.vau.lib.VauClientStateMachine;
 import java.net.URI;
 import java.util.List;
@@ -31,12 +33,12 @@ public class Connection {
 
     var ciphertextRequest = client.encryptVauMessage(requestBody);
     var req =
-        new HttpClient.Request(
+        new HttpRequest(
             sessionUri,
             METHOD_POST,
             List.of(
-                new HttpClient.Header("content-type", "application/octet-stream"),
-                new HttpClient.Header("accept", "*/*")),
+                new HttpHeader("content-type", "application/octet-stream"),
+                new HttpHeader("accept", "*/*")),
             ciphertextRequest);
 
     if (log.isDebugEnabled()) {

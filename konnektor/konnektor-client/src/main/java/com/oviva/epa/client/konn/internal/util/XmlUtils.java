@@ -23,6 +23,8 @@ import org.apache.cxf.frontend.ClientProxyFactoryBean;
 
 public class XmlUtils {
 
+  private XmlUtils() {}
+
   public static final String JAXB_ADDITIONAL_CONTEXT_CLASSES_PROPERTY_KEY =
       "jaxb.additionalContextClasses";
 

@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
-import com.oviva.telematik.vau.httpclient.HttpClient;
-import com.oviva.telematik.vau.httpclient.VauClientFactory;
+import com.oviva.telematik.vau.httpclient.*;
 import de.gematik.vau.lib.VauClientStateMachine;
 import de.gematik.vau.lib.exceptions.VauProtocolException;
 import java.io.IOException;
@@ -25,7 +24,7 @@ public class ConnectionFactory implements VauClientFactory {
   private static final Pattern VAU_CID_PATTERN = Pattern.compile("/[A-Za-z0-9-/]+");
 
   private final HttpClient outerClient;
-  private final List<HttpClient.Header> userAgentHeaders;
+  private final List<HttpHeader> userAgentHeaders;
 
   private final SignedPublicKeysTrustValidatorFactory signedPublicKeysTrustValidatorFactory;
 
@@ -38,8 +37,7 @@ public class ConnectionFactory implements VauClientFactory {
       SignedPublicKeysTrustValidatorFactory signedPublicKeysTrustValidatorFactory) {
     this.userAgentHeaders =
         List.of(
-            new HttpClient.Header("X-Useragent", xUserAgent),
-            new HttpClient.Header("User-Agent", xUserAgent));
+            new HttpHeader("X-Useragent", xUserAgent), new HttpHeader("User-Agent", xUserAgent));
     this.outerClient = new HeaderDecoratorHttpClient(outerClient, userAgentHeaders);
     this.signedPublicKeysTrustValidatorFactory = signedPublicKeysTrustValidatorFactory;
   }
@@ -100,14 +98,14 @@ public class ConnectionFactory implements VauClientFactory {
     var vauCid =
         res.headers().stream()
             .filter(h -> "VAU-CID".equalsIgnoreCase(h.name()))
-            .map(HttpClient.Header::value)
+            .map(HttpHeader::value)
             .findFirst();
 
     log.atDebug().log("handshake: <- msg2");
     return new Msg2(res.body(), vauCid.orElse(null));
   }
 
-  private HttpClient.Response postCbor(URI uri, byte[] body) {
+  private HttpResponse postCbor(URI uri, byte[] body) {
 
     log.atDebug()
         .setMessage("handshake: -> POST {}\n{}")
@@ -116,11 +114,8 @@ public class ConnectionFactory implements VauClientFactory {
         .log();
 
     var req =
-        new HttpClient.Request(
-            uri,
-            METHOD_POST,
-            List.of(new HttpClient.Header("Content-Type", "application/cbor")),
-            body);
+        new HttpRequest(
+            uri, METHOD_POST, List.of(new HttpHeader("Content-Type", "application/cbor")), body);
 
     var res = outerClient.call(req);
     if (res.status() != 200) {
@@ -140,6 +135,7 @@ public class ConnectionFactory implements VauClientFactory {
     return res;
   }
 
+  @SuppressWarnings("java:S6218")
   private record Msg2(byte[] body, String cid) {}
 
   private Msg4 postMsg3(URI vauUri, String cid, byte[] msg3) {
@@ -152,6 +148,7 @@ public class ConnectionFactory implements VauClientFactory {
     return new Msg4(msg4, sessionUri);
   }
 
+  @SuppressWarnings("java:S6218")
   private record Msg4(byte[] body, URI sessionUri) {}
 
   private void validateCid(String cid) {
@@ -168,6 +165,7 @@ public class ConnectionFactory implements VauClientFactory {
     }
   }
 
+  @SuppressWarnings("java:S1166")
   private String cborBytesToJsonString(byte[] cborBytes) {
 
     var cm =

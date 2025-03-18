@@ -14,15 +14,12 @@ import telematik.ws.conn.cardservicecommon.xsd.v2_0.CardTypeType;
 
 public class KonnektorServiceImpl implements KonnektorService {
 
-  private final String userAgent; // A_22470-05
   private final EventServiceClient eventServiceClient;
   private final CardServiceClient cardServiceClient;
   private final CertificateServiceClient certificateServiceClient;
   private final AuthSignatureServiceClient authSignatureServiceClient;
 
-  public KonnektorServiceImpl(
-      String userAgent, KonnektorConnection connection, KonnektorContext konnektorContext) {
-    this.userAgent = userAgent;
+  public KonnektorServiceImpl(KonnektorConnection connection, KonnektorContext konnektorContext) {
 
     eventServiceClient = new EventServiceClient(connection.eventService(), konnektorContext);
 

@@ -12,7 +12,6 @@ public class KonnektorServiceBuilder {
   private String mandantId = "m";
   private String clientSystemId = "c";
   private String userId = "admin";
-  private String userAgent = "DiGA-Lib-Test/0.0.1";
 
   private KonnektorServiceBuilder() {}
 
@@ -45,12 +44,6 @@ public class KonnektorServiceBuilder {
     return this;
   }
 
-  /** user agent according to A_22470-05 */
-  public KonnektorServiceBuilder userAgent(String userAgent) {
-    this.userAgent = userAgent;
-    return this;
-  }
-
   public KonnektorService build() {
 
     if (connection == null) {
@@ -70,7 +63,7 @@ public class KonnektorServiceBuilder {
     }
 
     var ctx = new KonnektorContext(mandantId, clientSystemId, workplaceId, userId);
-    var svc = new KonnektorServiceImpl(userAgent, connection, ctx);
+    var svc = new KonnektorServiceImpl(connection, ctx);
     return new ExceptionMappedKonnektorService(svc);
   }
 }

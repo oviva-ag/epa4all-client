@@ -1,9 +1,9 @@
 package com.oviva.telematik.vau.epa4all.client.authz;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimbusds.jose.*;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.*;
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 public class AuthorizationService {
 
   private static final Logger log = LoggerFactory.getLogger(AuthorizationService.class);
+  private static final String X_INSURANT_HEADER_NAME = "x-insurantid";
 
   private final HttpClient innerHttpClient;
   private final java.net.http.HttpClient outerHttpClient;
@@ -86,8 +87,8 @@ public class AuthorizationService {
     var uri = vauEndpoint.resolve(path);
     var method = "GET";
     var req =
-        new HttpClient.Request(
-            uri, method, List.of(new HttpClient.Header("x-insurantid", insurantId)), null);
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
+            uri, method, List.of(new HttpHeader(X_INSURANT_HEADER_NAME, insurantId)), null);
 
     var res = innerHttpClient.call(req);
     if (res.status() != 302) {
@@ -100,11 +101,11 @@ public class AuthorizationService {
     return followRedirect(location);
   }
 
-  private URI parseLocationHeader(HttpClient.Response res) {
+  private URI parseLocationHeader(com.oviva.telematik.vau.httpclient.HttpResponse res) {
 
     return res.headers().stream()
         .filter(h -> "location".equalsIgnoreCase(h.name()))
-        .map(HttpClient.Header::value)
+        .map(HttpHeader::value)
         .findFirst()
         .map(URI::create)
         .orElseThrow(() -> new AuthorizationException("missing 'Location' header"));
@@ -112,8 +113,7 @@ public class AuthorizationService {
 
   private String exchangeEncryptedSignedChallenge(URI idpBaseUri, String encryptedSignedChallenge) {
 
-    // TODO: dynamic config, though as is it is a JWT signed with `alg=BP256R1` which is
-    // non-standard (╯°□°)╯︵ ┻━┻
+    // TODO: use dynamic config from discovery document
     // https://idp-ref.app.ti-dienste.de/.well-known/openid-configuration
     // take 'authorization_endpoint'
     var uri = idpBaseUri.resolve("/auth");
@@ -182,12 +182,12 @@ public class AuthorizationService {
     var nonceUri = vauEndpoint.resolve(path);
     var method = "GET";
     var req1 =
-        new HttpClient.Request(
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
             nonceUri,
             method,
             List.of(
-                new HttpClient.Header("accept", "application/json"),
-                new HttpClient.Header("x-insurantid", insurantId)),
+                new HttpHeader("accept", MimeTypes.APPLICATION_JSON),
+                new HttpHeader(X_INSURANT_HEADER_NAME, insurantId)),
             null);
 
     var res = innerHttpClient.call(req1);
@@ -206,8 +206,7 @@ public class AuthorizationService {
               HttpRequest.newBuilder(idpAuthEndpoint).GET().build(),
               HttpResponse.BodyHandlers.ofByteArray());
       if (res.statusCode() != 200) {
-        throw new IllegalStateException(
-            "unexpected status %s %s, got: %s".formatted("GET", idpAuthEndpoint, res.statusCode()));
+        throw unexpectedStatus("GET", idpAuthEndpoint.toString(), res.statusCode());
       }
       return JsonCodec.readBytes(res.body(), AuthorizationRequestResponse.class);
     } catch (IOException e) {
@@ -232,13 +231,13 @@ public class AuthorizationService {
     var reqBody = JsonCodec.writeBytes(body);
 
     var req =
-        new HttpClient.Request(
+        new com.oviva.telematik.vau.httpclient.HttpRequest(
             uri,
             method,
             List.of(
-                new HttpClient.Header("content-type", "application/json"),
-                new HttpClient.Header("x-insurantid", insurantId),
-                new HttpClient.Header("accept", "application/json")),
+                new HttpHeader("content-type", MimeTypes.APPLICATION_JSON),
+                new HttpHeader(X_INSURANT_HEADER_NAME, insurantId),
+                new HttpHeader("accept", MimeTypes.APPLICATION_JSON)),
             reqBody);
 
     var res = innerHttpClient.call(req);
@@ -249,9 +248,13 @@ public class AuthorizationService {
             body,
             res.body() != null ? new String(res.body(), StandardCharsets.UTF_8) : "");
       }
-      throw new IllegalStateException(
-          "unexpected status '%s %s' %d".formatted(method, path, res.status()));
+      throw unexpectedStatus(method, path, res.status());
     }
+  }
+
+  private RuntimeException unexpectedStatus(String method, String path, int status) {
+    return new IllegalStateException(
+        "unexpected status '%s %s' %d".formatted(method, path, status));
   }
 
   record SendAuthcodeSmbCBody(

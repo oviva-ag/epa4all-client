@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
-import com.oviva.telematik.vau.httpclient.HttpClient.Header;
-import com.oviva.telematik.vau.httpclient.HttpClient.Request;
-import com.oviva.telematik.vau.httpclient.HttpClient.Response;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -27,26 +27,29 @@ class LoggingHttpClientTest {
   @Mock private HttpClient delegateClient;
   @Mock private Logger mockLogger;
   @Mock private LoggingEventBuilder logBuilder;
-  @Mock private Response mockResponse;
+  @Mock private HttpResponse mockResponse;
 
   @InjectMocks private LoggingHttpClient loggingClient;
 
-  private Request testRequest;
-  private final URI TEST_URI = URI.create("https://example.com/api");
-  private final byte[] TEST_BODY = "test body".getBytes(StandardCharsets.UTF_8);
+  private HttpRequest testRequest;
+  private static final URI TEST_URI = URI.create("https://example.com/api");
+  private static final byte[] TEST_BODY = "test body".getBytes(StandardCharsets.UTF_8);
 
   @BeforeEach
   void setUp() {
     testRequest =
-        new Request(
-            TEST_URI, "GET", List.of(new Header("Content-Type", "application/json")), TEST_BODY);
+        new HttpRequest(
+            TEST_URI,
+            "GET",
+            List.of(new HttpHeader("Content-Type", "application/json")),
+            TEST_BODY);
   }
 
   private void configureMockResponse() {
     when(mockResponse.status()).thenReturn(200);
     when(mockResponse.body()).thenReturn("response body".getBytes(StandardCharsets.UTF_8));
     when(mockResponse.headers())
-        .thenReturn(List.of(new Header("Content-Type", "application/json")));
+        .thenReturn(List.of(new HttpHeader("Content-Type", "application/json")));
   }
 
   @Test
@@ -114,13 +117,13 @@ class LoggingHttpClientTest {
 
     // Setup request with multiple headers
     var requestWithHeaders =
-        new Request(
+        new HttpRequest(
             TEST_URI,
             "POST",
             List.of(
-                new Header("Content-Type", "application/json"),
-                new Header("Authorization", "Bearer token"),
-                new Header("X-Request-ID", "123")),
+                new HttpHeader("Content-Type", "application/json"),
+                new HttpHeader("Authorization", "Bearer token"),
+                new HttpHeader("X-Request-ID", "123")),
             TEST_BODY);
 
     // When
@@ -128,7 +131,7 @@ class LoggingHttpClientTest {
 
     // Then
     // Capture the request passed to delegate
-    var requestCaptor = ArgumentCaptor.forClass(Request.class);
+    var requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
     verify(delegateClient).call(requestCaptor.capture());
 
     var capturedRequest = requestCaptor.getValue();
@@ -147,12 +150,12 @@ class LoggingHttpClientTest {
     // Create a response with multiple headers
     var headersForTest =
         List.of(
-            new Header("Content-Type", "application/json"),
-            new Header("Cache-Control", "no-cache"),
-            new Header("X-Response-ID", "456"));
+            new HttpHeader("Content-Type", "application/json"),
+            new HttpHeader("Cache-Control", "no-cache"),
+            new HttpHeader("X-Response-ID", "456"));
 
     var testBody = "{\"status\":\"success\"}".getBytes(StandardCharsets.UTF_8);
-    var responseWithHeaders = new Response(201, headersForTest, testBody);
+    var responseWithHeaders = new HttpResponse(201, headersForTest, testBody);
 
     when(delegateClient.call(testRequest)).thenReturn(responseWithHeaders);
 
@@ -184,10 +187,10 @@ class LoggingHttpClientTest {
     when(mockLogger.atDebug()).thenReturn(logBuilder);
 
     // Create request with null headers
-    var requestWithNullHeaders = new Request(TEST_URI, "GET", null, TEST_BODY);
+    var requestWithNullHeaders = new HttpRequest(TEST_URI, "GET", null, TEST_BODY);
 
     // Create response with null body for testing edge cases
-    var responseWithNullBody = new Response(204, List.of(), null);
+    var responseWithNullBody = new HttpResponse(204, List.of(), null);
 
     when(delegateClient.call(requestWithNullHeaders)).thenReturn(responseWithNullBody);
 
@@ -209,7 +212,7 @@ class LoggingHttpClientTest {
     when(mockLogger.atDebug()).thenReturn(logBuilder);
 
     // Create response with empty body
-    var emptyResponse = new Response(204, List.of(), new byte[0]);
+    var emptyResponse = new HttpResponse(204, List.of(), new byte[0]);
 
     when(delegateClient.call(testRequest)).thenReturn(emptyResponse);
 

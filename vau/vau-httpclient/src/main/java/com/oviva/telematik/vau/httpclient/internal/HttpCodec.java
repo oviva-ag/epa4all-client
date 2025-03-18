@@ -1,6 +1,9 @@
 package com.oviva.telematik.vau.httpclient.internal;
 
 import com.oviva.telematik.vau.httpclient.HttpClient;
+import com.oviva.telematik.vau.httpclient.HttpHeader;
+import com.oviva.telematik.vau.httpclient.HttpRequest;
+import com.oviva.telematik.vau.httpclient.HttpResponse;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -20,7 +23,7 @@ public class HttpCodec {
   private static final Set<String> SUPPORTED_METHODS = Set.of("GET", "POST", "PUT", "DELETE");
   private static final Pattern HEADER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9-_]+");
 
-  public static HttpClient.Response decode(byte[] bytes) {
+  public static HttpResponse decode(byte[] bytes) {
 
     try (var reader =
         new BufferedReader(new StringReader(new String(bytes, StandardCharsets.UTF_8)))) {
@@ -57,12 +60,16 @@ public class HttpCodec {
          * ist dies aus unserer Sicht ausreichend, damit Clients die verschlüsselten Nachrichten
          * trotzdem erfolgreich parsen können.
          */
-        //        throw new HttpClient.HttpException(
-        //            "content-length '%d' != actual length '%d'"
-        //                .formatted(headers.contentLength(), body.length));
+
+        var riseBehaves = false;
+        if (riseBehaves) {
+          throw new HttpClient.HttpException(
+              "content-length '%d' != actual length '%d'"
+                  .formatted(headers.contentLength(), body.length));
+        }
       }
 
-      return new HttpClient.Response(status, headers.all(), body);
+      return new HttpResponse(status, headers.all(), body);
 
     } catch (IOException e) {
       throw new HttpClient.HttpException("failed to decode response", e);
@@ -71,7 +78,7 @@ public class HttpCodec {
 
   private static ResponseHeaders parseHeaders(BufferedReader reader) {
 
-    var headers = new ArrayList<HttpClient.Header>();
+    var headers = new ArrayList<HttpHeader>();
     var contentLength = -1;
 
     try {
@@ -89,18 +96,7 @@ public class HttpCodec {
           if (contentLength >= 0) {
             throw new HttpClient.HttpException("content-length set more than once!");
           }
-
-          try {
-            var maybeContentLength = Integer.parseInt(h.value());
-            if (maybeContentLength >= 0) {
-              contentLength = maybeContentLength;
-            } else {
-              throw new HttpClient.HttpException(
-                  "invalid content-length: '%d'".formatted(maybeContentLength));
-            }
-          } catch (NumberFormatException e) {
-            throw new HttpClient.HttpException("invalid content-length: '%s'".formatted(h.value()));
-          }
+          contentLength = parseContentLength(h.value());
         }
 
         headers.add(h);
@@ -113,7 +109,21 @@ public class HttpCodec {
     throw new IllegalStateException("unreachable");
   }
 
-  private static HttpClient.Header parseHeader(String line) {
+  private static int parseContentLength(String headerValue) {
+
+    try {
+      int contentLength = Integer.parseInt(headerValue);
+      if (contentLength >= 0) {
+        return contentLength;
+      }
+
+      throw new HttpClient.HttpException("invalid content-length: '%d'".formatted(contentLength));
+    } catch (NumberFormatException e) {
+      throw new HttpClient.HttpException("invalid content-length: '%s'".formatted(headerValue));
+    }
+  }
+
+  private static HttpHeader parseHeader(String line) {
     var splits = line.split(":", 2);
     if (splits.length != 2) {
       throw new HttpClient.HttpException("invalid header line: '%s'".formatted(line));
@@ -122,10 +132,10 @@ public class HttpCodec {
     var name = canonicalizeHeaderName(splits[0].trim());
     var value = splits[1].trim();
     validateHeader(name, value);
-    return new HttpClient.Header(name, value);
+    return new HttpHeader(name, value);
   }
 
-  private record ResponseHeaders(List<HttpClient.Header> all, int contentLength) {}
+  private record ResponseHeaders(List<HttpHeader> all, int contentLength) {}
 
   private static int parseStatusLine(String statusLine) {
     var splits = statusLine.split(" ", 3);
@@ -141,7 +151,7 @@ public class HttpCodec {
     }
   }
 
-  public static byte[] encode(HttpClient.Request req) {
+  public static byte[] encode(HttpRequest req) {
 
     validateRequest(req);
 
@@ -161,7 +171,7 @@ public class HttpCodec {
     buf.writeBytes(body);
   }
 
-  private static void writeHeaders(ByteArrayOutputStream buf, HttpClient.Request req) {
+  private static void writeHeaders(ByteArrayOutputStream buf, HttpRequest req) {
     addHeaders(buf, req.headers());
     addContentLength(buf, req.body() != null ? req.body().length : 0);
 
@@ -189,12 +199,12 @@ public class HttpCodec {
     buf.writeBytes(CRLF);
   }
 
-  private static void addHeaders(ByteArrayOutputStream buf, List<HttpClient.Header> headers) {
+  private static void addHeaders(ByteArrayOutputStream buf, List<HttpHeader> headers) {
     if (headers == null) {
       return;
     }
 
-    for (HttpClient.Header h : headers) {
+    for (HttpHeader h : headers) {
       var name = canonicalizeHeaderName(h.name());
       if (SKIP_HEADERS.contains(name)) {
         continue;
@@ -206,7 +216,7 @@ public class HttpCodec {
     }
   }
 
-  private static void validateRequest(HttpClient.Request req) {
+  private static void validateRequest(HttpRequest req) {
     if (req == null) {
       throw new HttpClient.HttpException("invalid request: 'null'");
     }
@@ -217,7 +227,7 @@ public class HttpCodec {
     }
 
     if (req.headers() != null) {
-      for (HttpClient.Header h : req.headers()) {
+      for (HttpHeader h : req.headers()) {
         validateHeader(h.name(), h.value());
       }
     }
@@ -229,6 +239,7 @@ public class HttpCodec {
     }
   }
 
+  @SuppressWarnings("java:S1172")
   private static void validateHeader(String name, String value) {
     name = canonicalizeHeaderName(name);
     if (UNSUPPORTED_HEADERS.contains(name)) {

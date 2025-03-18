@@ -79,6 +79,7 @@ public class EncryptedVauMessage {
     }
   }
 
+  @SuppressWarnings("java:S2629")
   public void logAsTrace(byte[] serverSecretKey) {
     log.trace(
         """
