@@ -1,3 +1,4 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=oviva-ag_epa4all-client&metric=alert_status&token=4959774e1684547503bc8fb9d3d0a47a250cd7ad)](https://sonarcloud.io/summary/new_code?id=oviva-ag_epa4all-client)
 # epa4all-client - the document client for ePA 3.0
 
 
