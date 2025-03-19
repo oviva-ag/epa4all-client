@@ -7,6 +7,10 @@
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+  <name>${project.groupId}:${project.artifactId}</name>
+  <description>A client for the German electronic-health-record 3.0. Also known as ePA4all.</description>
+  <url>https://github.com/oviva-ag/epa4all-client</url>
+
   <licenses>
     <license>
       <name>(c) 2025, Oviva</name>
@@ -36,6 +40,11 @@
     <module>konnektor</module>
     <module>vau</module>
   </modules>
+
+  <scm>
+    <connection>scm:git:https://github.com/oviva-ag/epa4all-client.git</connection>
+    <url>https://github.com/oviva-ag/epa4all-client</url>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -192,6 +201,11 @@
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>1.7.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
           <version>3.4.0</version>
         </plugin>
@@ -312,6 +326,36 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <configuration>
+          <pomElements>
+            <description></description>
+            <developers></developers>
+            <name></name>
+            <scm></scm>
+            <url></url>
+          </pomElements>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+            <phase>process-resources</phase>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <phase>clean</phase>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 
