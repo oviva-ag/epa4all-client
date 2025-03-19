@@ -48,7 +48,7 @@
 
     <spotless.version>2.43.0</spotless.version>
     <slf4j.version>2.0.16</slf4j.version>
-    <apache-cxf.version>4.0.5</apache-cxf.version>
+    <apache-cxf.version>4.1.1</apache-cxf.version>
     <cxf-xjc.version>4.0.0</cxf-xjc.version>
     <xml.bind.jaxb.version>2.3.1</xml.bind.jaxb.version>
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>
@@ -203,6 +203,18 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>12.1.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
