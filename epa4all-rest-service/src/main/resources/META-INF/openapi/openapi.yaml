@@ -1,0 +1,134 @@
+---
+openapi: 3.0.3
+info:
+  title: Epa4All REST Service
+  contact:
+    name: Oviva
+    url: https://github.com/oviva-ag/epa4all-client
+  version: 0.0.1
+paths:
+  # https://hilfe.redmedical.de/display/RH/RED+interchange+API+-+ePA
+  /documents:
+    post:
+      tags:
+        - PHR Documents
+      summary: Write a document into the electronic health record of an insurant
+      operationId: writeDocument
+      requestBody:
+        content:
+          application/json:
+            examples:
+              fhir_bundle:
+                value:
+                  {
+                    "insurant_id": "X110661675",
+                    "content_type": "application/fhir+xml",
+                    "content": "PEJ1bmRsZSB4bWxucz0iaHR0cDovL2...ZXNvdXJjZT4KICAgPC9lbnRyeT4KPC9CdW5kbGU+Cg=="
+                  }
+              pdf:
+                value:
+                  {
+                    "insurant_id": "X110661675",
+                    "content_type": "application/pdf",
+                    "content": "5jZSI6ImJkMDBiMDU3O....NDE0N2Y4MmUxMTQ4NTFmM"
+                  }
+            schema:
+              $ref: '#/components/schemas/DocumentRequest'
+      responses:
+        "201":
+          $ref: '#/components/responses/UpsertDocumentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequestResponse'
+  /documents/{id}:
+    post:
+      tags:
+        - PHR Documents
+      parameters:
+        - in: header
+          name: id
+          schema:
+            type: string
+            format: uuid
+      summary: Replace a document in an insurants electronic health record
+      description: |
+        Replaces a document in an electronic health record by id
+      operationId: replaceDocument
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentRequest'
+      responses:
+        "200":
+          $ref: '#/components/responses/UpsertDocumentResponse'
+        "400":
+          $ref: '#/components/responses/BadRequestResponse'
+components:
+  schemas:
+    DocumentRequest:
+      type: object
+      required: [ insurant_id, content_type, content ]
+      properties:
+        insurant_id:
+          type: string
+          format: string
+          example: "X110661675"
+        content_type:
+          title: the media type of the document contents
+          type: string
+          format: media-type
+          example: application/pdf
+          default: application/fhir+xml
+        content:
+          type: string
+          format: byte
+          example: "5jZSI6ImJkMDBiMDU3ODVhMDNhNDE0N2Y4MmUxMTQ4NTFmM"
+    Problem:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: >
+            A reference that uniquely identifies the problem type only in the
+            context of the provided API. Preferably a path.
+          example: '/epa4all/document-exists'
+        title:
+          type: string
+          description: >
+            A short summary of the problem type.
+            Must not leak any sensitive information.
+          example: Service Unavailable
+        detail:
+          type: string
+          description: >
+            A human readable explanation specific to this occurrence of the
+            problem.
+          example: Connection to database timed out
+  responses:
+    UpsertDocumentResponse:
+      description: The inserted or replaced document's ID
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              document_id:
+                title: The id of the stored document.
+                type: string
+                format: uuid
+                example: "ed498df6-fd0d-45b9-9964-157efb0f4f47"
+    BadRequestResponse:
+      description: Input data are missing and/or invalid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    UnknownProblemResponse:
+      description: An error occurred - see status code and problem object for more
+        information.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
