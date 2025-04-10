@@ -4,8 +4,12 @@ import com.oviva.telematik.epaapi.internal.InsurantAdapter;
 import de.gematik.epa.LibIheXdsMain;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.document.DocumentMetadata;
+import de.gematik.epa.ihe.model.document.ReplaceDocument;
+import de.gematik.epa.ihe.model.request.DocumentReplaceRequest;
 import de.gematik.epa.ihe.model.request.DocumentSubmissionRequest;
 import de.gematik.epa.ihe.model.simple.SubmissionSetMetadata;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -26,7 +30,7 @@ public class PhrService {
     this.documentManagementPort = documentManagementPort;
   }
 
-  public String writeDocument(String insurantId, Document document) {
+  public void writeDocument(String insurantId, Document document) {
 
     var metadata = getSubmissionSetMetadata(document.documentMetadata());
     var docSubmissionRequest =
@@ -37,7 +41,7 @@ public class PhrService {
     var res = callWriteDocument(insurantId, req);
     validateResponse(res);
 
-    return res.getRequestId();
+    // actual requestId is always null, no use in returning it
   }
 
   private RegistryResponseType callWriteDocument(
@@ -67,8 +71,28 @@ public class PhrService {
         .put(Message.PROTOCOL_HEADERS, new HashMap<>());
   }
 
-  public String replaceDocument(String insurantId, Document document, UUID documentToReplaceId) {
-    throw new UnsupportedOperationException("not yet implemented");
+  public void replaceDocument(
+      @NonNull String insurantId, @NonNull Document document, @NonNull UUID documentToReplaceId) {
+
+    var metadata = getSubmissionSetMetadata(document.documentMetadata());
+
+    var replaceDocument =
+        new ReplaceDocument(
+            document.documentData(),
+            document.documentMetadata(),
+            // this ID must be a valid object ID in IHE
+            uuidToUrn(documentToReplaceId).orElse(null));
+
+    var insurant = new InsurantAdapter(insurantId);
+
+    new DocumentReplaceRequest(insurant, List.of(replaceDocument), metadata);
+    var req = new DocumentReplaceRequest(insurant, List.of(replaceDocument), metadata);
+
+    var provideAndRegisterRequest = LibIheXdsMain.convertDocumentReplaceRequest(req);
+
+    var res = callWriteDocument(insurantId, provideAndRegisterRequest);
+
+    validateResponse(res);
   }
 
   private SubmissionSetMetadata getSubmissionSetMetadata(DocumentMetadata metadata) {
@@ -102,5 +126,14 @@ public class PhrService {
             .toList();
     throw new WriteDocumentException(
         "writing document failed, status='%s'".formatted(res.getStatus()), errors);
+  }
+
+  /**
+   * Convert the UUID to a valid object identity in the context of IHE <a
+   * href="https://wiki.ihe.net/index.php/Creating_Unique_IDs_-_OID_and_UUID">Creating Unique IDs -
+   * OID and UUID</a>
+   */
+  private Optional<String> uuidToUrn(@Nullable UUID id) {
+    return Optional.ofNullable(id).map("urn:uuid:%s"::formatted);
   }
 }

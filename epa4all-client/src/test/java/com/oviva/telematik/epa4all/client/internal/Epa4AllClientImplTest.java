@@ -1,8 +1,6 @@
 package com.oviva.telematik.epa4all.client.internal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
@@ -55,8 +53,7 @@ class Epa4AllClientImplTest {
         .thenReturn(Optional.of(HTTPS_ENDPOINT_URI));
     doNothing().when(authorizationService).authorizeVauWithSmcB(HTTPS_ENDPOINT_URI, INSURANT_ID);
 
-    var requestId = "398dkehn9";
-    var regRes = mockRegistryResponseType(requestId);
+    var regRes = mockRegistryResponseType();
 
     var documentManagementPort = mockDocumentManagementPort(regRes);
 
@@ -67,19 +64,15 @@ class Epa4AllClientImplTest {
       when(endpoint.getRequestContext()).thenReturn(new java.util.HashMap<>());
       m.when(() -> ClientProxy.getClient(documentManagementPort)).thenReturn(endpoint);
 
-      // When
-      var res = client.writeDocument(INSURANT_ID, document);
-
-      // Then
-      assertEquals(requestId, res.requestId());
+      // When & Then
+      assertDoesNotThrow(() -> client.writeDocument(INSURANT_ID, document));
     }
   }
 
-  private RegistryResponseType mockRegistryResponseType(String requestId) {
+  private RegistryResponseType mockRegistryResponseType() {
     var regRes = mock(RegistryResponseType.class);
     when(regRes.getStatus())
         .thenReturn("urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Success");
-    when(regRes.getRequestId()).thenReturn(requestId);
     return regRes;
   }
 

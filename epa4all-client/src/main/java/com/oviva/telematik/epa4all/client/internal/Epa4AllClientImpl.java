@@ -3,7 +3,6 @@ package com.oviva.telematik.epa4all.client.internal;
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
-import com.oviva.telematik.epa4all.client.WriteDocumentResponse;
 import com.oviva.telematik.epaapi.PhrService;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
@@ -45,24 +44,20 @@ public class Epa4AllClientImpl implements Epa4AllClient {
   }
 
   @Override
-  public @NonNull WriteDocumentResponse writeDocument(
-      @NonNull String insurantId, @NonNull Document document) {
+  public void writeDocument(@NonNull String insurantId, @NonNull Document document) {
 
     Logs.log("write_document");
     var phrService = openPhrServiceForInsurant(insurantId);
-    var requestId = phrService.writeDocument(insurantId, document);
-    return new WriteDocumentResponse(requestId);
+    phrService.writeDocument(insurantId, document);
   }
 
-  @NonNull
   @Override
-  public WriteDocumentResponse replaceDocument(
+  public void replaceDocument(
       @NonNull String insurantId, @NonNull Document document, @NonNull UUID documentToReplaceId) {
 
     Logs.log("replace_document");
     var phrService = openPhrServiceForInsurant(insurantId);
-    var requestId = phrService.replaceDocument(insurantId, document, documentToReplaceId);
-    return new WriteDocumentResponse(requestId);
+    phrService.replaceDocument(insurantId, document, documentToReplaceId);
   }
 
   private PhrService openPhrServiceForInsurant(String insurantId) {

@@ -19,8 +19,7 @@ public interface Epa4AllClient {
    * @param insurantId the KVNR of the insurant (patient)
    * @param document the document to write into the electronic health record
    */
-  @NonNull
-  WriteDocumentResponse writeDocument(@NonNull String insurantId, @NonNull Document document);
+  void writeDocument(@NonNull String insurantId, @NonNull Document document);
 
   /**
    * replace a document in an insurants electronic health record
@@ -29,7 +28,6 @@ public interface Epa4AllClient {
    * @param document the document to write into the electronic health record
    * @param documentToReplaceId the ID of the document to replace
    */
-  @NonNull
-  WriteDocumentResponse replaceDocument(
+  void replaceDocument(
       @NonNull String insurantId, @NonNull Document document, @NonNull UUID documentToReplaceId);
 }

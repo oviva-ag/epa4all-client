@@ -8,44 +8,50 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>epa4all-client</artifactId>
+  <artifactId>epa4all-rest-service</artifactId>
 
-  <properties></properties>
+  <properties>
+    <docker.registry>ghcr.io/oviva-ag/</docker.registry>
+    <docker.image.name>epa4all-rest-service</docker.image.name>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>de.gematik.epa</groupId>
-      <artifactId>lib-ihe-xds</artifactId>
+      <groupId>io.undertow</groupId>
+      <artifactId>undertow-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk18on</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback-classic.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcutil-jdk18on</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.oviva.telematik</groupId>
-      <artifactId>epa4all-vau-client</artifactId>
-      <version>${project.version}</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
       <groupId>com.oviva.telematik</groupId>
-      <artifactId>epa4all-phr-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.oviva.telematik</groupId>
-      <artifactId>vau-proxy-server</artifactId>
+      <artifactId>epa4all-client</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auto.service</groupId>
+      <artifactId>auto-service</artifactId>
+      <version>1.1.1</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+      <version>1.48.0</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -64,11 +70,42 @@
     </dependency>
   </dependencies>
   <build>
+    <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${version.maven-surefire-plugin}</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>com.oviva.konnektor.watchdog.Main</mainClass>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+              <includeScope>compile</includeScope>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
@@ -100,6 +137,7 @@
             <phase>compile</phase>
           </execution>
         </executions>
+
       </plugin>
     </plugins>
   </build>

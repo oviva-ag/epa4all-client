@@ -13,7 +13,6 @@ import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
@@ -87,11 +86,8 @@ class PhrServiceTest {
               convertedRequest))
           .thenReturn(response);
 
-      // When
-      var result = phrService.writeDocument(insurantId, document);
-
-      // Then
-      assertEquals(requestId, result);
+      // When & Then
+      assertDoesNotThrow(() -> phrService.writeDocument(insurantId, document));
 
       // Verify headers were set correctly when initially set
       verify(clientMock, times(2)).getRequestContext();
@@ -182,13 +178,5 @@ class PhrServiceTest {
             IllegalArgumentException.class, () -> phrService.writeDocument(insurantId, document));
 
     assertEquals("no author", exception.getMessage());
-  }
-
-  @Test
-  void replaceDocument_notImplemented() {
-    // When & Then
-    assertThrows(
-        UnsupportedOperationException.class,
-        () -> phrService.replaceDocument(insurantId, document, UUID.randomUUID()));
   }
 }
