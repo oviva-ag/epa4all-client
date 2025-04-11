@@ -11,6 +11,7 @@ import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.server.handlers.DisableCacheHandler;
 import io.undertow.util.PathTemplateMatch;
 import java.net.InetSocketAddress;
@@ -66,7 +67,7 @@ public class Main implements AutoCloseable {
     server = buildServer(host, port, buildHandler(clientService));
     server.start();
 
-    var actualPort = ((InetSocketAddress) server.getListenerInfo().get(0).getAddress()).getPort();
+    var actualPort = listenerAddress().getPort();
     logger.atInfo().log("server ready at http://{}:{}/", host, actualPort);
   }
 
@@ -76,6 +77,10 @@ public class Main implements AutoCloseable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+  }
+
+  public InetSocketAddress listenerAddress() {
+    return (InetSocketAddress) server.getListenerInfo().get(0).getAddress();
   }
 
   private Undertow buildServer(String host, int port, HttpHandler handler) {
@@ -200,54 +205,58 @@ public class Main implements AutoCloseable {
   }
 
   private HttpHandler buildHandler(Epa4allClientService clientService) {
+
     var om = new ObjectMapper();
     return new DisableCacheHandler(
-        withErrorHandling(
-            Handlers.routing()
-                .get(
-                    "/health",
-                    ex -> {
-                      if (clientService.isHealthy()) {
-                        ex.setStatusCode(200).endExchange();
-                      } else {
-                        ex.setStatusCode(503).endExchange();
-                      }
-                    })
-                .post(
-                    "/documents",
-                    ex -> {
-                      try (var bex = ex.startBlocking()) {
+        new BlockingHandler(
+            withErrorHandling(
+                Handlers.routing()
+                    .get(
+                        "/health",
+                        ex -> {
+                          if (clientService.isHealthy()) {
+                            ex.setStatusCode(200).endExchange();
+                          } else {
+                            ex.setStatusCode(503).endExchange();
+                          }
+                        })
+                    .post(
+                        "/documents",
+                        ex -> {
+                          try (var bex = ex.startBlocking()) {
 
-                        var req = om.readValue(bex.getInputStream(), DocumentCreateRequest.class);
+                            var req =
+                                om.readValue(bex.getInputStream(), DocumentCreateRequest.class);
 
-                        var res =
-                            clientService.writeDocument(
-                                req.insurantId(), req.contentType(), req.content());
+                            var res =
+                                clientService.writeDocument(
+                                    req.insurantId(), req.contentType(), req.content());
 
-                        om.writeValue(
-                            bex.getOutputStream(),
-                            new WriteDocumentResponse(res.documentId().toString()));
-                        ex.setStatusCode(201).endExchange();
-                      }
-                    })
-                .post(
-                    "/documents/{document_id}",
-                    ex -> {
-                      var pm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY);
-                      var documentId = uuidFromString(pm.getParameters().get("document_id"));
-                      try (var bex = ex.startBlocking()) {
+                            om.writeValue(
+                                bex.getOutputStream(),
+                                new WriteDocumentResponse(res.documentId().toString()));
+                          }
+                          ex.setStatusCode(201);
+                        })
+                    .post(
+                        "/documents/{document_id}",
+                        ex -> {
+                          var pm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY);
+                          var documentId = uuidFromString(pm.getParameters().get("document_id"));
+                          try (var bex = ex.startBlocking()) {
 
-                        var req = om.readValue(bex.getInputStream(), DocumentCreateRequest.class);
-                        var res =
-                            clientService.replaceDocument(
-                                req.insurantId(), req.contentType(), req.content(), documentId);
+                            var req =
+                                om.readValue(bex.getInputStream(), DocumentCreateRequest.class);
+                            var res =
+                                clientService.replaceDocument(
+                                    req.insurantId(), req.contentType(), req.content(), documentId);
 
-                        om.writeValue(
-                            bex.getOutputStream(),
-                            new WriteDocumentResponse(res.documentId().toString()));
-                        ex.setStatusCode(201).endExchange();
-                      }
-                    })));
+                            om.writeValue(
+                                bex.getOutputStream(),
+                                new WriteDocumentResponse(res.documentId().toString()));
+                          }
+                          ex.setStatusCode(201);
+                        }))));
   }
 
   private HttpHandler withErrorHandling(HttpHandler next) {

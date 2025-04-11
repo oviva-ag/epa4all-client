@@ -30,14 +30,13 @@ public class LogConfigurator extends ContextAwareBase implements Configurator {
     var rootLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
     rootLogger.addAppender(ca);
 
-    rootLogger.setLevel(getLevel());
+    getLevel().ifPresent(rootLogger::setLevel);
 
     return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY;
   }
 
-  private Level getLevel() {
+  private Optional<Level> getLevel() {
     return Optional.ofNullable(System.getenv(Main.CONFIG_PREFIX + "_LOG_LEVEL"))
-        .map(Level::valueOf)
-        .orElse(Level.INFO);
+        .map(Level::valueOf);
   }
 }
