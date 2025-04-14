@@ -35,6 +35,7 @@
 
   <modules>
     <module>epa4all-client</module>
+    <module>epa4all-rest-service</module>
     <module>epa4all-phr-client</module>
     <module>epa4all-vau-client</module>
     <module>konnektor</module>
@@ -66,6 +67,7 @@
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>
     <!-- bouncycastle 1.80.x does not work with VAU post-quantum-crypto -->
     <bouncycastle.version>1.78.1</bouncycastle.version>
+    <logback-classic.version>1.5.16</logback-classic.version>
 
     <sonar.organization>oviva-ag</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
