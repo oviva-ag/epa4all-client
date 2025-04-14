@@ -6,12 +6,15 @@ DOCKER_REPO=ghcr.io/oviva-ag/
 
 GIT_COMMIT=`git rev-parse HEAD`
 
-.PHONY: update-version test unit-test integration-test setup dist build clean install docker
+.PHONY: update-version test unit-test dist build clean install docker
 
 build clean test update-version:
 	@$(MAKE) -C ../ $@
 
-docker: build
+verify:
+	@mvn -T 8 -B -am verify -f ../
+
+docker: verify
 	@docker build -t $(IMAGE_NAME):v$(VERSION) .
 
 dist: build

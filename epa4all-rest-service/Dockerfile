@@ -17,9 +17,9 @@ mkdir /deployments
 chown 1001 /deployments
 chmod "g+rwX" /deployments
 chown 1001:root /deployments
-#curl https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh -o /deployments/run-java.sh
-#chown 1001 /deployments/run-java.sh
-#chmod 540 /deployments/run-java.sh
+curl https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh -o /deployments/run-java.sh
+chown 1001 /deployments/run-java.sh
+chmod 540 /deployments/run-java.sh
 echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/conf/security/java.security
 echo "securerandom.strongAlgorithms=NativePRNGNonBlocking:SUN,DRBG:SUN" >> /etc/alternatives/jre/conf/security/java.security
 EOF
@@ -27,7 +27,6 @@ EOF
 
 # Java dependencies
 COPY --chown=1001 target/lib /deployments/
-COPY --chown=1001 --chmod=540 target/docker-extra/run-java/run-java.sh /deployments/run-java.sh
 
 # application
 COPY --chown=1001 target/epa4all-rest-service.jar /deployments/
