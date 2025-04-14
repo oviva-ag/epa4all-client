@@ -36,6 +36,8 @@ WORKDIR /deployments
 # Configure the JAVA_OPTIONS, you can add -XshowSettings:vm to also display the heap size.
 ENV JAVA_MAIN_CLASS=com.oviva.telematik.epa4all.restservice.Main
 
+ENV EPA4ALL_LOG_LEVEL=INFO
+
 USER 1001
 
 EXPOSE 8080

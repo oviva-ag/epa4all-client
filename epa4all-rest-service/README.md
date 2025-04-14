@@ -2,7 +2,43 @@
 
 Small wrapper around the epa4all client library.
 
-## Configuration
+### Run the Container
+
+#### PU with jumphost
+> [!WARNING]  
+> This is the example for PRODUCTION. Handle with care ;)
+```shell
+docker run --rm \
+  -e 'EPA4ALL_KONNEKTOR_URI=https://10.156.120.103:443' \
+  -e 'EPA4ALL_PROXY_ADDRESS=<my proxy IP address>' \
+  -e 'EPA4ALL_CREDENTIALS_PATH=/credentials.p12' \
+  -e 'EPA4ALL_CREDENTIALS_PASSWORD=<my password>' \
+  -e 'EPA4ALL_ENVIRONMENT=PU' \
+  -v './credentials.p12:/credentials.p12' \
+  -p '8080:8080' \
+  ghcr.io/oviva-ag/epa4all-rest-service:latest
+```
+
+#### RU with localhost - jumphost forwarded
+```shell
+
+# forward the ports from a jumphost to localhost
+# assumes an HTTP forward proxy is running on the jumphost with access to the konnektor
+ssh alice@jumphost.example.com \
+  -L 3128:127.0.0.1:3128
+  
+# run the service against the RU
+docker run --rm \
+  -e 'EPA4ALL_KONNEKTOR_URI=https://10.156.145.103:443' \
+  -e 'EPA4ALL_PROXY_ADDRESS=host.docker.internal' \
+  -e 'EPA4ALL_CREDENTIALS_PATH=/credentials.p12' \
+  -e 'EPA4ALL_ENVIRONMENT=RU' \
+  -v './credentials.p12:/credentials.p12' \
+  -p '127.0.0.1:8080:8080' \
+  ghcr.io/oviva-ag/epa4all-rest-service:latest
+```
+
+## Configuration Options
 
 | name                            | description                                                                             | default             |
 |---------------------------------|-----------------------------------------------------------------------------------------|---------------------|
