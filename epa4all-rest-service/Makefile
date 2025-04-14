@@ -14,10 +14,13 @@ build clean test update-version:
 verify:
 	@mvn -T 8 -B -am verify -f ../
 
-docker: verify
+install:
+	@mvn -T 8 -B -am install -f ../
+
+docker: install
 	@docker build -t $(IMAGE_NAME):v$(VERSION) .
 
-dist: build
+dist: install
 ifndef RELEASE_TAG
 	$(error RELEASE_TAG is not set)
 endif
