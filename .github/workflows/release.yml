@@ -30,6 +30,7 @@ jobs:
           echo "version: '$VERSION'"
 
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Update Version
         run: |
           echo "updating version to '$VERSION'"
