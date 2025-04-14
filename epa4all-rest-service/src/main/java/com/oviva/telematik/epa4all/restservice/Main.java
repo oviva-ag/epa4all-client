@@ -5,6 +5,8 @@ import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.KonnektorServiceBuilder;
 import com.oviva.epa.client.konn.KonnektorConnectionFactory;
 import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
+import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
@@ -223,19 +225,17 @@ public class Main implements AutoCloseable {
                     .post(
                         "/documents",
                         ex -> {
-                          try (var bex = ex.startBlocking()) {
+                          ex.startBlocking();
 
-                            var req =
-                                om.readValue(bex.getInputStream(), DocumentCreateRequest.class);
+                          var req = om.readValue(ex.getInputStream(), DocumentCreateRequest.class);
 
-                            var res =
-                                clientService.writeDocument(
-                                    req.insurantId(), req.contentType(), req.content());
+                          var res =
+                              clientService.writeDocument(
+                                  req.insurantId(), req.contentType(), req.content());
 
-                            om.writeValue(
-                                bex.getOutputStream(),
-                                new WriteDocumentResponse(res.documentId().toString()));
-                          }
+                          om.writeValue(
+                              ex.getOutputStream(),
+                              new WriteDocumentResponse(res.documentId().toString()));
                           ex.setStatusCode(201);
                         })
                     .post(
@@ -243,18 +243,16 @@ public class Main implements AutoCloseable {
                         ex -> {
                           var pm = ex.getAttachment(PathTemplateMatch.ATTACHMENT_KEY);
                           var documentId = uuidFromString(pm.getParameters().get("document_id"));
-                          try (var bex = ex.startBlocking()) {
+                          ex.startBlocking();
 
-                            var req =
-                                om.readValue(bex.getInputStream(), DocumentCreateRequest.class);
-                            var res =
-                                clientService.replaceDocument(
-                                    req.insurantId(), req.contentType(), req.content(), documentId);
+                          var req = om.readValue(ex.getInputStream(), DocumentCreateRequest.class);
+                          var res =
+                              clientService.replaceDocument(
+                                  req.insurantId(), req.contentType(), req.content(), documentId);
 
-                            om.writeValue(
-                                bex.getOutputStream(),
-                                new WriteDocumentResponse(res.documentId().toString()));
-                          }
+                          om.writeValue(
+                              ex.getOutputStream(),
+                              new WriteDocumentResponse(res.documentId().toString()));
                           ex.setStatusCode(201);
                         }))));
   }
@@ -267,7 +265,10 @@ public class Main implements AutoCloseable {
       } catch (BadRequestException e) {
         logger.atDebug().setCause(e).log("bad request: {}", e.getMessage());
         exchange.setStatusCode(400).endExchange();
-      } catch (ApplicationException e) {
+      } catch (DuplicateDocumentClientException e) {
+        logger.atDebug().setCause(e).log("conflict: {}", e.getMessage());
+        exchange.setStatusCode(409).endExchange();
+      } catch (ApplicationException | ClientException e) {
         logger.atError().setCause(e).log("internal error: {}", e.getMessage());
         exchange.setStatusCode(500).endExchange();
       }

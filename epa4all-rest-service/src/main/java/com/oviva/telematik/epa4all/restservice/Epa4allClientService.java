@@ -108,7 +108,7 @@ public class Epa4allClientService {
     }
   }
 
-  public static DocumentMetadata buildDocumentMetadata(
+  public DocumentMetadata buildDocumentMetadata(
       UUID id,
       String insurantId,
       AuthorInstitution authorInstitution,
@@ -121,10 +121,10 @@ public class Epa4allClientService {
     // some implementations use local time or summertime, 3h is safe
     var createdAt = LocalDateTime.now().minusHours(3);
 
-    // TODO
     return new DocumentMetadata(
         List.of(
             // https://gemspec.gematik.de/docs/gemSpec/gemSpec_DM_ePA_EU-Pilot/gemSpec_DM_ePA_EU-Pilot_V1.53.1/#2.1.4.3.1
+            // https://profiles.ihe.net/ITI/TF/Volume3/ch-4.2.html#4.2.3.1.4
             new Author(
                 authorInstitution.identifier(),
                 authorInstitution.name(),
@@ -140,8 +140,6 @@ public class Epa4allClientService {
                 List.of(authorInstitution),
                 List.of("12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO"),
                 List.of("25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO"),
-                //
-                //                List.of("^^Internet^telematik-infrastructure@oviva.com")) // TODO
                 List.of())),
         "AVAILABLE",
         null,
@@ -170,7 +168,7 @@ public class Epa4allClientService {
         insurantId);
   }
 
-  public static Document buildDocumentPayload(
+  public Document buildDocumentPayload(
       UUID id, String kvnr, AuthorInstitution authorInstitution, String mimeType, byte[] contents) {
 
     var metadata = buildDocumentMetadata(id, kvnr, authorInstitution, mimeType, contents);

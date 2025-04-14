@@ -3,6 +3,7 @@
 Small wrapper around the epa4all client library.
 
 ## Configuration
+
 | name                            | description                                                                             | default             |
 |---------------------------------|-----------------------------------------------------------------------------------------|---------------------|
 | `EPA4ALL_LOG_LEVEL`*            | Log level for the entire application.                                                   | `INFO`              |
@@ -18,3 +19,4 @@ Small wrapper around the epa4all client library.
 | `EPA4ALL_MANDANT_ID`*           | The mandant ID configured in the Konnektor.                                             | `m`                 | 
 | `EPA4ALL_USER_ID`*              | The user ID configured in the Konnektor.                                                | `admin`             | 
 | `EPA4ALL_ENVIRONMENT`*          | The telematik environment, either RU or PU.                                             | `PU`                | 
+| `EPA4ALL_TELEMETRY_OPTOUT`      | Basic telemetry to help with development.                                               | `false`             | 

@@ -124,6 +124,11 @@ public class PhrService {
                         e.getSeverity(),
                         e.getLocation()))
             .toList();
+
+    if (errors.stream().anyMatch(e -> e.errorCode().equals("XDSDuplicateDocument"))) {
+      throw new DuplicateDocumentException("duplicate document", errors);
+    }
+
     throw new WriteDocumentException(
         "writing document failed, status='%s'".formatted(res.getStatus()), errors);
   }

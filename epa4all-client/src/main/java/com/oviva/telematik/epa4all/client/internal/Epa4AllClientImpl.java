@@ -2,9 +2,12 @@ package com.oviva.telematik.epa4all.client.internal;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
+import com.oviva.telematik.epaapi.DuplicateDocumentException;
 import com.oviva.telematik.epaapi.PhrService;
 import com.oviva.telematik.epaapi.SoapClientFactory;
+import com.oviva.telematik.epaapi.WriteDocumentException;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import de.gematik.epa.ihe.model.document.Document;
@@ -47,8 +50,14 @@ public class Epa4AllClientImpl implements Epa4AllClient {
   public void writeDocument(@NonNull String insurantId, @NonNull Document document) {
 
     Logs.log("write_document");
-    var phrService = openPhrServiceForInsurant(insurantId);
-    phrService.writeDocument(insurantId, document);
+    try {
+      var phrService = openPhrServiceForInsurant(insurantId);
+      phrService.writeDocument(insurantId, document);
+    } catch (DuplicateDocumentException e) {
+      throw new DuplicateDocumentClientException("duplicate document", e);
+    } catch (WriteDocumentException e) {
+      throw new ClientException("failed to write document", e);
+    }
   }
 
   @Override
@@ -56,8 +65,14 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       @NonNull String insurantId, @NonNull Document document, @NonNull UUID documentToReplaceId) {
 
     Logs.log("replace_document");
-    var phrService = openPhrServiceForInsurant(insurantId);
-    phrService.replaceDocument(insurantId, document, documentToReplaceId);
+    try {
+      var phrService = openPhrServiceForInsurant(insurantId);
+      phrService.replaceDocument(insurantId, document, documentToReplaceId);
+    } catch (DuplicateDocumentException e) {
+      throw new DuplicateDocumentClientException("duplicate document", e);
+    } catch (WriteDocumentException e) {
+      throw new ClientException("failed to write document", e);
+    }
   }
 
   private PhrService openPhrServiceForInsurant(String insurantId) {

@@ -39,6 +39,8 @@ paths:
           $ref: '#/components/responses/UpsertDocumentResponse'
         "400":
           $ref: '#/components/responses/BadRequestResponse'
+        "409":
+          $ref: '#/components/responses/ConflictResponse'
   /documents/{id}:
     post:
       tags:
@@ -83,29 +85,6 @@ components:
           type: string
           format: byte
           example: "5jZSI6ImJkMDBiMDU3ODVhMDNhNDE0N2Y4MmUxMTQ4NTFmM"
-    Problem:
-      type: object
-      required:
-        - type
-      properties:
-        type:
-          type: string
-          description: >
-            A reference that uniquely identifies the problem type only in the
-            context of the provided API. Preferably a path.
-          example: '/epa4all/document-exists'
-        title:
-          type: string
-          description: >
-            A short summary of the problem type.
-            Must not leak any sensitive information.
-          example: Service Unavailable
-        detail:
-          type: string
-          description: >
-            A human readable explanation specific to this occurrence of the
-            problem.
-          example: Connection to database timed out
   responses:
     UpsertDocumentResponse:
       description: The inserted or replaced document's ID
@@ -121,14 +100,9 @@ components:
                 example: "ed498df6-fd0d-45b9-9964-157efb0f4f47"
     BadRequestResponse:
       description: Input data are missing and/or invalid
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-    UnknownProblemResponse:
-      description: An error occurred - see status code and problem object for more
-        information.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Problem"
+    ConflictResponse:
+      description: |
+        The resource already exists.
+        
+        In case of PHR documents: There is extensive duplicate detection. Make sure the ID in the bundle actually
+        differs from previous bundles when creating a new document.

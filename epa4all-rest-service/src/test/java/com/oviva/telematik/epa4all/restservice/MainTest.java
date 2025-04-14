@@ -7,8 +7,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.restassured.RestAssured;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +49,8 @@ class MainTest {
 
     final var insurantId = "X110661675";
 
-    var content = loadDocument();
+    var documentId = UUID.randomUUID();
+    var content = loadDocument(documentId);
     given()
         .body(new CreateDocument(content, "application/fhir+xml", insurantId))
         .header("Content-Type", "application/json")
@@ -61,9 +64,10 @@ class MainTest {
   @Test
   void replaceDocument() {
 
+    var documentId = UUID.randomUUID();
     final var insurantId = "X110661675";
 
-    var content = loadDocument();
+    var content = loadDocument(documentId);
     given()
         .body(new CreateDocument(content, "application/fhir+xml", insurantId))
         .header("Content-Type", "application/json")
@@ -77,9 +81,11 @@ class MainTest {
       @JsonProperty("content_type") String contentType,
       @JsonProperty("insurant_id") String insurantId) {}
 
-  byte[] loadDocument() {
-    try (var is = MainTest.class.getResourceAsStream("/fhir_document.xml")) {
-      return is.readAllBytes();
+  byte[] loadDocument(UUID id) {
+    try (var is = MainTest.class.getResourceAsStream("/fhir_document.xml.template")) {
+      var bytes = is.readAllBytes();
+      var str = new String(bytes, StandardCharsets.UTF_8);
+      return str.formatted(id).getBytes(StandardCharsets.UTF_8);
     } catch (IOException e) {
       fail(e);
       return null;

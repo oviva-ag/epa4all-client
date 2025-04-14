@@ -24,7 +24,7 @@ public class Logs {
   private int failures = 0;
 
   private Logs() {
-    shouldLog = !"true".equalsIgnoreCase(System.getenv("TELEMETRY_OPTOUT"));
+    shouldLog = !"true".equalsIgnoreCase(System.getenv("EPA4ALL_TELEMETRY_OPTOUT"));
   }
 
   public static synchronized void log(String event, Attr... attrs) {
