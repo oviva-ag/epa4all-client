@@ -74,11 +74,12 @@ public class Epa4allClientService {
     return withClient(
         client -> {
           var authorInstitution = client.authorInstitution();
+          var newDocumentId = UUID.randomUUID();
           var document =
               buildDocumentPayload(
-                  documentToReplaceId, insurantId, authorInstitution, contentType, contents);
+                  newDocumentId, insurantId, authorInstitution, contentType, contents);
           client.replaceDocument(insurantId, document, documentToReplaceId);
-          return new WriteDocumentResponse(documentToReplaceId);
+          return new WriteDocumentResponse(newDocumentId);
         });
   }
 
@@ -121,6 +122,7 @@ public class Epa4allClientService {
     // some implementations use local time or summertime, 3h is safe
     var createdAt = LocalDateTime.now().minusHours(3);
 
+    // TODO
     return new DocumentMetadata(
         List.of(
             // https://gemspec.gematik.de/docs/gemSpec/gemSpec_DM_ePA_EU-Pilot/gemSpec_DM_ePA_EU-Pilot_V1.53.1/#2.1.4.3.1
@@ -159,10 +161,10 @@ public class Epa4allClientService {
         null,
         null,
         contents.length,
-        "Export %s".formatted(id),
+        "Export %s".formatted(authorInstitution.name()),
         TypeCode.PATIENTENEIGENE_DOKUMENTE.getValue(),
         documentUuid,
-        "%s Export %s".formatted(authorInstitution.name(), id),
+        "Export %s".formatted(authorInstitution.name()),
         "",
         "",
         insurantId);
