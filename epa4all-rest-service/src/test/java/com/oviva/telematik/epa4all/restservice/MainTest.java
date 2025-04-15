@@ -64,14 +64,29 @@ class MainTest {
   @Test
   void replaceDocument() {
 
-    var documentId = UUID.randomUUID();
     final var insurantId = "X110661675";
 
-    var content = loadDocument(documentId);
+    var bundleId = UUID.randomUUID();
+
+    var content = loadDocument(bundleId);
+    var writtenDocumentId =
+        given()
+            .body(new CreateDocument(content, "application/fhir+xml", insurantId))
+            .header("Content-Type", "application/json")
+            .post("/documents")
+            .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath()
+            .get("id");
+
+    // When
+    var newBundleId = UUID.randomUUID();
+    var newContent = loadDocument(newBundleId);
     given()
-        .body(new CreateDocument(content, "application/fhir+xml", insurantId))
+        .body(new CreateDocument(newContent, "application/fhir+xml", insurantId))
         .header("Content-Type", "application/json")
-        .post("/documents")
+        .post("/documents/" + writtenDocumentId)
         .then()
         .statusCode(200);
   }
