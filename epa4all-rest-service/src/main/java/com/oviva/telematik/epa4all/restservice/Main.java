@@ -8,6 +8,7 @@ import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
+import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
 import io.undertow.Handlers;
@@ -268,6 +269,9 @@ public class Main implements AutoCloseable {
       } catch (DuplicateDocumentClientException e) {
         logger.atDebug().setCause(e).log("conflict: {}", e.getMessage());
         exchange.setStatusCode(409).endExchange();
+      } catch (NotAuthorizedClientException e) {
+        logger.atDebug().setCause(e).log("not authorized: {}", e.getMessage());
+        exchange.setStatusCode(403).endExchange();
       } catch (ApplicationException | ClientException e) {
         logger.atError().setCause(e).log("internal error: {}", e.getMessage());
         exchange.setStatusCode(500).endExchange();
