@@ -129,6 +129,10 @@ public class PhrService {
       throw new DuplicateDocumentException("duplicate document", errors);
     }
 
+    if (errors.stream().anyMatch(e -> e.errorCode().equals("NotEntitled"))) {
+      throw new NotAuthorizedDocumentException("not authorized", errors);
+    }
+
     throw new WriteDocumentException(
         "writing document failed, status='%s'".formatted(res.getStatus()), errors);
   }

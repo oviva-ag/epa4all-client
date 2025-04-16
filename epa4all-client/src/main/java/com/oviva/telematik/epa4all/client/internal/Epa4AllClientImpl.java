@@ -4,10 +4,8 @@ import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
-import com.oviva.telematik.epaapi.DuplicateDocumentException;
-import com.oviva.telematik.epaapi.PhrService;
-import com.oviva.telematik.epaapi.SoapClientFactory;
-import com.oviva.telematik.epaapi.WriteDocumentException;
+import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
+import com.oviva.telematik.epaapi.*;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import de.gematik.epa.ihe.model.document.Document;
@@ -55,6 +53,8 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       phrService.writeDocument(insurantId, document);
     } catch (DuplicateDocumentException e) {
       throw new DuplicateDocumentClientException("duplicate document", e);
+    } catch (NotAuthorizedDocumentException e) {
+      throw new NotAuthorizedClientException("PHR not authorized", e);
     } catch (WriteDocumentException e) {
       throw new ClientException("failed to write document", e);
     }
