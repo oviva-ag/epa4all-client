@@ -67,7 +67,7 @@
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>
     <!-- bouncycastle 1.80.x does not work with VAU post-quantum-crypto -->
     <bouncycastle.version>1.78.1</bouncycastle.version>
-    <logback-classic.version>1.5.16</logback-classic.version>
+    <logback-classic.version>1.5.18</logback-classic.version>
 
     <sonar.organization>oviva-ag</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -107,7 +107,7 @@
       <dependency>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
-        <version>4.8.6</version>
+        <version>4.9.3</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.code.findbugs</groupId>
@@ -148,7 +148,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>2.18.3</version>
+        <version>2.19.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -162,11 +162,16 @@
         <artifactId>oauth2-oidc-sdk</artifactId>
         <version>11.23.1</version>
       </dependency>
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-api</artifactId>
+        <version>1.49.0</version>
+      </dependency>
 
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter</artifactId>
-        <version>5.11.3</version>
+        <version>5.12.2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -178,7 +183,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-bom</artifactId>
-        <version>5.16.1</version>
+        <version>5.17.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
