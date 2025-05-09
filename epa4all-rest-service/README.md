@@ -2,6 +2,24 @@
 
 Small wrapper around the epa4all client library.
 
+### API Specification
+
+**[openapi.yaml](./src/main/resources/META-INF/openapi/openapi.yaml)**
+
+#### Example
+```shell
+# Add a new FHIR document
+curl -X 'POST' \
+  'http://localhost:8080/documents' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "insurant_id": "X110661675",
+  "content_type": "application/fhir+xml",
+  "content": "PEJ1bmRsZSB4bWxucz0iaHR0cDovL2...ZXNvdXJjZT4KICAgPC9lbnRyeT4KPC9CdW5kbGU+Cg=="
+}'
+```
+
 ### Run the Container
 
 #### PU with jumphost
