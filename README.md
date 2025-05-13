@@ -48,7 +48,7 @@ docker run --rm \
   ghcr.io/oviva-ag/epa4all-rest-service:latest
 ```
 
-### docker-compose with userspace wireguard
+## docker-compose with userspace wireguard
 This would be an example on how to run the epa4all-rest-service with a VPN connection to the Konnektor. The VPN connection is established via a userspace wireguard implementation. The service uses the network stack of the VPN container.
 
 Note: a userspace wireguard implementation is not as performant as a kernel implementation. If you want to use a kernel implementation, you need to run the VPN container in host network mode.
