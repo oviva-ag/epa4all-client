@@ -41,7 +41,7 @@ public class TestKonnektors {
           KonnektorConnectionFactoryBuilder.newBuilder()
               .clientKeys(keys)
               .konnektorUri(uri)
-              .proxyServer(proxyAdress, proxyPort, true)
+              .proxyServer(proxyAdress, proxyPort)
               .trustAllServers() // currently we don't validate the server's certificate
               .build();
 

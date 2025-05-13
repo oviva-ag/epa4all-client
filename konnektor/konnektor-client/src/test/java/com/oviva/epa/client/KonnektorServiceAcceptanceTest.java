@@ -95,7 +95,7 @@ class KonnektorServiceAcceptanceTest {
         KonnektorConnectionFactoryBuilder.newBuilder()
             .clientKeys(keys)
             .konnektorUri(uri)
-            .proxyServer(PROXY_ADDRESS, PROXY_PORT, true)
+            .proxyServer(PROXY_ADDRESS, PROXY_PORT)
             .trustAllServers() // currently we don't validate the server's certificate
             .build();
 
