@@ -98,7 +98,6 @@ public class Main implements AutoCloseable {
   }
 
   private Epa4allClientService buildClientService(Config config) {
-
     var konnektorFactory = buildFactory(config);
 
     var proxySocket = new InetSocketAddress(config.proxyAddress(), config.proxyPort());
@@ -121,7 +120,7 @@ public class Main implements AutoCloseable {
     return KonnektorConnectionFactoryBuilder.newBuilder()
         .clientKeys(cfg.clientKeys())
         .konnektorUri(cfg.konnektorUri())
-        .proxyServer(cfg.proxyAddress(), cfg.proxyPort())
+        .proxyServer(cfg.proxyAddress(), cfg.proxyPort(), cfg.konnektorProxyEnabled())
         .trustAllServers() // currently we don't validate the server's certificate
         .build();
   }
@@ -130,6 +129,7 @@ public class Main implements AutoCloseable {
       URI konnektorUri,
       String proxyAddress,
       int proxyPort,
+      Boolean konnektorProxyEnabled,
       List<KeyManager> clientKeys,
       String workplaceId,
       String mandantId,
@@ -149,6 +149,9 @@ public class Main implements AutoCloseable {
     var proxyAddress = mustLoad("proxy.address").orElseThrow();
 
     var proxyPort = configProvider.get("proxy.port").map(Integer::parseInt).orElse(3128);
+
+    var konnektorProxyEnabled =
+        configProvider.get("konnektor.proxy").map(Boolean::parseBoolean).orElse(true);
 
     var pw = configProvider.get("credentials.password").orElse("0000");
 
@@ -179,6 +182,7 @@ public class Main implements AutoCloseable {
         uri,
         proxyAddress,
         proxyPort,
+        konnektorProxyEnabled,
         keys,
         workplace,
         mandant,
