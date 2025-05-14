@@ -52,8 +52,11 @@ docker run --rm \
 This would be an example on how to run the epa4all-rest-service with a VPN connection to the Konnektor. The VPN connection is established via a userspace wireguard implementation. The service uses the network stack of the VPN container.
 To achieve this, not setting the `EPA4ALL_PROXY_ADDRESS` is enough.
 
-Note: Also note that this will most likely not work on GKE or other managed Kubernetes solutions due to the NET_ADMIN capability.
-Note2: a userspace wireguard implementation is not as performant as a kernel implementation. If you want to use a kernel implementation, you need to run the VPN container in host network mode.
+> [!NOTE]
+> This will most likely not work on GKE or other managed Kubernetes solutions due to the required `NET_ADMIN` capability.
+
+> [!NOTE]
+> A userspace wireguard implementation is not as performant as a kernel implementation. If you want to use a kernel implementation, you need to run the VPN container in host network mode.
 ```yaml
 services:
   epa4all-rest:
