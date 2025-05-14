@@ -81,8 +81,10 @@ public class KonnektorConnectionFactoryBuilder {
   }
 
   @NonNull
-  public KonnektorConnectionFactoryBuilder proxyServer(@NonNull String address, int port) {
-    this.proxyAddress = new ProxyAddressConfig(address, port, true);
+  public KonnektorConnectionFactoryBuilder proxyServer(String address, int port) {
+    if (address != null) {
+      this.proxyAddress = new ProxyAddressConfig(address, port, true);
+    }
     return this;
   }
 
