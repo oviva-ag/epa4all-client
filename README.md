@@ -48,6 +48,61 @@ docker run --rm \
   ghcr.io/oviva-ag/epa4all-rest-service:latest
 ```
 
+## docker-compose with userspace wireguard
+This would be an example on how to run the epa4all-rest-service with a VPN connection to the Konnektor. The VPN connection is established via a userspace wireguard implementation. The service uses the network stack of the VPN container.
+To achieve this, not setting the `EPA4ALL_PROXY_ADDRESS` is enough.
+
+> [!NOTE]
+> This will most likely not work on GKE or other managed Kubernetes solutions due to the required `NET_ADMIN` capability.
+
+> [!NOTE]
+> A userspace wireguard implementation is not as performant as a kernel implementation. If you want to use a kernel implementation, you need to run the VPN container in host network mode.
+```yaml
+services:
+  epa4all-rest:
+    container_name: epa4all-rest
+    image: epa4all-rest-service:latest
+    ports:
+        - '127.0.0.1:8099:8080'
+    volumes:
+        - ./vKon_Client_XXX.p12:/credentials.p12
+    environment:
+        - EPA4ALL_KONNEKTOR_URI=https://10.156.145.103:443
+        - EPA4ALL_ENVIRONMENT=RU
+        - EPA4ALL_CREDENTIALS_PATH=/credentials.p12
+
+        - EPA4ALL_WORKPLACE_ID=test-arbeitsplatz
+        - EPA4ALL_CLIENT_SYSTEM_ID=test-api
+        - EPA4ALL_MANDANT_ID=test-mandant
+        - EPA4ALL_USER_ID=admin
+
+  epa4all-vpn:
+    container_name: epa4all-vpn
+    image: qmcgaw/gluetun:v3
+    cap_add:
+        - NET_ADMIN
+    network_mode: "service:epa4all-rest"
+    environment:
+        - VPN_SERVICE_PROVIDER=custom
+        - VPN_TYPE=wireguard
+        - WIREGUARD_IMPLEMENTATION=userspace
+        - DNS_KEEP_NAMESERVER=on
+        - PUBLICIP_ENABLED=off
+
+        - HEALTH_TARGET_ADDRESS=10.156.145.103:443
+        - HEALTH_VPN_DURATION_INITIAL=24h
+        - HEALTH_VPN_DURATION_ADDITION=24h
+        - HEALTH_SUCCESS_WAIT_DURATION=24h
+    volumes:
+        - ./VPN_Configuration_XXX.conf:/gluetun/wireguard/wg0.conf
+    healthcheck:
+        test: "ping -c 1 10.156.145.103:443 || exit 1"
+        interval: 1s
+        retries: 1
+        timeout: 5s
+        start_period: 5s
+```
+
 ## Cloud-Based Infrastructure Setup
 
 - client traffic routed via HTTP forward proxy into the telematik infrastructure - applications and developers go via

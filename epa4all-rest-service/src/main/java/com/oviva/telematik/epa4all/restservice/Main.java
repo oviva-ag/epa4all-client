@@ -98,10 +98,12 @@ public class Main implements AutoCloseable {
   }
 
   private Epa4allClientService buildClientService(Config config) {
-
     var konnektorFactory = buildFactory(config);
 
-    var proxySocket = new InetSocketAddress(config.proxyAddress(), config.proxyPort());
+    var proxySocket =
+        config.proxyAddress() != null
+            ? new InetSocketAddress(config.proxyAddress(), config.proxyPort())
+            : null;
     return new Epa4allClientService(
         () -> buildKonnektorService(konnektorFactory, config), proxySocket, config.environment());
   }
@@ -146,7 +148,7 @@ public class Main implements AutoCloseable {
 
     var uri = mustLoad("konnektor.uri").map(URI::create).orElseThrow();
 
-    var proxyAddress = mustLoad("proxy.address").orElseThrow();
+    var proxyAddress = configProvider.get("proxy.address").orElse(null);
 
     var proxyPort = configProvider.get("proxy.port").map(Integer::parseInt).orElse(3128);
 

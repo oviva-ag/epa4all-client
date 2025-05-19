@@ -32,9 +32,8 @@ public class Epa4AllClientFactoryBuilder {
 
   @NonNull
   public Epa4AllClientFactoryBuilder konnektorProxyAddress(
-      @NonNull InetSocketAddress konnektorProxyAddress) {
-    this.konnektorProxyAddress =
-        Objects.requireNonNull(konnektorProxyAddress, "konnektorProxyAddress must not be null");
+      InetSocketAddress konnektorProxyAddress) {
+    this.konnektorProxyAddress = konnektorProxyAddress;
     return this;
   }
 
@@ -58,7 +57,6 @@ public class Epa4AllClientFactoryBuilder {
   @NonNull
   public Epa4AllClientFactory build() {
     Objects.requireNonNull(konnektorService, "konnektorService must be set");
-    Objects.requireNonNull(konnektorProxyAddress, "konnektorProxyAddress must be set");
     Objects.requireNonNull(environment, "environment must be set");
 
     var actualTrustStore = determineTrustStore(environment == Environment.PU, trustStore);
