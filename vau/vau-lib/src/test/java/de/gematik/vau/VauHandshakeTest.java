@@ -45,8 +45,6 @@ import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPrivateKey;
-import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPublicKey;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -151,18 +149,8 @@ class VauHandshakeTest {
     assertThat(assertPublicKeyAlgorithm(serverVauKeyPair.eccKeyPair().getPublic())).isTrue();
     assertThat(assertPrivateKeyAlgorithm(serverVauKeyPair.eccKeyPair().getPrivate())).isTrue();
 
-    assertThat(serverVauKeyPair.kyberKeyPair().getPublic().getAlgorithm()).isEqualTo("KYBER768");
-    assertThat(serverVauKeyPair.kyberKeyPair().getPrivate().getAlgorithm()).isEqualTo("KYBER768");
-    assertThat(
-            ((BCKyberPublicKey) serverVauKeyPair.kyberKeyPair().getPublic())
-                .getParameterSpec()
-                .getName())
-        .isEqualTo("KYBER768");
-    assertThat(
-            ((BCKyberPrivateKey) serverVauKeyPair.kyberKeyPair().getPrivate())
-                .getParameterSpec()
-                .getName())
-        .isEqualTo("KYBER768");
+    assertThat(serverVauKeyPair.kyberKeyPair().getPublic().getAlgorithm()).isEqualTo("ML-KEM-768");
+    assertThat(serverVauKeyPair.kyberKeyPair().getPrivate().getAlgorithm()).isEqualTo("ML-KEM-768");
 
     VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     VauClientStateMachine client = new VauClientStateMachine(false, s -> true);
