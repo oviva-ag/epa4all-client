@@ -101,6 +101,7 @@ public class KonnektorConnectionFactoryBuilder {
     return this;
   }
 
+  /** DO NOT USE IN PRODUCTION! */
   @NonNull
   public KonnektorConnectionFactoryBuilder trustAllServers() {
     this.trustManagers = List.of(new NaiveTrustManager());

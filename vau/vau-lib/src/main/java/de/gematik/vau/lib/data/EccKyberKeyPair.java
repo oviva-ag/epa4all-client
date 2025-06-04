@@ -16,6 +16,9 @@
 
 package de.gematik.vau.lib.data;
 
+import static de.gematik.vau.lib.crypto.KyberKeys.KYBER_PRIVATE_KEY_ENCODING_HEADER;
+import static de.gematik.vau.lib.crypto.KyberKeys.KYBER_PUBLIC_KEY_ENCODING_HEADER;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.crypto.EllipticCurve;
@@ -34,16 +37,10 @@ import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.bouncycastle.util.encoders.Hex;
 
 public class EccKyberKeyPair {
 
   private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
-
-  protected static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER =
-      Hex.decode("308204B4300D060B2B0601040181B01A050602038204A100");
-  protected static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER =
-      Hex.decode("3082097A020100300D060B2B0601040181B01A0506020482096404820960");
 
   private final KeyPair eccKeyPair;
   private final KeyPair kyberKeyPair;

@@ -17,8 +17,13 @@ public class KyberKeys {
 
   private KyberKeys() {}
 
-  private static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER =
-      Hex.decode("308204B4300D060B2B0601040181B01A050602038204A100");
+  @SuppressWarnings("java:S2386")
+  public static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER =
+      Hex.decode("308204B2300B0609608648016503040402038204A100");
+
+  @SuppressWarnings("java:S2386")
+  public static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER =
+      Hex.decode("30820978020100300B06096086480165030404020482096404820960");
 
   public static byte[] extractCompactKyberPublicKey(KeyPair kyberKeyPair) {
     try {
