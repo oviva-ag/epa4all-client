@@ -10,6 +10,7 @@
 
   <artifactId>epa4all-phr-client</artifactId>
 
+  <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <generated.sources.path>${project.build.directory}/generated-sources</generated.sources.path>
     <schema.root.path>${project.basedir}/src/main/resources/schemas</schema.root.path>

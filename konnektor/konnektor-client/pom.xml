@@ -6,8 +6,9 @@
     <artifactId>konnektor-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
   </parent>
-
   <artifactId>konnektor-client</artifactId>
+
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
     <dependency>
