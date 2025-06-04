@@ -61,7 +61,7 @@
     <spotless.version>2.43.0</spotless.version>
     <slf4j.version>2.0.17</slf4j.version>
     <!-- apache-cxf 4.1.x is incompatible-->
-    <apache-cxf.version>4.0.7</apache-cxf.version>
+    <apache-cxf.version>4.1.2</apache-cxf.version>
     <cxf-xjc.version>4.1.0</cxf-xjc.version>
     <xml.bind.jaxb.version>2.3.1</xml.bind.jaxb.version>
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>

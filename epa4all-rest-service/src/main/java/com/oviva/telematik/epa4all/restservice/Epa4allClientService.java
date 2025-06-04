@@ -122,7 +122,8 @@ public class Epa4allClientService {
     // some implementations use local time or summertime, 3h is safe
     var createdAt = LocalDateTime.now().minusHours(3);
 
-    // NOTE: These constants are a mix of values from IHE specs, Gematik specs as well as trial-and-error
+    // NOTE: These constants are a mix of values from IHE specs, Gematik specs as well as
+    // trial-and-error
     return new DocumentMetadata(
         List.of(
             // https://gemspec.gematik.de/docs/gemSpec/gemSpec_DM_ePA_EU-Pilot/gemSpec_DM_ePA_EU-Pilot_V1.53.1/#2.1.4.3.1
