@@ -838,7 +838,8 @@ public class ExportFixture {
             "Oviva_DiGA_Export_%s".formatted(id),
             "",
             "",
-            kvnr),
+            kvnr,
+            null),
         null);
   }
 }
