@@ -50,11 +50,6 @@ public class Epa4AllClientFactoryBuilder {
   }
 
   @NonNull
-  public Epa4AllClientFactoryBuilder useInsecureTrustManager() {
-    return this;
-  }
-
-  @NonNull
   public Epa4AllClientFactory build() {
     Objects.requireNonNull(konnektorService, "konnektorService must be set");
     Objects.requireNonNull(environment, "environment must be set");
