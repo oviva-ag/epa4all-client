@@ -15,6 +15,12 @@
     <license>
       <name>(c) 2025, Oviva</name>
     </license>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
   </licenses>
 
   <developers>
