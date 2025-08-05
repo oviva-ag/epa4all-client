@@ -12,7 +12,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationException;
-import com.oviva.telematik.vau.epa4all.client.authz.RsaSignatureService;
+import com.oviva.telematik.vau.epa4all.client.authz.SignatureService;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECDHEncrypter;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECKey;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolAlgorithms;
@@ -36,12 +36,12 @@ import org.slf4j.LoggerFactory;
 
 public class AuthnChallengeResponder {
 
-  private final RsaSignatureService rsaSignatureService;
+  private final SignatureService signatureService;
   private final OidcClient oidcClient;
   private final Logger log = LoggerFactory.getLogger(AuthnChallengeResponder.class);
 
-  public AuthnChallengeResponder(RsaSignatureService rsaSignatureService, OidcClient oidcClient) {
-    this.rsaSignatureService = rsaSignatureService;
+  public AuthnChallengeResponder(SignatureService signatureService, OidcClient oidcClient) {
+    this.signatureService = signatureService;
     this.oidcClient = oidcClient;
   }
 
@@ -234,11 +234,10 @@ public class AuthnChallengeResponder {
     try {
       var claims = new JWTClaimsSet.Builder().claim("njwt", challenge).build();
 
-      var cert = rsaSignatureService.authCertificate();
+      var cert = signatureService.authCertificate();
 
       var header =
-          // FUTURE: use ECC instead
-          new JWSHeader.Builder(JWSAlgorithm.PS256)
+          new JWSHeader.Builder(BrainpoolAlgorithms.BS256R1)
               .type(JOSEObjectType.JWT)
               .x509CertChain(List.of(Base64.encode(cert.getEncoded())))
               .contentType("NJWT")
@@ -246,12 +245,16 @@ public class AuthnChallengeResponder {
 
       var jwt = new SignedJWT(header, claims);
 
-      var signer = new SmcBSigner(rsaSignatureService);
-      jwt.sign(signer);
+      var signer = new SmcBSigner(signatureService);
 
-      debugLogSignedChallenge(challenge, jwt);
+      // extra hoops, otherwise BS256R1 alg is not accepted
+      var signature = signer.sign(jwt.getHeader(), jwt.getSigningInput());
+      var signedJwt =
+          new SignedJWT(jwt.getHeader().toBase64URL(), jwt.getPayload().toBase64URL(), signature);
 
-      return jwt;
+      debugLogSignedChallenge(challenge, signedJwt);
+
+      return signedJwt;
     } catch (JOSEException | ParseException | CertificateEncodingException e) {
       throw new AuthorizationException("failed to sign challenge", e);
     }
@@ -262,7 +265,7 @@ public class AuthnChallengeResponder {
       return;
     }
 
-    var principal = rsaSignatureService.authCertificate().getSubjectX500Principal().getName();
+    var principal = signatureService.authCertificate().getSubjectX500Principal().getName();
     var header = jwt.getHeader().toString();
     var payload = JSONObjectUtils.toJSONString(jwt.getJWTClaimsSet().toJSONObject());
     log.atDebug()

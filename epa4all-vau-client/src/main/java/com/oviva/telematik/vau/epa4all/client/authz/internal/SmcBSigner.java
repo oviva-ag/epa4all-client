@@ -6,15 +6,16 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.jca.JCAContext;
 import com.nimbusds.jose.util.Base64URL;
-import com.oviva.telematik.vau.epa4all.client.authz.RsaSignatureService;
+import com.oviva.telematik.vau.epa4all.client.authz.SignatureService;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolAlgorithms;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SmcBSigner implements JWSSigner {
 
-  private final RsaSignatureService signer;
+  private final SignatureService signer;
 
-  public SmcBSigner(RsaSignatureService signer) {
+  public SmcBSigner(SignatureService signer) {
     this.signer = signer;
   }
 
@@ -37,9 +38,10 @@ public class SmcBSigner implements JWSSigner {
 
   @Override
   public Set<JWSAlgorithm> supportedJWSAlgorithms() {
-    // TODO: We can also advertise and support elliptic-curve algorithms, though only with brainpool
-    // curves while advertising ES256 (non-standard).
-    return Set.of(JWSAlgorithm.PS256);
+    return Set.of(
+        /* abuse ES256 for brainbool EC keys - that's what the Gematik spec wants */ JWSAlgorithm
+            .ES256,
+        BrainpoolAlgorithms.BS256R1);
   }
 
   @Override
