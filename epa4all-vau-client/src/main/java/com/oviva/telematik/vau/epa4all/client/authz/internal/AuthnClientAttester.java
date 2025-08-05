@@ -8,7 +8,7 @@ import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationException;
-import com.oviva.telematik.vau.epa4all.client.authz.RsaSignatureService;
+import com.oviva.telematik.vau.epa4all.client.authz.EccSignatureService;
 import java.security.cert.CertificateEncodingException;
 import java.time.Duration;
 import java.time.Instant;
@@ -17,10 +17,10 @@ import java.util.List;
 
 public class AuthnClientAttester {
 
-  private final RsaSignatureService rsaSignatureService;
+  private final EccSignatureService eccSignatureService;
 
-  public AuthnClientAttester(RsaSignatureService rsaSignatureService) {
-    this.rsaSignatureService = rsaSignatureService;
+  public AuthnClientAttester(EccSignatureService eccSignatureService) {
+    this.eccSignatureService = eccSignatureService;
   }
 
   public SignedJWT attestClient(String nonce) {
@@ -38,24 +38,22 @@ public class AuthnClientAttester {
             .claim("nonce", nonce)
             .build();
 
-    var cert = rsaSignatureService.authCertificate();
+    var cert = eccSignatureService.authCertificate();
 
     try {
       var x5c = Base64.encode(cert.getEncoded());
 
-      // TODO: We can also sign with the brainpoolP256r curve and pretend its ES256
-      // this is not according to the official RFC, this is the intended way for this use-case
-      // though ¯\_(ツ)_/¯
+      // Using ECC with ES256 for VAU client attestation compatibility
 
       var header =
-          new JWSHeader.Builder(JWSAlgorithm.PS256)
+          new JWSHeader.Builder(JWSAlgorithm.ES256)
               .type(JOSEObjectType.JWT)
               .x509CertChain(List.of(x5c))
               .build();
 
       var jwt = new SignedJWT(header, claims);
 
-      jwt.sign(new SmcBSigner(rsaSignatureService));
+      jwt.sign(new SmcBEccSigner(eccSignatureService));
       return jwt;
     } catch (JOSEException | CertificateEncodingException e) {
       throw new AuthorizationException("failed client attestation - signing nonce", e);
