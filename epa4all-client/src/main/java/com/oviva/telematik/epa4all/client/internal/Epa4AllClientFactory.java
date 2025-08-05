@@ -11,8 +11,8 @@ import com.oviva.telematik.vau.epa4all.client.Epa4AllClientException;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.AuthnChallengeResponder;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.AuthnClientAttester;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.EccSignatureAdapter;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.OidcClient;
-import com.oviva.telematik.vau.epa4all.client.authz.internal.RsaSignatureAdapter;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import com.oviva.telematik.vau.httpclient.internal.DowngradeHttpClient;
 import com.oviva.telematik.vau.httpclient.internal.JavaHttpClient;
@@ -108,7 +108,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
       KonnektorService konnektorService,
       SmcbCard card) {
 
-    var signer = new RsaSignatureAdapter(konnektorService, card);
+    var signer = new EccSignatureAdapter(konnektorService, card);
 
     var authnChallengeResponder =
         new AuthnChallengeResponder(signer, new OidcClient(outerHttpClient));
