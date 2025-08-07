@@ -3,7 +3,6 @@ package com.oviva.telematik.vau.epa4all.client.authz.internal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,19 +13,20 @@ import com.oviva.telematik.vau.epa4all.client.Epa4AllClientException;
 import java.security.cert.X509Certificate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class EccSignatureAdapterTest {
 
-  private KonnektorService konnektorService;
-  private SmcbCard card;
+  @Mock private KonnektorService konnektorService;
+  @Mock private SmcbCard card;
+  @Mock private X509Certificate mockCertificate;
   private EccSignatureAdapter eccSignatureAdapter;
-  private X509Certificate mockCertificate;
 
   @BeforeEach
   void setUp() {
-    konnektorService = mock(KonnektorService.class);
-    card = mock(SmcbCard.class);
-    mockCertificate = mock(X509Certificate.class);
     eccSignatureAdapter = new EccSignatureAdapter(konnektorService, card);
   }
 

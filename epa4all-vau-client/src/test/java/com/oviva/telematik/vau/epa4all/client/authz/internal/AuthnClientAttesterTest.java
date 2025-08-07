@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,27 +20,30 @@ import java.time.Instant;
 import javax.security.auth.x500.X500Principal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class AuthnClientAttesterTest {
 
-  private SignatureService signatureService;
+  @Mock private SignatureService signatureService;
+  @Mock private X509Certificate mockCertificate;
   private AuthnClientAttester attester;
-  private X509Certificate mockCertificate;
 
   @BeforeEach
   void setUp() throws Exception {
-    signatureService = mock(SignatureService.class);
-    mockCertificate = mock(X509Certificate.class);
     attester = new AuthnClientAttester(signatureService);
     setupMockCertificate();
   }
 
   private void setupMockCertificate() throws CertificateEncodingException {
-    when(signatureService.authCertificate()).thenReturn(mockCertificate);
+    lenient().when(signatureService.authCertificate()).thenReturn(mockCertificate);
 
     var mockCertBytes = "mock-certificate-data".getBytes();
-    when(mockCertificate.getEncoded()).thenReturn(mockCertBytes);
-    when(mockCertificate.getSubjectX500Principal())
+    lenient().when(mockCertificate.getEncoded()).thenReturn(mockCertBytes);
+    lenient()
+        .when(mockCertificate.getSubjectX500Principal())
         .thenReturn(new X500Principal("CN=Test Certificate"));
   }
 
