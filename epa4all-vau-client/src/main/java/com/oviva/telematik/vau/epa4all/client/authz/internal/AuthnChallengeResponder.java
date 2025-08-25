@@ -18,11 +18,7 @@ import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECKey;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolAlgorithms;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolJwsVerifier;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
 import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.text.ParseException;
@@ -281,63 +277,5 @@ public class AuthnChallengeResponder {
             header,
             payload,
             jwt.serialize());
-  }
-
-  private BP256ECKey fetchEncryptionKeyFromOidcConfig(URI issuer) {
-    try {
-      // Base URI for OIDC configuration
-      String oidcConfigUrl = issuer.toString();
-      if (!oidcConfigUrl.endsWith("/")) {
-        oidcConfigUrl += "/";
-      }
-      oidcConfigUrl += ".well-known/openid-configuration";
-
-      log.debug("Fetching OIDC configuration from: {}", oidcConfigUrl);
-
-      // Fetch the OIDC configuration
-      URL url = new URL(oidcConfigUrl);
-      Map<String, Object> oidcConfig = JSONObjectUtils.parse(readUrlContent(url));
-
-      // Get the JWKS URI from the configuration
-      String jwksUri = (String) oidcConfig.get("jwks_uri");
-      if (jwksUri == null) {
-        throw new AuthorizationException("JWKS URI not found in OIDC configuration");
-      }
-
-      log.debug("Fetching JWKS from: {}", jwksUri);
-
-      // Fetch the JWKS
-      URL jwksUrl = new URL(jwksUri);
-      Map<String, Object> jwks = JSONObjectUtils.parse(readUrlContent(jwksUrl));
-
-      // Find the encryption key with kid "puk_idp_enc" and use "enc"
-      List<Map<String, Object>> keys = (List<Map<String, Object>>) jwks.get("keys");
-      for (Map<String, Object> key : keys) {
-        String kid = (String) key.get("kid");
-        String use = (String) key.get("use");
-        String kty = (String) key.get("kty");
-
-        if ("puk_idp_enc".equals(kid) && "enc".equals(use) && "EC".equals(kty)) {
-          // Parse the key
-          return BP256ECKey.parse(JSONObjectUtils.toJSONString(key));
-        }
-      }
-
-      throw new AuthorizationException("Encryption key not found in JWKS");
-    } catch (Exception e) {
-      log.error("Failed to fetch encryption key from OIDC configuration", e);
-      throw new AuthorizationException("Failed to fetch encryption key from OIDC configuration", e);
-    }
-  }
-
-  private String readUrlContent(URL url) throws IOException {
-    try (var reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
-      StringBuilder content = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        content.append(line);
-      }
-      return content.toString();
-    }
   }
 }
