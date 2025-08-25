@@ -12,17 +12,13 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationException;
-import com.oviva.telematik.vau.epa4all.client.authz.RsaSignatureService;
+import com.oviva.telematik.vau.epa4all.client.authz.SignatureService;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECDHEncrypter;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BP256ECKey;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolAlgorithms;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.jose.BrainpoolJwsVerifier;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
 import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.text.ParseException;
@@ -36,12 +32,12 @@ import org.slf4j.LoggerFactory;
 
 public class AuthnChallengeResponder {
 
-  private final RsaSignatureService rsaSignatureService;
+  private final SignatureService signatureService;
   private final OidcClient oidcClient;
   private final Logger log = LoggerFactory.getLogger(AuthnChallengeResponder.class);
 
-  public AuthnChallengeResponder(RsaSignatureService rsaSignatureService, OidcClient oidcClient) {
-    this.rsaSignatureService = rsaSignatureService;
+  public AuthnChallengeResponder(SignatureService signatureService, OidcClient oidcClient) {
+    this.signatureService = signatureService;
     this.oidcClient = oidcClient;
   }
 
@@ -234,11 +230,10 @@ public class AuthnChallengeResponder {
     try {
       var claims = new JWTClaimsSet.Builder().claim("njwt", challenge).build();
 
-      var cert = rsaSignatureService.authCertificate();
+      var cert = signatureService.authCertificate();
 
       var header =
-          // FUTURE: use ECC instead
-          new JWSHeader.Builder(JWSAlgorithm.PS256)
+          new JWSHeader.Builder(BrainpoolAlgorithms.BS256R1)
               .type(JOSEObjectType.JWT)
               .x509CertChain(List.of(Base64.encode(cert.getEncoded())))
               .contentType("NJWT")
@@ -246,12 +241,16 @@ public class AuthnChallengeResponder {
 
       var jwt = new SignedJWT(header, claims);
 
-      var signer = new SmcBSigner(rsaSignatureService);
-      jwt.sign(signer);
+      var signer = new SmcBSigner(signatureService);
 
-      debugLogSignedChallenge(challenge, jwt);
+      // extra hoops, otherwise BS256R1 alg is not accepted
+      var signature = signer.sign(jwt.getHeader(), jwt.getSigningInput());
+      var signedJwt =
+          new SignedJWT(jwt.getHeader().toBase64URL(), jwt.getPayload().toBase64URL(), signature);
 
-      return jwt;
+      debugLogSignedChallenge(challenge, signedJwt);
+
+      return signedJwt;
     } catch (JOSEException | ParseException | CertificateEncodingException e) {
       throw new AuthorizationException("failed to sign challenge", e);
     }
@@ -262,7 +261,7 @@ public class AuthnChallengeResponder {
       return;
     }
 
-    var principal = rsaSignatureService.authCertificate().getSubjectX500Principal().getName();
+    var principal = signatureService.authCertificate().getSubjectX500Principal().getName();
     var header = jwt.getHeader().toString();
     var payload = JSONObjectUtils.toJSONString(jwt.getJWTClaimsSet().toJSONObject());
     log.atDebug()
@@ -278,63 +277,5 @@ public class AuthnChallengeResponder {
             header,
             payload,
             jwt.serialize());
-  }
-
-  private BP256ECKey fetchEncryptionKeyFromOidcConfig(URI issuer) {
-    try {
-      // Base URI for OIDC configuration
-      String oidcConfigUrl = issuer.toString();
-      if (!oidcConfigUrl.endsWith("/")) {
-        oidcConfigUrl += "/";
-      }
-      oidcConfigUrl += ".well-known/openid-configuration";
-
-      log.debug("Fetching OIDC configuration from: {}", oidcConfigUrl);
-
-      // Fetch the OIDC configuration
-      URL url = new URL(oidcConfigUrl);
-      Map<String, Object> oidcConfig = JSONObjectUtils.parse(readUrlContent(url));
-
-      // Get the JWKS URI from the configuration
-      String jwksUri = (String) oidcConfig.get("jwks_uri");
-      if (jwksUri == null) {
-        throw new AuthorizationException("JWKS URI not found in OIDC configuration");
-      }
-
-      log.debug("Fetching JWKS from: {}", jwksUri);
-
-      // Fetch the JWKS
-      URL jwksUrl = new URL(jwksUri);
-      Map<String, Object> jwks = JSONObjectUtils.parse(readUrlContent(jwksUrl));
-
-      // Find the encryption key with kid "puk_idp_enc" and use "enc"
-      List<Map<String, Object>> keys = (List<Map<String, Object>>) jwks.get("keys");
-      for (Map<String, Object> key : keys) {
-        String kid = (String) key.get("kid");
-        String use = (String) key.get("use");
-        String kty = (String) key.get("kty");
-
-        if ("puk_idp_enc".equals(kid) && "enc".equals(use) && "EC".equals(kty)) {
-          // Parse the key
-          return BP256ECKey.parse(JSONObjectUtils.toJSONString(key));
-        }
-      }
-
-      throw new AuthorizationException("Encryption key not found in JWKS");
-    } catch (Exception e) {
-      log.error("Failed to fetch encryption key from OIDC configuration", e);
-      throw new AuthorizationException("Failed to fetch encryption key from OIDC configuration", e);
-    }
-  }
-
-  private String readUrlContent(URL url) throws IOException {
-    try (var reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
-      StringBuilder content = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        content.append(line);
-      }
-      return content.toString();
-    }
   }
 }

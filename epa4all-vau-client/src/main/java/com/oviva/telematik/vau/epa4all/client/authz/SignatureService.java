@@ -2,7 +2,7 @@ package com.oviva.telematik.vau.epa4all.client.authz;
 
 import java.security.cert.X509Certificate;
 
-public interface RsaSignatureService {
+public interface SignatureService {
 
   X509Certificate authCertificate();
 

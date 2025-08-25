@@ -7,19 +7,19 @@ import com.oviva.telematik.vau.epa4all.client.Epa4AllClientException;
 import com.oviva.telematik.vau.epa4all.client.authz.SignatureService;
 import java.security.cert.X509Certificate;
 
-public class RsaSignatureAdapter implements SignatureService {
+public class EccSignatureAdapter implements SignatureService {
 
   private final KonnektorService konnektorService;
   private final SmcbCard card;
 
-  public RsaSignatureAdapter(KonnektorService konnektorService, SmcbCard card) {
+  public EccSignatureAdapter(KonnektorService konnektorService, SmcbCard card) {
     this.konnektorService = konnektorService;
     this.card = card;
   }
 
   @Override
   public X509Certificate authCertificate() {
-    return card.authRsaCertificate();
+    return card.authEccCertificate();
   }
 
   @Override
@@ -28,6 +28,6 @@ public class RsaSignatureAdapter implements SignatureService {
       throw new Epa4AllClientException(
           "PIN not verified: %s (%s)".formatted(card.holderName(), card.handle()));
     }
-    return konnektorService.authSignRsaPss(card.handle(), bytesToSign);
+    return konnektorService.authSignEcdsa(card.handle(), bytesToSign);
   }
 }
