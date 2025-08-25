@@ -21,8 +21,6 @@ import java.security.*;
 import java.time.Duration;
 import java.util.List;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
@@ -63,8 +61,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
       Environment environment,
       KeyStore trustStore) {
 
-    var telematikSslContext = buildSslContext(trustStore);
-    //    telematikSslContext = buildSslContextFromTrustManager(new NaiveTrustManager());
+    var telematikSslContext = SslContextBuilder.buildSslContext(trustStore);
     var outerHttpClientTelematik = buildOuterHttpClient(konnektorProxyAddress, telematikSslContext);
 
     var informationService = buildInformationService(environment, outerHttpClientTelematik);
@@ -190,30 +187,6 @@ public class Epa4AllClientFactory implements AutoCloseable {
         .proxy(ProxySelector.of(konnektorProxyAddress))
         .connectTimeout(Duration.ofSeconds(10))
         .build();
-  }
-
-  private static SSLContext buildSslContext(KeyStore trustStore) {
-    return buildSslContextFromTrustManager(buildTrustManager(trustStore));
-  }
-
-  private static SSLContext buildSslContextFromTrustManager(TrustManager trustManager) {
-    try {
-      SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
-      sslContext.init(null, new TrustManager[] {trustManager}, null);
-      return sslContext;
-    } catch (NoSuchAlgorithmException | KeyManagementException e) {
-      throw new IllegalStateException("failed to initialise ssl context", e);
-    }
-  }
-
-  private static TrustManager buildTrustManager(KeyStore trustStore) {
-    try {
-      var tmf = TrustManagerFactory.getInstance("PKIX");
-      tmf.init(trustStore);
-      return tmf.getTrustManagers()[0];
-    } catch (KeyStoreException | NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
