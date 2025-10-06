@@ -59,7 +59,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
       KonnektorService konnektorService,
       InetSocketAddress konnektorProxyAddress,
       Environment environment,
-      KeyStore trustStore) {
+      KeyStore trustStore,
+      String telematikId) {
 
     var telematikSslContext = SslContextBuilder.buildSslContext(trustStore);
     var outerHttpClientTelematik = buildOuterHttpClient(konnektorProxyAddress, telematikSslContext);
@@ -76,7 +77,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
     // HTTP client used to communicate inside the VAU tunnel
     var innerVauClient = buildInnerHttpClient(vauProxyServerAddr);
 
-    var card = findSmcBCard(konnektorService);
+    // TODO! Needs to be configurable
+    var card = findSmcBCard(konnektorService, telematikId);
 
     var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
 
@@ -111,14 +113,30 @@ public class Epa4AllClientFactory implements AutoCloseable {
         innerVauClient, outerHttpClient, authnChallengeResponder, authnClientAttester);
   }
 
-  private static SmcbCard findSmcBCard(KonnektorService konnektorService) {
+  private static SmcbCard findSmcBCard(KonnektorService konnektorService, String telematikId) {
     var cards = konnektorService.listSmcbCards();
     if (cards.isEmpty()) {
       throw new Epa4AllClientException("no SMC-B cards found");
     }
-    if (cards.size() > 1) {
-      log.atInfo().log("more than one SMC-B card found, using first one");
+    if (telematikId == null) {
+      if (cards.size() > 1) {
+        log.atInfo().log("more than one SMC-B card found, using first one");
+      }
+      return cards.get(0);
     }
+
+    cards = cards.stream().filter(c -> c.telematikId().equals(telematikId)).toList();
+    if (cards.isEmpty()) {
+      throw new Epa4AllClientException("no SMC-B card found for telematikId " + telematikId);
+    }
+    if (cards.size() > 1) {
+      log.atInfo()
+          .addKeyValue("telematikId", telematikId)
+          .log(
+              "more than one SMC-B card found for telematikId \"{}\", using first one",
+              telematikId);
+    }
+
     return cards.get(0);
   }
 

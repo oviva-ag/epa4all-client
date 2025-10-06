@@ -105,7 +105,10 @@ public class Main implements AutoCloseable {
             ? new InetSocketAddress(config.proxyAddress(), config.proxyPort())
             : null;
     return new Epa4allClientService(
-        () -> buildKonnektorService(konnektorFactory, config), proxySocket, config.environment());
+        () -> buildKonnektorService(konnektorFactory, config),
+        proxySocket,
+        config.environment(),
+        config.telematikId());
   }
 
   private KonnektorService buildKonnektorService(
@@ -139,7 +142,8 @@ public class Main implements AutoCloseable {
       String userId,
       String address,
       int port,
-      Environment environment) {}
+      Environment environment,
+      String telematikId) {}
 
   private Config loadConfig(ConfigProvider configProvider) {
 
@@ -177,6 +181,13 @@ public class Main implements AutoCloseable {
             .map(Environment::valueOf)
             .orElse(Environment.PU);
 
+    var telematikId =
+        configProvider
+            .get("telematik.id")
+            .map(String::strip)
+            .filter(s -> !s.isBlank())
+            .orElse(null);
+
     return new Config(
         uri,
         proxyAddress,
@@ -188,7 +199,8 @@ public class Main implements AutoCloseable {
         user,
         address,
         port,
-        environment);
+        environment,
+        telematikId);
   }
 
   private Optional<String> mustLoad(String key) {
