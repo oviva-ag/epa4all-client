@@ -35,7 +35,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
 
   private static final String LOCALHOST = "127.0.0.1";
 
-  private static Logger log = LoggerFactory.getLogger(Epa4AllClientFactory.class);
+  private static final Logger log = LoggerFactory.getLogger(Epa4AllClientFactory.class);
   private final VauProxy proxyServer;
   private final SoapClientFactory client;
   private final AuthorizationService authorizationService;
@@ -122,7 +122,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
       if (cards.size() > 1) {
         log.atInfo().log("more than one SMC-B card found, using first one");
       }
-      return cards.get(0);
+      return cards.getFirst();
     }
 
     cards = cards.stream().filter(c -> c.telematikId().equals(telematikId)).toList();
@@ -137,7 +137,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
               telematikId);
     }
 
-    return cards.get(0);
+    return cards.getFirst();
   }
 
   private static VauProxy buildVauProxy(

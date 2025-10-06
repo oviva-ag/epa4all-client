@@ -104,7 +104,7 @@ public class Epa4allClientService {
             .konnektorProxyAddress(tiProxyAddress)
             .konnektorService(konnektorService)
             .environment(environment)
-            .telmatikId(telematikId)
+            .telematikId(telematikId)
             .build()) {
 
       var client = cf.newClient();
