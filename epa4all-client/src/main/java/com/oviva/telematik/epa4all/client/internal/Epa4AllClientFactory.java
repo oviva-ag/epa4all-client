@@ -20,6 +20,7 @@ import java.net.http.HttpClient;
 import java.security.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
@@ -120,16 +121,20 @@ public class Epa4AllClientFactory implements AutoCloseable {
     }
     if (telematikId == null) {
       if (cards.size() > 1) {
-        log.atInfo().log("more than one SMC-B card found, using first one");
+        log.atInfo().log(
+            "more than one SMC-B card found, using first one - available: %s"
+                .formatted(cardListToString(cards)));
       }
       return cards.getFirst();
     }
 
-    cards = cards.stream().filter(c -> c.telematikId().equals(telematikId)).toList();
-    if (cards.isEmpty()) {
-      throw new Epa4AllClientException("no SMC-B card found for telematikId " + telematikId);
+    var selectedCard = cards.stream().filter(c -> c.telematikId().equals(telematikId)).toList();
+    if (selectedCard.isEmpty()) {
+      throw new Epa4AllClientException(
+          "no SMC-B card found for telematikId '%s', available %s"
+              .formatted(telematikId, cardListToString(cards)));
     }
-    if (cards.size() > 1) {
+    if (selectedCard.size() > 1) {
       log.atInfo()
           .addKeyValue("telematikId", telematikId)
           .log(
@@ -137,7 +142,17 @@ public class Epa4AllClientFactory implements AutoCloseable {
               telematikId);
     }
 
-    return cards.getFirst();
+    return selectedCard.getFirst();
+  }
+
+  private static String cardListToString(List<SmcbCard> cards) {
+    return "[ "
+        + cards.stream().map(Epa4AllClientFactory::cardToString).collect(Collectors.joining(", "))
+        + " ]";
+  }
+
+  private static String cardToString(SmcbCard card) {
+    return "'" + card.telematikId() + "' (" + card.holderName() + ")";
   }
 
   private static VauProxy buildVauProxy(

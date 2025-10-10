@@ -25,6 +25,9 @@ class E2eEpa4AllClientImplTest {
   @Test
   void writeDocument() {
 
+    var telematikIdTinaGraefin = "9-SMC-B-Testkarte-883110000145356";
+    var telematikIdFeliGraefin = "9-SMC-B-Testkarte-883110000157665";
+
     System.setProperty("jdk.httpclient.HttpClient.log", "errors,requests,headers");
 
     try (var cf =
@@ -32,6 +35,7 @@ class E2eEpa4AllClientImplTest {
             .konnektorProxyAddress(
                 new InetSocketAddress(KONNEKTOR_PROXY_HOST, KONNEKTOR_PROXY_PORT))
             .konnektorService(TestKonnektors.riseKonnektor_RU())
+            .telematikId(telematikIdTinaGraefin)
             .environment(Environment.RU)
             .build()) {
 
