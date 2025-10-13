@@ -78,7 +78,6 @@ public class Epa4AllClientFactory implements AutoCloseable {
     // HTTP client used to communicate inside the VAU tunnel
     var innerVauClient = buildInnerHttpClient(vauProxyServerAddr);
 
-    // TODO! Needs to be configurable
     var card = findSmcBCard(konnektorService, telematikId);
 
     var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
@@ -114,7 +113,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
         innerVauClient, outerHttpClient, authnChallengeResponder, authnClientAttester);
   }
 
-  private static SmcbCard findSmcBCard(KonnektorService konnektorService, String telematikId) {
+  public static SmcbCard findSmcBCard(KonnektorService konnektorService, String telematikId) {
     var cards = konnektorService.listSmcbCards();
     if (cards.isEmpty()) {
       throw new Epa4AllClientException("no SMC-B cards found");
@@ -131,15 +130,15 @@ public class Epa4AllClientFactory implements AutoCloseable {
     var selectedCard = cards.stream().filter(c -> c.telematikId().equals(telematikId)).toList();
     if (selectedCard.isEmpty()) {
       throw new Epa4AllClientException(
-          "no SMC-B card found for telematikId '%s', available %s"
+          "no SMC-B card found for telematikId [ %s ], available %s"
               .formatted(telematikId, cardListToString(cards)));
     }
     if (selectedCard.size() > 1) {
       log.atInfo()
           .addKeyValue("telematikId", telematikId)
           .log(
-              "more than one SMC-B card found for telematikId \"{}\", using first one",
-              telematikId);
+              "more than one SMC-B card found for telematikId [ %s ], using first one - available: %s"
+                  .formatted(telematikId, cardListToString(cards)));
     }
 
     return selectedCard.getFirst();
