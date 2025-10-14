@@ -74,4 +74,4 @@ docker run --rm \
 | `EPA4ALL_USER_ID`*              | The user ID configured in the Konnektor.                                                | `admin`      | 
 | `EPA4ALL_ENVIRONMENT`*          | The telematik environment, either RU or PU.                                             | `PU`         | 
 | `EPA4ALL_TELEMETRY_OPTOUT`      | Basic telemetry to help with development.                                               | `false`      | 
-| `EPA4ALL_TELEMATIC_ID`          | The telematic id of the SMC-B card                                                      |              | 
+| `EPA4ALL_TELEMATIK_ID`          | The telematik id of the SMC-B card                                                      |              | 
