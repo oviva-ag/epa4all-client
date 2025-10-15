@@ -20,6 +20,7 @@ import java.net.http.HttpClient;
 import java.security.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
@@ -35,7 +36,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
 
   private static final String LOCALHOST = "127.0.0.1";
 
-  private static Logger log = LoggerFactory.getLogger(Epa4AllClientFactory.class);
+  private static final Logger log = LoggerFactory.getLogger(Epa4AllClientFactory.class);
   private final VauProxy proxyServer;
   private final SoapClientFactory client;
   private final AuthorizationService authorizationService;
@@ -59,7 +60,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
       KonnektorService konnektorService,
       InetSocketAddress konnektorProxyAddress,
       Environment environment,
-      KeyStore trustStore) {
+      KeyStore trustStore,
+      String telematikId) {
 
     var telematikSslContext = SslContextBuilder.buildSslContext(trustStore);
     var outerHttpClientTelematik = buildOuterHttpClient(konnektorProxyAddress, telematikSslContext);
@@ -76,7 +78,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
     // HTTP client used to communicate inside the VAU tunnel
     var innerVauClient = buildInnerHttpClient(vauProxyServerAddr);
 
-    var card = findSmcBCard(konnektorService);
+    var card = findSmcBCard(konnektorService, telematikId);
 
     var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
 
@@ -111,15 +113,45 @@ public class Epa4AllClientFactory implements AutoCloseable {
         innerVauClient, outerHttpClient, authnChallengeResponder, authnClientAttester);
   }
 
-  private static SmcbCard findSmcBCard(KonnektorService konnektorService) {
+  public static SmcbCard findSmcBCard(KonnektorService konnektorService, String telematikId) {
     var cards = konnektorService.listSmcbCards();
     if (cards.isEmpty()) {
       throw new Epa4AllClientException("no SMC-B cards found");
     }
-    if (cards.size() > 1) {
-      log.atInfo().log("more than one SMC-B card found, using first one");
+    if (telematikId == null) {
+      if (cards.size() > 1) {
+        log.atInfo().log(
+            "more than one SMC-B card found, using first one - available: %s"
+                .formatted(cardListToString(cards)));
+      }
+      return cards.getFirst();
     }
-    return cards.get(0);
+
+    var selectedCard = cards.stream().filter(c -> c.telematikId().equals(telematikId)).toList();
+    if (selectedCard.isEmpty()) {
+      throw new Epa4AllClientException(
+          "no SMC-B card found for telematikId [ %s ], available %s"
+              .formatted(telematikId, cardListToString(cards)));
+    }
+    if (selectedCard.size() > 1) {
+      log.atInfo()
+          .addKeyValue("telematikId", telematikId)
+          .log(
+              "more than one SMC-B card found for telematikId [ %s ], using first one - available: %s"
+                  .formatted(telematikId, cardListToString(cards)));
+    }
+
+    return selectedCard.getFirst();
+  }
+
+  private static String cardListToString(List<SmcbCard> cards) {
+    return "[ "
+        + cards.stream().map(Epa4AllClientFactory::cardToString).collect(Collectors.joining(", "))
+        + " ]";
+  }
+
+  private static String cardToString(SmcbCard card) {
+    return "'" + card.telematikId() + "' (" + card.holderName() + ")";
   }
 
   private static VauProxy buildVauProxy(

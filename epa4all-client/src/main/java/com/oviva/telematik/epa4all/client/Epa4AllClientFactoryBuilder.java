@@ -16,6 +16,7 @@ public class Epa4AllClientFactoryBuilder {
   private KeyStore trustStore;
 
   private Environment environment;
+  private String telematikId;
 
   private Epa4AllClientFactoryBuilder() {}
 
@@ -50,6 +51,12 @@ public class Epa4AllClientFactoryBuilder {
   }
 
   @NonNull
+  public Epa4AllClientFactoryBuilder telematikId(String telematikId) {
+    this.telematikId = telematikId;
+    return this;
+  }
+
+  @NonNull
   public Epa4AllClientFactory build() {
     Objects.requireNonNull(konnektorService, "konnektorService must be set");
     Objects.requireNonNull(environment, "environment must be set");
@@ -58,7 +65,7 @@ public class Epa4AllClientFactoryBuilder {
     Objects.requireNonNull(actualTrustStore, "trustStore must be set");
 
     return Epa4AllClientFactory.create(
-        konnektorService, konnektorProxyAddress, environment, actualTrustStore);
+        konnektorService, konnektorProxyAddress, environment, actualTrustStore, telematikId);
   }
 
   private KeyStore determineTrustStore(boolean isPu, KeyStore providedTrustStore) {
