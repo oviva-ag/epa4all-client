@@ -6,6 +6,5 @@ public record SmcbCard(
     String handle,
     String telematikId,
     String holderName,
-    X509Certificate authRsaCertificate,
     X509Certificate authEccCertificate,
     boolean pinVerified) {}

@@ -44,11 +44,8 @@ public class KonnektorServiceImpl implements KonnektorService {
   private SmcbCard getCardDetails(CardInfoType cardInfo) {
 
     var cardHandle = cardInfo.getCardHandle();
-    var authRsaCertificate =
-        certificateServiceClient.readRsaAuthenticationCertificateForCard(cardHandle);
     var authEccCertificate =
         certificateServiceClient.readEccAuthenticationCertificateForCard(cardHandle);
-
     var pinVerified =
         cardServiceClient.getPinStatusResponse(cardHandle, "PIN.SMC").getPinStatus()
             == PinStatusEnum.VERIFIED;
@@ -56,12 +53,7 @@ public class KonnektorServiceImpl implements KonnektorService {
     var telematikId = certificateServiceClient.getTelematikIdForCard(cardHandle);
 
     return new SmcbCard(
-        cardHandle,
-        telematikId,
-        cardInfo.getCardHolderName(),
-        authRsaCertificate,
-        authEccCertificate,
-        pinVerified);
+        cardHandle, telematikId, cardInfo.getCardHolderName(), authEccCertificate, pinVerified);
   }
 
   @Override
