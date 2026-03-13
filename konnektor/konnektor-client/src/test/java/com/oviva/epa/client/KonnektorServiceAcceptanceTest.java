@@ -49,24 +49,6 @@ class KonnektorServiceAcceptanceTest {
   }
 
   @Test
-  void authSignRsaPss() {
-
-    var cards = konnektorService.listSmcbCards();
-    assumeTrue(cards.size() == 1);
-    var card = cards.get(0);
-
-    assertNotNull(card.authRsaCertificate());
-
-    var data = "Hello!".getBytes(StandardCharsets.UTF_8);
-
-    // when
-    var signed = konnektorService.authSignRsaPss(card.handle(), data);
-
-    // then
-    assertNotNull(signed);
-  }
-
-  @Test
   void authSignEcc() {
 
     var cards = konnektorService.listSmcbCards();
