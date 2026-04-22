@@ -17,7 +17,7 @@
     <module>konnektor-client</module>
   </modules>
 
-  <properties></properties>
+  <properties/>
 
   <build>
     <plugins>
@@ -26,13 +26,13 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <configuration>
           <java>
-            <removeUnusedImports></removeUnusedImports>
+            <removeUnusedImports/>
             <googleJavaFormat>
               <style>GOOGLE</style>
             </googleJavaFormat>
           </java>
           <pom>
-            <sortPom></sortPom>
+            <sortPom/>
           </pom>
         </configuration>
         <executions>
