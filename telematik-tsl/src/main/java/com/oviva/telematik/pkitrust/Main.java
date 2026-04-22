@@ -8,8 +8,6 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Main {
 
