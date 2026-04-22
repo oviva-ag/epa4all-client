@@ -71,7 +71,7 @@
     <cxf-xjc.version>4.1.0</cxf-xjc.version>
     <xml.bind.jaxb.version>2.3.1</xml.bind.jaxb.version>
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>
-    <bouncycastle.version>1.81</bouncycastle.version>
+    <bouncycastle.version>1.84</bouncycastle.version>
     <logback-classic.version>1.5.22</logback-classic.version>
 
     <sonar.organization>oviva-ag</sonar.organization>

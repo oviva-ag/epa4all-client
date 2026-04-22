@@ -34,13 +34,15 @@ class DownloadCaRoots {
       "https://download.tsl.ti-dienste.de/ECC/ROOT-CA/roots.json";
   private static final Logger log = LoggerFactory.getLogger(DownloadCaRoots.class);
 
-  public void downloadTrustedCertificatesTEST(Path dst) throws CertificateException, IOException, NoSuchProviderException {
+  public void downloadTrustedCertificatesTEST(Path dst)
+      throws CertificateException, IOException, NoSuchProviderException {
 
     var certs = downloadCertificates(ROOTS_URL_TEST);
     updateKeystore(dst, certs);
   }
 
-  public void downloadTrustedCertificatesPU(Path dst) throws CertificateException, IOException, NoSuchProviderException {
+  public void downloadTrustedCertificatesPU(Path dst)
+      throws CertificateException, IOException, NoSuchProviderException {
 
     var certs = downloadCertificates(ROOTS_URL_PU);
     updateKeystore(dst, certs);
