@@ -13,7 +13,8 @@ import java.util.UUID;
 public class ExportFixture {
 
   public static byte[] fhirDocumentWithId(UUID id) {
-    return """
+    return
+"""
 <Bundle xmlns="http://hl7.org/fhir">
    <id value="%s"/>
    <meta>

@@ -11,7 +11,7 @@
 
   <name>${project.groupId}:${project.artifactId}</name>
 
-  <properties></properties>
+  <properties/>
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -81,13 +81,13 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <configuration>
           <java>
-            <removeUnusedImports></removeUnusedImports>
+            <removeUnusedImports/>
             <googleJavaFormat>
               <style>GOOGLE</style>
             </googleJavaFormat>
           </java>
           <pom>
-            <sortPom></sortPom>
+            <sortPom/>
           </pom>
         </configuration>
         <executions>

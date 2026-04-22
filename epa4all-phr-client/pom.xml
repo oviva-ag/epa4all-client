@@ -117,7 +117,7 @@
                   <bindingFiles>
                     <bindingFile>${binding.path}/XDSDocumentService.jaxws.xjb</bindingFile>
                   </bindingFiles>
-                  <extraargs></extraargs>
+                  <extraargs/>
                 </wsdlOption>
               </wsdlOptions>
             </configuration>
