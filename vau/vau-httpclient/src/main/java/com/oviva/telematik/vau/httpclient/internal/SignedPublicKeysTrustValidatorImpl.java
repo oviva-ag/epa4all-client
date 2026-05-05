@@ -2,9 +2,7 @@ package com.oviva.telematik.vau.httpclient.internal;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.impl.ECDSA;
-import com.oviva.telematik.vau.httpclient.HttpClient;
 import com.oviva.telematik.vau.httpclient.internal.cert.CertificateValidationException;
-import com.oviva.telematik.vau.httpclient.internal.cert.TrustValidator;
 import com.oviva.telematik.vau.httpclient.internal.cert.VauCertificateClient;
 import de.gematik.vau.lib.data.SignedPublicKeysTrustValidator;
 import java.net.URI;
@@ -20,10 +18,9 @@ public class SignedPublicKeysTrustValidatorImpl implements SignedPublicKeysTrust
   private final VauCertificateClient certDataClient;
   private final URI vauUri;
 
-  public SignedPublicKeysTrustValidatorImpl(
-      HttpClient outerClient, TrustValidator trustValidator, URI vauUri) {
+  public SignedPublicKeysTrustValidatorImpl(VauCertificateClient client, URI vauUri) {
     this.vauUri = vauUri;
-    certDataClient = new VauCertificateClient(outerClient, trustValidator);
+    this.certDataClient = client;
   }
 
   @Override
@@ -42,7 +39,7 @@ public class SignedPublicKeysTrustValidatorImpl implements SignedPublicKeysTrust
 
       // https://www.rfc-editor.org/rfc/rfc7515.html#appendix-A.3.1
       var signatureDer = ECDSA.transcodeSignatureToDER(signedPublicKeys.signatureEs256());
-      ecdsa.verify(signatureDer);
+      return ecdsa.verify(signatureDer);
 
     } catch (CertificateValidationException
         | InvalidKeyException
@@ -53,6 +50,5 @@ public class SignedPublicKeysTrustValidatorImpl implements SignedPublicKeysTrust
       log.atDebug().setCause(e).log("failed to validate certificate: {}", e.getMessage());
       return false;
     }
-    return true;
   }
 }
