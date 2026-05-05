@@ -83,7 +83,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
     var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
 
     var authorizationService =
-        buildAuthorizationService(innerVauClient, outerHttpClient, konnektorService, card);
+        buildAuthorizationService(
+            environment, innerVauClient, outerHttpClient, konnektorService, card);
 
     var client =
         new SoapClientFactory(
@@ -98,7 +99,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
     return new Epa4AllClientImpl(informationService, authorizationService, card, client);
   }
 
-  private static AuthorizationService buildAuthorizationService(
+  static AuthorizationService buildAuthorizationService(
+      Environment environment,
       com.oviva.telematik.vau.httpclient.HttpClient innerVauClient,
       HttpClient outerHttpClient,
       KonnektorService konnektorService,
@@ -106,14 +108,15 @@ public class Epa4AllClientFactory implements AutoCloseable {
 
     var signer = new EccSignatureAdapter(konnektorService, card);
 
+    var idpTrustValidator = PinnedIdpTrustValidator.forEnvironment(environment);
     var authnChallengeResponder =
-        new AuthnChallengeResponder(signer, new OidcClient(outerHttpClient));
+        new AuthnChallengeResponder(signer, new OidcClient(outerHttpClient), idpTrustValidator);
     var authnClientAttester = new AuthnClientAttester(signer);
     return new AuthorizationService(
         innerVauClient, outerHttpClient, authnChallengeResponder, authnClientAttester);
   }
 
-  public static SmcbCard findSmcBCard(KonnektorService konnektorService, String telematikId) {
+  static SmcbCard findSmcBCard(KonnektorService konnektorService, String telematikId) {
     var cards = konnektorService.listSmcbCards();
     if (cards.isEmpty()) {
       throw new Epa4AllClientException("no SMC-B cards found");
@@ -190,7 +193,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
         HttpClient.newBuilder()
             // this is the local VAU termination proxy
             .proxy(ProxySelector.of(vauProxyServerAddress))
-            // no redirects, wee need to deal with redirects from authorization directly
+            // no redirects, we need to deal with redirects from authorization directly
             .followRedirects(HttpClient.Redirect.NEVER)
             .connectTimeout(Duration.ofSeconds(7))
             // within the VAU tunnel HTTP/1.1 is preferred

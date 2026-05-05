@@ -2,8 +2,7 @@ package com.oviva.telematik.vau.epa4all.client.authz.internal;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.crypto.impl.ECDSA;
@@ -42,6 +41,7 @@ class AuthnChallengeResponderTest {
   @Mock private SignatureService signatureService;
   @Mock private OidcClient oidcClient;
   @Mock private X509Certificate mockCertificate;
+  @Mock private AuthnChallengeResponder.IdpTrustValidator idpTrustValidator;
 
   private AuthnChallengeResponder responder;
 
@@ -52,7 +52,7 @@ class AuthnChallengeResponderTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    responder = new AuthnChallengeResponder(signatureService, oidcClient);
+    responder = new AuthnChallengeResponder(signatureService, oidcClient, idpTrustValidator);
 
     lenient().when(signatureService.authCertificate()).thenReturn(mockCertificate);
     lenient().when(mockCertificate.getEncoded()).thenReturn("cert".getBytes());
@@ -74,6 +74,7 @@ class AuthnChallengeResponderTest {
             URI.create("https://jwks.example.test/puk_idp_sig"),
             URI.create("https://jwks.example.test/jwks.json"));
 
+    doNothing().when(idpTrustValidator).validate(iss);
     when(oidcClient.fetchOidcDiscoveryDocument(iss)).thenReturn(discovery);
 
     // brainpool key for both challenge verification (SIG) and encryption (ENC)
@@ -113,6 +114,33 @@ class AuthnChallengeResponderTest {
   }
 
   @Test
+  void challengeResponse_badIssuer() throws Exception {
+    // Given
+    var iss = URI.create("https://mallory.example.test");
+
+    var expected = new AuthorizationException("issuer not trusted: " + iss);
+    doThrow(expected).when(idpTrustValidator).validate(iss);
+
+    // brainpool key for both challenge verification (SIG) and encryption (ENC)
+    var bpKeyPair = generateBrainpoolP256KeyPair();
+
+    // challenge JWT signed with brainpool private key
+    var challenge =
+        createSignedChallengeJwt(
+            iss.toString(), Instant.now().plusSeconds(300), (ECPrivateKey) bpKeyPair.getPrivate());
+    var challengeData = challenge.serialize();
+
+    // When
+    var got =
+        assertThrows(
+            AuthorizationException.class, () -> responder.challengeResponse(challengeData));
+
+    // Then
+    assertEquals(expected, got);
+    verify(oidcClient, never()).fetchOidcDiscoveryDocument(iss);
+  }
+
+  @Test
   void challengeResponse_throwsOnInvalidChallengeJwt() {
     // Given
     var invalid = "not-a-jwt";
@@ -133,6 +161,7 @@ class AuthnChallengeResponderTest {
             null,
             URI.create("https://jwks.example.test/puk_idp_sig"),
             URI.create("https://jwks.example.test/jwks.json"));
+
     when(oidcClient.fetchOidcDiscoveryDocument(iss)).thenReturn(discovery);
 
     var kp = generateBrainpoolP256KeyPair();

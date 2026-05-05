@@ -35,10 +35,15 @@ public class AuthnChallengeResponder {
   private final SignatureService signatureService;
   private final OidcClient oidcClient;
   private final Logger log = LoggerFactory.getLogger(AuthnChallengeResponder.class);
+  private final IdpTrustValidator idpTrustValidator;
 
-  public AuthnChallengeResponder(SignatureService signatureService, OidcClient oidcClient) {
+  public AuthnChallengeResponder(
+      SignatureService signatureService,
+      OidcClient oidcClient,
+      IdpTrustValidator idpTrustValidator) {
     this.signatureService = signatureService;
     this.oidcClient = oidcClient;
+    this.idpTrustValidator = idpTrustValidator;
   }
 
   public record Response(URI issuer, String response) {}
@@ -75,12 +80,15 @@ public class AuthnChallengeResponder {
   private void validateChallenge(SignedJWT challenge) {
 
     try {
-      // Note: The challenge contains the URL to the keys, so is anyways in control of it. Not sure
-      // what validating the signature adds.
       var claims = challenge.getJWTClaimsSet();
       var iss = claims.getIssuer();
 
-      var discoveryDocument = oidcClient.fetchOidcDiscoveryDocument(URI.create(iss));
+      var issUri = URI.create(iss);
+      // break self-referential trust chain - we only trust well-known issuers
+      // see A_19874-05 and A_19877-04
+      idpTrustValidator.validate(issUri);
+
+      var discoveryDocument = oidcClient.fetchOidcDiscoveryDocument(issUri);
       var jwk = oidcClient.fetchJwk(discoveryDocument.uriPukIdpSig());
 
       var jwsKeySelector = keySelector(jwk);
@@ -277,5 +285,9 @@ public class AuthnChallengeResponder {
             header,
             payload,
             jwt.serialize());
+  }
+
+  public interface IdpTrustValidator {
+    void validate(URI issuer) throws AuthorizationException;
   }
 }
