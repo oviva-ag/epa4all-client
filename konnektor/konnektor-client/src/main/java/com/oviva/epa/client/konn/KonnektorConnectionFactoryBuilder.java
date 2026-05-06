@@ -22,6 +22,7 @@ import javax.net.ssl.TrustManager;
 
 public class KonnektorConnectionFactoryBuilder {
 
+  private static final String DEFAULT_KONNEKTOR_DNS_SAN = "konnektor.konlan";
   private static final List<String> DEFAULT_TLS_CIPHERSUITES =
       List.of(
           "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
@@ -101,7 +102,8 @@ public class KonnektorConnectionFactoryBuilder {
     return this;
   }
 
-  /** DO NOT USE IN PRODUCTION! */
+  /* DO NOT USE IN PRODUCTION! */
+  @Deprecated(forRemoval = true)
   @NonNull
   public KonnektorConnectionFactoryBuilder trustAllServers() {
     this.trustManagers = List.of(new NaiveTrustManager());
@@ -125,7 +127,7 @@ public class KonnektorConnectionFactoryBuilder {
       var kms = Optional.ofNullable(this.keyManagers).orElse(List.of());
       var tms = Optional.ofNullable(this.trustManagers).orElse(List.of());
 
-      tlsConfig = new TlsConfig(kms, tms, ciphersuites);
+      tlsConfig = new TlsConfig(kms, tms, ciphersuites, DEFAULT_KONNEKTOR_DNS_SAN);
     }
 
     var cfg =

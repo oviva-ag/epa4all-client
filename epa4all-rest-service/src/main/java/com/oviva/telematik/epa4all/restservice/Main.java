@@ -9,6 +9,7 @@ import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
+import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
 import io.undertow.Handlers;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.security.*;
 import java.util.*;
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.TrustManager;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
@@ -115,7 +117,7 @@ public class Main implements AutoCloseable {
       KonnektorConnectionFactory factory, Config config) {
     return KonnektorServiceBuilder.newBuilder()
         .connection(factory.connect())
-        .clientSystemId(config.clientSystemId)
+        .clientSystemId(config.clientSystemId())
         .mandantId(config.mandantId())
         .workplaceId(config.workplaceId())
         .userId(config.userId())
@@ -127,8 +129,15 @@ public class Main implements AutoCloseable {
         .clientKeys(cfg.clientKeys())
         .konnektorUri(cfg.konnektorUri())
         .proxyServer(cfg.proxyAddress(), cfg.proxyPort())
-        .trustAllServers() // currently we don't validate the server's certificate
+        .trustManagers(loadTrustManagers(cfg.environment()))
         .build();
+  }
+
+  private List<TrustManager> loadTrustManagers(Environment env) {
+    return switch (env) {
+      case PU -> List.of(TelematikTrustRoots.createPuTrustManager());
+      case RU -> List.of(TelematikTrustRoots.createRuTrustManager());
+    };
   }
 
   record Config(

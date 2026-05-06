@@ -32,7 +32,10 @@ public class KeyStores {
         | KeyStoreException
         | CertificateException
         | UnrecoverableKeyException e) {
-      throw new IllegalArgumentException("failed to load keys from %s".formatted(keystoreFile), e);
+      throw new IllegalArgumentException(
+          "failed to load keys from '%s', absolute path '%s'"
+              .formatted(keystoreFile, keystoreFile.toAbsolutePath()),
+          e);
     }
   }
 
