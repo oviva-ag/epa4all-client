@@ -8,8 +8,12 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import org.bouncycastle.asn1.x509.GeneralName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class StaticHostnameVerifier implements HostnameVerifier {
+
+  private static final Logger logger = LoggerFactory.getLogger(StaticHostnameVerifier.class);
 
   private final String konnektorDnsSan;
 
@@ -36,10 +40,14 @@ class StaticHostnameVerifier implements HostnameVerifier {
                   }
                   return sans.stream().anyMatch(this::matchesDnsSubjectAlternateName);
                 } catch (CertificateParsingException e) {
+                  logger.error(
+                      "failed to parse peer certificate: %s".formatted(c.getSubjectX500Principal()),
+                      e);
                   return false;
                 }
               });
     } catch (SSLPeerUnverifiedException e) {
+      logger.error("unverified peer", e);
       return false;
     }
   }

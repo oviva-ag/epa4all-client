@@ -5,7 +5,6 @@ import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.Basic
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.ProxyAddressConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.TlsConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionFactoryImpl;
-import com.oviva.epa.client.konn.internal.util.NaiveTrustManager;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.net.URI;
@@ -99,14 +98,6 @@ public class KonnektorConnectionFactoryBuilder {
   public KonnektorConnectionFactoryBuilder trustManagers(
       @NonNull List<TrustManager> trustManagers) {
     this.trustManagers = trustManagers;
-    return this;
-  }
-
-  /* DO NOT USE IN PRODUCTION! */
-  @Deprecated(forRemoval = true)
-  @NonNull
-  public KonnektorConnectionFactoryBuilder trustAllServers() {
-    this.trustManagers = List.of(new NaiveTrustManager());
     return this;
   }
 
