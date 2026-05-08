@@ -5,12 +5,17 @@ import static org.mockito.Mockito.*;
 
 import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.model.SmcbCard;
+import com.oviva.telematik.epa4all.client.Environment;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.Epa4AllClientException;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import com.oviva.telematik.vau.proxy.VauProxy;
+import java.net.InetSocketAddress;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import javax.net.ssl.SSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -127,5 +132,126 @@ class Epa4AllClientFactoryTest {
         exception
             .getMessage()
             .contains("no SMC-B card found for telematikId [ nonexistintent-telematik-id ]"));
+  }
+
+  @Test
+  void findSmcBCard_singleCard_nullTelematikId_returnsCard() {
+    when(konnektorService.listSmcbCards()).thenReturn(List.of(mockCard1));
+
+    var result = Epa4AllClientFactory.findSmcBCard(konnektorService, null);
+
+    assertEquals(mockCard1, result);
+  }
+
+  @Test
+  void findSmcBCard_shouldSelectSecondCardByTelematikId() {
+    when(konnektorService.listSmcbCards()).thenReturn(List.of(mockCard1, mockCard2));
+
+    var result = Epa4AllClientFactory.findSmcBCard(konnektorService, "test-telematik-id-2");
+
+    assertEquals(mockCard2, result);
+  }
+
+  @Test
+  void findSmcBCard_notFound_errorMessageContainsAvailableCardDetails() {
+    when(konnektorService.listSmcbCards()).thenReturn(List.of(mockCard1, mockCard2));
+
+    var exception =
+        assertThrows(
+            Epa4AllClientException.class,
+            () -> Epa4AllClientFactory.findSmcBCard(konnektorService, "unknown-id"));
+
+    var msg = exception.getMessage();
+    assertTrue(msg.contains("'test-telematik-id-1' (Test Holder)"));
+    assertTrue(msg.contains("'test-telematik-id-2' (Test Holder)"));
+  }
+
+  @Test
+  void create_noCardsFound_throwsEpa4AllClientException() throws NoSuchAlgorithmException {
+    var proxyAddr = new InetSocketAddress("127.0.0.1", 9999);
+
+    var ks = mock(KonnektorService.class);
+    when(ks.listSmcbCards()).thenReturn(List.of());
+
+    var trustStore = mock(KeyStore.class);
+    var proxyListenAddr = new InetSocketAddress("127.0.0.1", 18080);
+
+    try (var sslMock = mockStatic(SslContextBuilder.class);
+        var ignored =
+            mockConstruction(
+                VauProxy.class,
+                (proxy, ctx) ->
+                    when(proxy.start()).thenReturn(new VauProxy.ServerInfo(proxyListenAddr)))) {
+      sslMock
+          .when(() -> SslContextBuilder.buildSslContext(any()))
+          .thenReturn(SSLContext.getDefault());
+
+      // When & Then
+      assertThrows(
+          Epa4AllClientException.class,
+          () -> Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, null));
+    }
+  }
+
+  @Test
+  void create_withSingleCard_returnsFactory() throws NoSuchAlgorithmException {
+    var proxyAddr = new InetSocketAddress("127.0.0.1", 9999);
+    var ks = mock(KonnektorService.class);
+    var card = mock(SmcbCard.class);
+    when(ks.listSmcbCards()).thenReturn(List.of(card));
+    when(card.telematikId()).thenReturn("test-id");
+    var trustStore = mock(KeyStore.class);
+    var proxyListenAddr = new InetSocketAddress("127.0.0.1", 18080);
+
+    try (var sslMock = mockStatic(SslContextBuilder.class);
+        var ignored =
+            mockConstruction(
+                VauProxy.class,
+                (proxy, ctx) ->
+                    when(proxy.start()).thenReturn(new VauProxy.ServerInfo(proxyListenAddr)));
+        var ignored2 = mockConstruction(SoapClientFactory.class)) {
+      sslMock
+          .when(() -> SslContextBuilder.buildSslContext(any()))
+          .thenReturn(SSLContext.getDefault());
+
+      // When
+      var result =
+          Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, "test-id");
+
+      // Then
+      assertNotNull(result);
+      assertInstanceOf(Epa4AllClientFactory.class, result);
+    }
+  }
+
+  @Test
+  void create_withTelematikId_selectsMatchingCard() throws NoSuchAlgorithmException {
+    var proxyAddr = new InetSocketAddress("127.0.0.1", 9999);
+    var ks = mock(KonnektorService.class);
+    var card1 = mock(SmcbCard.class);
+    var card2 = mock(SmcbCard.class);
+    when(card1.telematikId()).thenReturn("id-1");
+    when(card2.telematikId()).thenReturn("id-2");
+    when(ks.listSmcbCards()).thenReturn(List.of(card1, card2));
+    var trustStore = mock(KeyStore.class);
+    var proxyListenAddr = new InetSocketAddress("127.0.0.1", 18080);
+
+    try (var sslMock = mockStatic(SslContextBuilder.class);
+        var ignored =
+            mockConstruction(
+                VauProxy.class,
+                (proxy, ctx) ->
+                    when(proxy.start()).thenReturn(new VauProxy.ServerInfo(proxyListenAddr)));
+        var ignored2 = mockConstruction(SoapClientFactory.class)) {
+      sslMock
+          .when(() -> SslContextBuilder.buildSslContext(any()))
+          .thenReturn(SSLContext.getDefault());
+
+      // When
+      var result = Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, "id-2");
+
+      // Then
+      assertNotNull(result);
+    }
   }
 }

@@ -5,7 +5,6 @@ import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.Basic
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.ProxyAddressConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.TlsConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionFactoryImpl;
-import com.oviva.epa.client.konn.internal.util.NaiveTrustManager;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.net.URI;
@@ -22,6 +21,7 @@ import javax.net.ssl.TrustManager;
 
 public class KonnektorConnectionFactoryBuilder {
 
+  private static final String DEFAULT_KONNEKTOR_DNS_SAN = "konnektor.konlan";
   private static final List<String> DEFAULT_TLS_CIPHERSUITES =
       List.of(
           "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
@@ -101,13 +101,6 @@ public class KonnektorConnectionFactoryBuilder {
     return this;
   }
 
-  /** DO NOT USE IN PRODUCTION! */
-  @NonNull
-  public KonnektorConnectionFactoryBuilder trustAllServers() {
-    this.trustManagers = List.of(new NaiveTrustManager());
-    return this;
-  }
-
   @NonNull
   public KonnektorConnectionFactoryBuilder clientKeysFromP12(
       @NonNull Path keyStorePath, String password) {
@@ -125,7 +118,7 @@ public class KonnektorConnectionFactoryBuilder {
       var kms = Optional.ofNullable(this.keyManagers).orElse(List.of());
       var tms = Optional.ofNullable(this.trustManagers).orElse(List.of());
 
-      tlsConfig = new TlsConfig(kms, tms, ciphersuites);
+      tlsConfig = new TlsConfig(kms, tms, ciphersuites, DEFAULT_KONNEKTOR_DNS_SAN);
     }
 
     var cfg =

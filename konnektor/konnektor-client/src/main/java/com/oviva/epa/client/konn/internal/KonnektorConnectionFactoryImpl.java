@@ -27,8 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.TrustManager;
+import javax.net.ssl.*;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.ext.logging.LoggingFeature;
@@ -155,7 +154,11 @@ public class KonnektorConnectionFactoryImpl implements KonnektorConnectionFactor
 
   protected TLSClientParameters tlsClientParameters() {
     final TLSClientParameters tlsParams = new TLSClientParameters();
-    tlsParams.setDisableCNCheck(true);
+
+    if (configuration.tlsConfig().subjectAlternativeName() != null) {
+      tlsParams.setHostnameVerifier(
+          new StaticHostnameVerifier(configuration.tlsConfig().subjectAlternativeName()));
+    }
 
     tlsParams.setTrustManagers(
         configuration.tlsConfig().trustManagers().toArray(new TrustManager[0]));

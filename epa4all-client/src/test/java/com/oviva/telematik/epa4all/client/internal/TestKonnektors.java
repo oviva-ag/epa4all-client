@@ -37,12 +37,13 @@ public class TestKonnektors {
       var keys = loadKeys(keystoreFile, keystorePassword);
       var uri = URI.create(tiKonnektorUri);
 
+      var tm = TelematikTrustRoots.createRuTrustManager();
       var cf =
           KonnektorConnectionFactoryBuilder.newBuilder()
               .clientKeys(keys)
               .konnektorUri(uri)
               .proxyServer(proxyAdress, proxyPort)
-              .trustAllServers() // currently we don't validate the server's certificate
+              .trustManagers(List.of(tm))
               .build();
 
       var conn = cf.connect();

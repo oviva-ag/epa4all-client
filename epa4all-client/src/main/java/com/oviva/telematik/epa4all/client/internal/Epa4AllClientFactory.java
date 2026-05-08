@@ -60,16 +60,17 @@ public class Epa4AllClientFactory implements AutoCloseable {
       KonnektorService konnektorService,
       InetSocketAddress konnektorProxyAddress,
       Environment environment,
-      KeyStore trustStore,
+      KeyStore tiTrustStore,
       String telematikId) {
 
-    var telematikSslContext = SslContextBuilder.buildSslContext(trustStore);
-    var outerHttpClientTelematik = buildOuterHttpClient(konnektorProxyAddress, telematikSslContext);
+    var telematikSslContext = SslContextBuilder.buildSslContext(tiTrustStore);
+    var outerHttpClientTelematik =
+        buildOuterHttpClientWithTlsContext(konnektorProxyAddress, telematikSslContext);
 
     var informationService = buildInformationService(environment, outerHttpClientTelematik);
 
     var proxyServer =
-        buildVauProxy(environment, konnektorProxyAddress, trustStore, telematikSslContext);
+        buildVauProxy(environment, konnektorProxyAddress, tiTrustStore, telematikSslContext);
 
     var serverInfo = proxyServer.start();
     var vauProxyServerListener = serverInfo.listenAddress();
@@ -83,7 +84,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
     var outerHttpClient = buildOuterHttpClient(konnektorProxyAddress);
 
     var authorizationService =
-        buildAuthorizationService(innerVauClient, outerHttpClient, konnektorService, card);
+        buildAuthorizationService(
+            tiTrustStore, innerVauClient, outerHttpClient, konnektorService, card);
 
     var client =
         new SoapClientFactory(
@@ -99,6 +101,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
   }
 
   private static AuthorizationService buildAuthorizationService(
+      KeyStore telematikTrustStore,
       com.oviva.telematik.vau.httpclient.HttpClient innerVauClient,
       HttpClient outerHttpClient,
       KonnektorService konnektorService,
@@ -107,7 +110,9 @@ public class Epa4AllClientFactory implements AutoCloseable {
     var signer = new EccSignatureAdapter(konnektorService, card);
 
     var authnChallengeResponder =
-        new AuthnChallengeResponder(signer, new OidcClient(outerHttpClient));
+        new AuthnChallengeResponder(
+            signer,
+            new OidcClient(outerHttpClient, new OidcDiscoveryValidatorImpl(telematikTrustStore)));
     var authnClientAttester = new AuthnClientAttester(signer);
     return new AuthorizationService(
         innerVauClient, outerHttpClient, authnChallengeResponder, authnClientAttester);
@@ -203,13 +208,13 @@ public class Epa4AllClientFactory implements AutoCloseable {
 
   private static HttpClient buildOuterHttpClient(InetSocketAddress konnektorProxyAddress) {
     try {
-      return buildOuterHttpClient(konnektorProxyAddress, SSLContext.getDefault());
+      return buildOuterHttpClientWithTlsContext(konnektorProxyAddress, SSLContext.getDefault());
     } catch (NoSuchAlgorithmException e) {
       throw new ClientException("failed creating client", e);
     }
   }
 
-  private static HttpClient buildOuterHttpClient(
+  private static HttpClient buildOuterHttpClientWithTlsContext(
       InetSocketAddress konnektorProxyAddress, SSLContext sslContext) {
 
     return HttpClient.newBuilder()

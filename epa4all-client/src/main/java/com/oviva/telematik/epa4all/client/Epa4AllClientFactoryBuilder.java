@@ -72,9 +72,9 @@ public class Epa4AllClientFactoryBuilder {
     if (providedTrustStore != null) {
       return providedTrustStore;
     } else if (isPu) {
-      return TelematikTrustRoots.loadPuTruststore();
+      return TelematikTrustRoots.loadPuTrustStore();
     } else {
-      return TelematikTrustRoots.loadRuTruststore();
+      return TelematikTrustRoots.loadRuTrustStore();
     }
   }
 }

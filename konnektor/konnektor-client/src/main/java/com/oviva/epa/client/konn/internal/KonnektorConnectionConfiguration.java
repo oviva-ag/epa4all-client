@@ -38,7 +38,12 @@ public record KonnektorConnectionConfiguration(
       // 'TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384',
       // 'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA',
       // 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA']")
-      List<String> ciphersuites) {}
+      List<String> ciphersuites,
+      /*
+       * Subject Alternative Name (SAN) for hostname verification - usually on konnektor is only
+       * reachable by IP
+       */
+      String subjectAlternativeName) {}
 
   public record ProxyAddressConfig(String address, Integer port, boolean enabled) {}
 

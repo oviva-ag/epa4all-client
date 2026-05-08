@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
+import com.oviva.epa.client.konn.internal.util.NaiveTrustManager;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -78,7 +79,8 @@ class KonnektorServiceAcceptanceTest {
             .clientKeys(keys)
             .konnektorUri(uri)
             .proxyServer(PROXY_ADDRESS, PROXY_PORT)
-            .trustAllServers() // currently we don't validate the server's certificate
+            .trustManagers(
+                List.of(new NaiveTrustManager())) // ignoring server-certificate for testing
             .build();
 
     var conn = cf.connect();

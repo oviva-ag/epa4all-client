@@ -3,8 +3,8 @@ package com.oviva.telematik.vau.epa4all.client.authz.internal;
 import static java.util.function.Predicate.not;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.GeneralException;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
@@ -24,9 +24,11 @@ import java.time.Instant;
 public class OidcClient {
 
   private final HttpClient httpClient;
+  private final DiscoveryValidator discoveryValidator;
 
-  public OidcClient(HttpClient httpClient) {
+  public OidcClient(HttpClient httpClient, DiscoveryValidator discoveryValidator) {
     this.httpClient = httpClient;
+    this.discoveryValidator = discoveryValidator;
   }
 
   public record OidcDiscoveryResponse(
@@ -71,17 +73,19 @@ public class OidcClient {
                         "Missing content-type header in discovery document response"));
 
     if (contentType.equals("application/jwt")) {
-      return parseFromJwt(response.body());
-    } else if (contentType.equals(MimeTypes.APPLICATION_JSON)) {
-      return JsonCodec.readString(response.body(), OidcDiscoveryResponse.class);
+      return verifyAndParse(response.body());
     }
     throw new AuthorizationException(
         "Unsupported content-type in discovery document response: " + contentType);
   }
 
-  private OidcDiscoveryResponse parseFromJwt(String jwt) {
+  private OidcDiscoveryResponse verifyAndParse(String jwt) {
     try {
-      var payload = JWSObject.parse(jwt).getPayload();
+
+      // establish trust in the discovery document
+      discoveryValidator.validate(SignedJWT.parse(jwt));
+
+      var payload = SignedJWT.parse(jwt).getPayload();
       return JsonCodec.readBytes(payload.toBytes(), OidcDiscoveryResponse.class);
     } catch (ParseException e) {
       throw new AuthorizationException("Failed to parse JWT", e);
@@ -136,5 +140,9 @@ public class OidcClient {
           "Unexpected content-type in %s Set. Expected: %s, got: %s"
               .formatted(res.uri(), expectedContentType, contentType));
     }
+  }
+
+  public interface DiscoveryValidator {
+    void validate(SignedJWT jwsObject);
   }
 }

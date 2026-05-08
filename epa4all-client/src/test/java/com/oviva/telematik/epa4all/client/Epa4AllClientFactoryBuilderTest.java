@@ -79,7 +79,7 @@ class Epa4AllClientFactoryBuilderTest {
         MockedStatic<Epa4AllClientFactory> factoryMock =
             Mockito.mockStatic(Epa4AllClientFactory.class)) {
 
-      trustRoots.when(TelematikTrustRoots::loadRuTruststore).thenReturn(ruTrustStore);
+      trustRoots.when(TelematikTrustRoots::loadRuTrustStore).thenReturn(ruTrustStore);
 
       factoryMock
           .when(
@@ -112,7 +112,7 @@ class Epa4AllClientFactoryBuilderTest {
         MockedStatic<Epa4AllClientFactory> factoryMock =
             Mockito.mockStatic(Epa4AllClientFactory.class)) {
 
-      trustRoots.when(TelematikTrustRoots::loadPuTruststore).thenReturn(puTrustStore);
+      trustRoots.when(TelematikTrustRoots::loadPuTrustStore).thenReturn(puTrustStore);
 
       factoryMock
           .when(
