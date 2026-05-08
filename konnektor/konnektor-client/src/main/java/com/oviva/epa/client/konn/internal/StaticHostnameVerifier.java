@@ -2,7 +2,6 @@ package com.oviva.epa.client.konn.internal;
 
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -26,26 +25,26 @@ class StaticHostnameVerifier implements HostnameVerifier {
     try {
       // throws if cert is otherwise invalid
       var peerCertificates = session.getPeerCertificates();
+      if (peerCertificates == null || peerCertificates.length == 0) {
+        return false;
+      }
+
+      if (!(peerCertificates[0] instanceof X509Certificate leaf)) {
+        return false;
+      }
 
       // we allow the special SAN to be used as the hostname of the server
-      return Arrays.stream(peerCertificates)
-          .filter(X509Certificate.class::isInstance)
-          .map(c -> (X509Certificate) c)
-          .anyMatch(
-              c -> {
-                try {
-                  var sans = c.getSubjectAlternativeNames();
-                  if (sans == null) {
-                    return false;
-                  }
-                  return sans.stream().anyMatch(this::matchesDnsSubjectAlternateName);
-                } catch (CertificateParsingException e) {
-                  logger.error(
-                      "failed to parse peer certificate: %s".formatted(c.getSubjectX500Principal()),
-                      e);
-                  return false;
-                }
-              });
+      try {
+        var sans = leaf.getSubjectAlternativeNames();
+        if (sans == null) {
+          return false;
+        }
+        return sans.stream().anyMatch(this::matchesDnsSubjectAlternateName);
+      } catch (CertificateParsingException e) {
+        logger.error(
+            "failed to parse peer certificate: %s".formatted(leaf.getSubjectX500Principal()), e);
+        return false;
+      }
     } catch (SSLPeerUnverifiedException e) {
       logger.error("unverified peer", e);
       return false;

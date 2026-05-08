@@ -74,7 +74,7 @@ class StaticHostnameVerifierTest {
   }
 
   @Test
-  void verify_returnsTrue_whenMatchingCertAmongMultiple() throws Exception {
+  void verify_returnsFalse_whenMatchingCertInIntermediate() throws Exception {
     var cert1 = mock(X509Certificate.class);
     var cert2 = mock(X509Certificate.class);
     when(session.getPeerCertificates())
@@ -84,7 +84,7 @@ class StaticHostnameVerifierTest {
     when(cert2.getSubjectAlternativeNames())
         .thenReturn(List.of(List.of(GeneralName.dNSName, KONNEKTOR_DNS_SAN)));
 
-    assertTrue(verifier.verify("hostname", session));
+    assertFalse(verifier.verify("hostname", session));
   }
 
   @Test

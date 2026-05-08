@@ -12,6 +12,8 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.interfaces.ECPublicKey;
 import java.text.ParseException;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -50,7 +52,10 @@ public class OidcDiscoveryValidatorImpl implements OidcClient.DiscoveryValidator
   private X509Certificate signingCertificcate(SignedJWT jwt) {
 
     var x5cRaw =
-        jwt.getHeader().getX509CertChain().stream()
+        Optional.ofNullable(jwt.getHeader())
+            .map(h -> h.getX509CertChain())
+            .orElse(List.of())
+            .stream()
             // the first one MUST be the one used for signing
             // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.6
             .findFirst()

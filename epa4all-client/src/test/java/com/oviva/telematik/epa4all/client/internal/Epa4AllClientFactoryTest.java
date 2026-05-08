@@ -169,8 +169,10 @@ class Epa4AllClientFactoryTest {
   @Test
   void create_noCardsFound_throwsEpa4AllClientException() throws NoSuchAlgorithmException {
     var proxyAddr = new InetSocketAddress("127.0.0.1", 9999);
+
     var ks = mock(KonnektorService.class);
     when(ks.listSmcbCards()).thenReturn(List.of());
+
     var trustStore = mock(KeyStore.class);
     var proxyListenAddr = new InetSocketAddress("127.0.0.1", 18080);
 
@@ -184,6 +186,7 @@ class Epa4AllClientFactoryTest {
           .when(() -> SslContextBuilder.buildSslContext(any()))
           .thenReturn(SSLContext.getDefault());
 
+      // When & Then
       assertThrows(
           Epa4AllClientException.class,
           () -> Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, null));
