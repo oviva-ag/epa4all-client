@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 public class KeyStores {
 
@@ -27,11 +29,7 @@ public class KeyStores {
       var keyFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
       keyFactory.init(ks, password != null ? password.toCharArray() : null);
       return Arrays.asList(keyFactory.getKeyManagers());
-    } catch (NoSuchAlgorithmException
-        | IOException
-        | KeyStoreException
-        | CertificateException
-        | UnrecoverableKeyException e) {
+    } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
       throw new IllegalArgumentException(
           "failed to load keys from '%s', absolute path '%s'"
               .formatted(keystoreFile, keystoreFile.toAbsolutePath()),
@@ -39,9 +37,23 @@ public class KeyStores {
     }
   }
 
+  @Nullable
+  public static TrustManager convertToTrustManager(@Nullable KeyStore trustStore) {
+    try {
+      if (trustStore == null) {
+        return null;
+      }
+
+      var tmf = TrustManagerFactory.getInstance("PKIX");
+      tmf.init(trustStore);
+      return tmf.getTrustManagers()[0];
+    } catch (KeyStoreException | NoSuchAlgorithmException e) {
+      throw new IllegalStateException("failed to initialize TrustManager from KeyStore", e);
+    }
+  }
+
   @NonNull
-  private static KeyStore loadPkcs12KeyStore(@NonNull Path keystoreFile, @Nullable String password)
-      throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException {
+  public static KeyStore loadPkcs12KeyStore(@NonNull Path keystoreFile, @Nullable String password) {
 
     try (var is = Files.newInputStream(keystoreFile)) {
 
@@ -49,6 +61,8 @@ public class KeyStores {
       keyStore.load(is, password != null ? password.toCharArray() : null);
 
       return keyStore;
+    } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException e) {
+      throw new IllegalStateException("failed to load keystore: " + keystoreFile, e);
     }
   }
 }

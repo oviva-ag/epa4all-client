@@ -88,6 +88,6 @@ class KonnektorConnectionFactoryImplTest {
       String uriStr, String san, List<TrustManager> trustManagers) {
     var tlsConfig =
         new KonnektorConnectionConfiguration.TlsConfig(List.of(), trustManagers, List.of(), san);
-    return new KonnektorConnectionConfiguration(URI.create(uriStr), tlsConfig, null, null);
+    return new KonnektorConnectionConfiguration(URI.create(uriStr), tlsConfig, null);
   }
 }
