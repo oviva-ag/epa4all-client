@@ -14,7 +14,7 @@
 
     <version.maven-surefire-plugin>3.5.1</version.maven-surefire-plugin>
 
-    <slf4j.version>2.0.16</slf4j.version>
+    <slf4j.version>2.0.18</slf4j.version>
     <bouncycastle.version>1.84</bouncycastle.version>
   </properties>
 
@@ -23,7 +23,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>2.18.0</version>
+        <version>2.21.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -57,19 +57,19 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>2.0.17</version>
+      <version>${slf4j.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.11.3</version>
+      <version>6.0.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-bom</artifactId>
-      <version>5.14.2</version>
+      <version>5.23.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>

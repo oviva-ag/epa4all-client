@@ -65,7 +65,7 @@
     <jacoco.version>0.8.14</jacoco.version>
 
     <spotless.version>3.4.0</spotless.version>
-    <slf4j.version>2.0.17</slf4j.version>
+    <slf4j.version>2.0.18</slf4j.version>
     <!-- apache-cxf 4.1.x is incompatible-->
     <apache-cxf.version>4.2.0</apache-cxf.version>
     <cxf-xjc.version>4.1.2</cxf-xjc.version>
@@ -157,7 +157,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>2.21.2</version>
+        <version>2.21.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -169,12 +169,12 @@
       <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>oauth2-oidc-sdk</artifactId>
-        <version>11.37</version>
+        <version>11.37.1</version>
       </dependency>
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-api</artifactId>
-        <version>1.61.0</version>
+        <version>1.62.0</version>
       </dependency>
 
       <dependency>
@@ -206,7 +206,7 @@
       <dependency>
         <groupId>io.undertow</groupId>
         <artifactId>undertow-core</artifactId>
-        <version>2.3.24.Final</version>
+        <version>2.4.0.Final</version>
       </dependency>
 
     </dependencies>
