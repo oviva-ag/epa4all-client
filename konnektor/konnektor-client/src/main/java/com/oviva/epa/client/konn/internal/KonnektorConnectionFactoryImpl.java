@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import javax.net.ssl.*;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.ext.logging.event.EventType;
 import org.apache.cxf.ext.logging.event.LogEvent;
@@ -99,8 +98,6 @@ public class KonnektorConnectionFactoryImpl implements KonnektorConnectionFactor
       configureTls(sdsHttpConduit);
     }
 
-    configureBasicAuthenticationIfEnabled(sdsHttpConduit);
-
     configureProxyIfEnabled(sdsHttpConduit);
 
     return sdsApi;
@@ -144,8 +141,6 @@ public class KonnektorConnectionFactoryImpl implements KonnektorConnectionFactor
     if (isTlsPreferred) {
       configureTls(httpConduit);
     }
-
-    configureBasicAuthenticationIfEnabled(httpConduit);
 
     configureProxyIfEnabled(httpConduit);
 
@@ -274,20 +269,6 @@ public class KonnektorConnectionFactoryImpl implements KonnektorConnectionFactor
     tlsParams.setKeyManagers(tlsConfig.keyManagers().toArray(new KeyManager[0]));
     tlsParams.setCipherSuites(tlsConfig.ciphersuites());
     httpConduit.setTlsClientParameters(tlsParams);
-  }
-
-  private void configureBasicAuthenticationIfEnabled(HTTPConduit httpConduit) {
-    Optional.ofNullable(configuration.basicAuthentication())
-        .filter(KonnektorConnectionConfiguration.BasicAuthenticationConfig::enabled)
-        .ifPresent(
-            ba -> {
-              var authorizationPolicy = new AuthorizationPolicy();
-              authorizationPolicy.setUserName(Objects.requireNonNull(ba.username()));
-              authorizationPolicy.setPassword(Objects.requireNonNull(ba.password()));
-              authorizationPolicy.setAuthorizationType("Basic");
-
-              httpConduit.setAuthorization(authorizationPolicy);
-            });
   }
 
   private void configureProxyIfEnabled(HTTPConduit httpConduit) {

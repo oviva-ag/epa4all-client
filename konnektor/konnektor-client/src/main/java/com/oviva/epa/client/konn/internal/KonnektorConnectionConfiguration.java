@@ -24,10 +24,7 @@ import javax.net.ssl.TrustManager;
 public record KonnektorConnectionConfiguration(
 
     /** the URI to the Konnektor APIs (Fachmodule) */
-    URI uri,
-    TlsConfig tlsConfig,
-    ProxyAddressConfig proxyAddress,
-    BasicAuthenticationConfig basicAuthentication) {
+    URI uri, TlsConfig tlsConfig, ProxyAddressConfig proxyAddress) {
 
   public record TlsConfig(
       List<KeyManager> keyManagers,

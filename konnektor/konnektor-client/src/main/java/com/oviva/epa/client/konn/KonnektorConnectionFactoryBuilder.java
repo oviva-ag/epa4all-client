@@ -1,7 +1,6 @@
 package com.oviva.epa.client.konn;
 
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration;
-import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.BasicAuthenticationConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.ProxyAddressConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionConfiguration.TlsConfig;
 import com.oviva.epa.client.konn.internal.KonnektorConnectionFactoryImpl;
@@ -32,9 +31,9 @@ public class KonnektorConnectionFactoryBuilder {
           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA");
 
   private URI uri = null;
+  private String servername = DEFAULT_KONNEKTOR_DNS_SAN;
   private TlsConfig tlsConfig = null;
   private ProxyAddressConfig proxyAddress = null;
-  private BasicAuthenticationConfig basicAuthentication = null;
 
   private List<String> ciphersuites = DEFAULT_TLS_CIPHERSUITES;
   private List<KeyManager> keyManagers = null;
@@ -68,15 +67,14 @@ public class KonnektorConnectionFactoryBuilder {
   }
 
   @NonNull
-  public KonnektorConnectionFactoryBuilder tlsCiphersuites(@NonNull List<String> ciphersuites) {
-    this.ciphersuites = ciphersuites;
+  public KonnektorConnectionFactoryBuilder konnektorServername(@NonNull String servername) {
+    this.servername = servername;
     return this;
   }
 
   @NonNull
-  public KonnektorConnectionFactoryBuilder basicAuthentication(
-      @NonNull String username, @NonNull String password) {
-    this.basicAuthentication = new BasicAuthenticationConfig(username, password, true);
+  public KonnektorConnectionFactoryBuilder tlsCiphersuites(@NonNull List<String> ciphersuites) {
+    this.ciphersuites = ciphersuites;
     return this;
   }
 
@@ -118,11 +116,10 @@ public class KonnektorConnectionFactoryBuilder {
       var kms = Optional.ofNullable(this.keyManagers).orElse(List.of());
       var tms = Optional.ofNullable(this.trustManagers).orElse(List.of());
 
-      tlsConfig = new TlsConfig(kms, tms, ciphersuites, DEFAULT_KONNEKTOR_DNS_SAN);
+      tlsConfig = new TlsConfig(kms, tms, ciphersuites, servername);
     }
 
-    var cfg =
-        new KonnektorConnectionConfiguration(uri, tlsConfig, proxyAddress, basicAuthentication);
+    var cfg = new KonnektorConnectionConfiguration(uri, tlsConfig, proxyAddress);
     return new KonnektorConnectionFactoryImpl(cfg);
   }
 }

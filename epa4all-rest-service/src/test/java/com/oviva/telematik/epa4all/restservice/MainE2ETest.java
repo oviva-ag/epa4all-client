@@ -56,9 +56,9 @@ class MainE2ETest {
         .header("Content-Type", "application/json")
         .post("/documents")
         .then()
-        .statusCode(200)
         .log()
-        .all();
+        .ifValidationFails()
+        .statusCode(200);
   }
 
   @Test

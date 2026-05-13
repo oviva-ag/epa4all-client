@@ -128,12 +128,13 @@ public class Main implements AutoCloseable {
     return KonnektorConnectionFactoryBuilder.newBuilder()
         .clientKeys(cfg.clientKeys())
         .konnektorUri(cfg.konnektorUri())
+        .konnektorServername(cfg.konnektorServername())
         .proxyServer(cfg.proxyAddress(), cfg.proxyPort())
-        .trustManagers(loadTrustManagers(cfg.environment()))
+        .trustManagers(cfg.konnektorTruststores())
         .build();
   }
 
-  private List<TrustManager> loadTrustManagers(Environment env) {
+  private List<TrustManager> loadTelematikTrustManagers(Environment env) {
     return switch (env) {
       case PU -> List.of(TelematikTrustRoots.createPuTrustManager());
       case RU -> List.of(TelematikTrustRoots.createRuTrustManager());
@@ -142,6 +143,8 @@ public class Main implements AutoCloseable {
 
   record Config(
       URI konnektorUri,
+      String konnektorServername,
+      List<TrustManager> konnektorTruststores,
       String proxyAddress,
       int proxyPort,
       List<KeyManager> clientKeys,
@@ -156,10 +159,46 @@ public class Main implements AutoCloseable {
 
   private Config loadConfig(ConfigProvider configProvider) {
 
+    var environment =
+        configProvider
+            .get("environment")
+            .map(String::toUpperCase)
+            .map(Environment::valueOf)
+            .orElse(Environment.PU);
+
     var address = configProvider.get("address").orElse("0.0.0.0");
     var port = configProvider.get("port").map(Integer::parseInt).orElse(8080);
 
     var uri = mustLoad("konnektor.uri").map(URI::create).orElseThrow();
+
+    var servername =
+        configProvider
+            .get("konnektor.servername")
+            .map(String::strip)
+            .filter(s -> !s.isBlank())
+            // https://gemspec.gematik.de/docs/gemKPT/gemKPT_Arch_TIP/gemKPT_Arch_TIP_V2.10.0/#TIP1-A_6716
+            // Der Produkttyp Konnektor MUSS es Clientsystemen ermöglichen, die LAN-seitige
+            // IP-Adresse des Konnektors durch Abfrage des fest vorgegebenen FQDN "konnektor.konlan"
+            // aufzulösen.
+            .orElse("konnektor.konlan");
+
+    var konnektorTrustStorePassword =
+        configProvider
+            .get("konnektor.truststore.password")
+            .map(String::strip)
+            .filter(s -> !s.isBlank())
+            .orElse("changeit");
+
+    var konnektorTruststores =
+        configProvider
+            .get("konnektor.truststore.path")
+            .map(String::strip)
+            .filter(s -> !s.isBlank())
+            .map(Path::of)
+            .map(p -> KeyStores.loadPkcs12KeyStore(p, konnektorTrustStorePassword))
+            .map(KeyStores::convertToTrustManager)
+            .map(List::of)
+            .orElse(loadTelematikTrustManagers(environment));
 
     var proxyAddress = configProvider.get("proxy.address").orElse(null);
 
@@ -183,13 +222,6 @@ public class Main implements AutoCloseable {
 
     var user = configProvider.get("user.id").orElse("admin");
 
-    var environment =
-        configProvider
-            .get("environment")
-            .map(String::toUpperCase)
-            .map(Environment::valueOf)
-            .orElse(Environment.PU);
-
     var telematikId =
         configProvider
             .get("telematik.id")
@@ -199,6 +231,8 @@ public class Main implements AutoCloseable {
 
     return new Config(
         uri,
+        servername,
+        konnektorTruststores,
         proxyAddress,
         proxyPort,
         keys,
