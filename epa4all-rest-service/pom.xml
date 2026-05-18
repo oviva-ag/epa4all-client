@@ -48,7 +48,6 @@
     <dependency>
       <groupId>com.oviva.telematik</groupId>
       <artifactId>epa4all-client</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>

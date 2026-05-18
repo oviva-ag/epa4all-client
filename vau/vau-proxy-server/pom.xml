@@ -14,14 +14,12 @@
   <properties></properties>
   <dependencies>
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>com.oviva.telematik</groupId>
       <artifactId>vau-httpclient</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>com.oviva.telematik</groupId>
       <artifactId>epa4all-vau-client</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>
