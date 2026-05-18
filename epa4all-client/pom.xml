@@ -32,17 +32,14 @@
     <dependency>
       <groupId>com.oviva.telematik</groupId>
       <artifactId>epa4all-vau-client</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.oviva.telematik</groupId>
       <artifactId>epa4all-phr-client</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.oviva.telematik</groupId>
       <artifactId>vau-proxy-server</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>
