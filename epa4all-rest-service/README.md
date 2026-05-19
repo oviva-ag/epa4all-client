@@ -2,6 +2,10 @@
 
 Small wrapper around the epa4all client library.
 
+> [!CAUTION]
+> The rest adapter does not support any authentication nor authorization. It must be used in a trusted environment, e.g.
+> as a Kubernetes side-car or with a reverse proxy.
+
 ### API Specification
 
 **[openapi.yaml](./src/main/resources/META-INF/openapi/openapi.yaml)**
@@ -25,7 +29,7 @@ curl -X 'POST' \
 
 #### PU with jumphost
 > [!WARNING]  
-> This is the example for PRODUCTION. Handle with care ;)
+> This is the example for PRODUCTION. This is assumed to run in a trusted environment.
 ```shell
 docker run --rm \
   -e 'EPA4ALL_KONNEKTOR_URI=https://10.156.120.103:443' \
