@@ -48,6 +48,9 @@ docker run --rm \
   ghcr.io/oviva-ag/epa4all-rest-service:latest
 ```
 
+> [!CAUTION]
+> The rest adapter does not support any authentication nor authorization. It must be used in a trusted environment, e.g. as a Kubernetes side-car or with a reverse proxy.
+
 ## docker-compose with userspace wireguard
 This would be an example on how to run the epa4all-rest-service with a VPN connection to the Konnektor. The VPN connection is established via a userspace wireguard implementation. The service uses the network stack of the VPN container.
 To achieve this, not setting the `EPA4ALL_PROXY_ADDRESS` is enough.
