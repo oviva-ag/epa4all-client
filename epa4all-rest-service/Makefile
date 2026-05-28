@@ -1,8 +1,7 @@
-
 VERSION?=$(shell mvn -q -Dexec.executable=echo -Dexec.args='$${project.version}' --non-recursive exec:exec)
 IMAGE_NAME=$(shell mvn -q -Dexec.executable=echo -Dexec.args='$${project.artifactId}' --non-recursive exec:exec)
 
-DOCKER_REPO=ghcr.io/oviva-ag/
+DOCKER_REPO=europe-docker.pkg.dev/oviva-pkg/ovi/
 
 GIT_COMMIT=`git rev-parse HEAD`
 
