@@ -11,6 +11,9 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -46,12 +49,18 @@ jobs:
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
       # release the corresponding docker image
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        id: auth
+        uses: google-github-actions/auth@v3
         with:
+          token_format: access_token
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      - name: Configure Docker for GAR
-        run: gcloud auth configure-docker europe-docker.pkg.dev --quiet
+          service_account: gh-wi-main-registry-writer@github-actions-sa.iam.gserviceaccount.com
+      - name: Login to Google Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: europe-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - id: buildx
