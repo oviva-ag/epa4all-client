@@ -26,16 +26,19 @@ public class Epa4allClientService {
   private final InetSocketAddress tiProxyAddress;
   private final Environment environment;
   private final String telematikId;
+  private final String authorSpecialty;
 
   public Epa4allClientService(
       KonnektorServiceFactory konnektorServiceProvider,
       InetSocketAddress tiProxyAddress,
       Environment environment,
-      String telematikId) {
+      String telematikId,
+      String authorSpecialty) {
     this.konnektorServiceProvider = konnektorServiceProvider;
     this.tiProxyAddress = tiProxyAddress;
     this.environment = environment;
     this.telematikId = telematikId;
+    this.authorSpecialty = authorSpecialty;
   }
 
   public Epa4allClientService.WriteDocumentResponse writeDocument(
@@ -146,7 +149,7 @@ public class Epa4allClientService {
                 // wie sie z. B. auf der SMC-B-Karte enthalten ist
                 List.of(authorInstitution),
                 List.of("12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO"),
-                List.of("25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO"),
+                List.of(authorSpecialty),
                 List.of())),
         "AVAILABLE",
         null,
