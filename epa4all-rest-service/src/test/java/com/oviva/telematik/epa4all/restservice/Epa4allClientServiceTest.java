@@ -40,7 +40,7 @@ class Epa4allClientServiceTest {
     proxy = new InetSocketAddress("127.0.0.1", 3128);
     environment = Environment.RU;
     telematikId = "test-telematik-id";
-    authorSpecialty = "12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO";
+    authorSpecialty = "25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO";
   }
 
   @Test

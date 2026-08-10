@@ -36,7 +36,7 @@ docker run --rm \
   -e 'EPA4ALL_PROXY_ADDRESS=<my proxy IP address>' \
   -e 'EPA4ALL_CREDENTIALS_PATH=/credentials.p12' \
   -e 'EPA4ALL_CREDENTIALS_PASSWORD=<my password>' \
-  -e 'EPA4ALL_AUTHOR_SPECIALTY=12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO' \
+  -e 'EPA4ALL_AUTHOR_SPECIALTY=25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO' \
   -e 'EPA4ALL_ENVIRONMENT=PU' \
   -v './credentials.p12:/credentials.p12' \
   -p '8080:8080' \

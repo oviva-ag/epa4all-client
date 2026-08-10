@@ -111,7 +111,7 @@ class MainTest {
                 Map.entry("port", "9090"),
                 Map.entry("environment", "RU"),
                 Map.entry("telematik.id", "TID-123"),
-                Map.entry("author.specialty", "12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO")));
+                Map.entry("author.specialty", "25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO")));
 
     var main = new Main(cfg);
     var result = invokeLoadConfig(main, cfg);
@@ -172,7 +172,7 @@ class MainTest {
                 Map.entry("proxy.port", "9999"),
                 Map.entry("environment", "RU"),
                 Map.entry("telematik.id", "TID-XYZ"),
-                Map.entry("author.specialty", "12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO")));
+                Map.entry("author.specialty", "25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO")));
 
     var main = new Main(cfg);
     var config = invokeLoadConfig(main, cfg);
