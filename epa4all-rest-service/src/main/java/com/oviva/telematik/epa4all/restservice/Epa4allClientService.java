@@ -149,6 +149,8 @@ public class Epa4allClientService {
                 // wie sie z. B. auf der SMC-B-Karte enthalten ist
                 List.of(authorInstitution),
                 List.of("12^^^&amp;1.3.6.1.4.1.19376.3.276.1.5.13&amp;ISO"),
+                // authorSpecialty OIDs:
+                // https://gemspec.gematik.de/docs/gemSpec/gemSpec_DM_ePA_EU-Pilot/gemSpec_DM_ePA_EU-Pilot_V1.53.1/#5
                 List.of(authorSpecialty),
                 List.of())),
         "AVAILABLE",
