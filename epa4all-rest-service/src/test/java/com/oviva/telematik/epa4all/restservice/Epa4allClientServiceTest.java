@@ -32,6 +32,7 @@ class Epa4allClientServiceTest {
   private InetSocketAddress proxy;
   private Environment environment;
   private String telematikId;
+  private String authorSpecialty;
 
   @BeforeEach
   void setup() {
@@ -39,6 +40,7 @@ class Epa4allClientServiceTest {
     proxy = new InetSocketAddress("127.0.0.1", 3128);
     environment = Environment.RU;
     telematikId = "test-telematik-id";
+    authorSpecialty = "25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO";
   }
 
   @Test
@@ -64,7 +66,7 @@ class Epa4allClientServiceTest {
 
       when(factory.newClient()).thenReturn(client);
 
-      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId);
+      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
       assertTrue(service.isHealthy());
     }
@@ -93,7 +95,7 @@ class Epa4allClientServiceTest {
 
       when(factory.newClient()).thenReturn(client);
 
-      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId);
+      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
       assertFalse(service.isHealthy());
     }
@@ -121,7 +123,7 @@ class Epa4allClientServiceTest {
       when(builder.build()).thenReturn(factory);
       when(factory.newClient()).thenReturn(client);
 
-      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId);
+      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
       var kvnr = "X123456789";
       var mime = "text/plain";
@@ -158,7 +160,7 @@ class Epa4allClientServiceTest {
       when(builder.build()).thenReturn(factory);
       when(factory.newClient()).thenReturn(client);
 
-      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId);
+      var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
       var kvnr = "X123456789";
       var mime = "text/plain";
@@ -176,7 +178,7 @@ class Epa4allClientServiceTest {
 
   @Test
   void writeDocument_shouldValidateInputs() {
-    var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId);
+    var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
     assertThrows(BadRequestException.class, () -> service.writeDocument(null, "m", new byte[0]));
     assertThrows(BadRequestException.class, () -> service.writeDocument("kvnr", null, new byte[0]));
@@ -185,7 +187,7 @@ class Epa4allClientServiceTest {
 
   @Test
   void replaceDocument_shouldValidateInputs() {
-    var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId);
+    var service = new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
     assertThrows(
         BadRequestException.class,
