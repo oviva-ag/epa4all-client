@@ -131,6 +131,23 @@ class MainTest {
   }
 
   @Test
+  void loadConfig_acceptsRefEnvironment() throws Exception {
+    var keystore = createEmptyPkcs12(tempDir.resolve("keys-ref.p12"), "0000");
+
+    var cfg =
+        mapProvider(
+            Map.of(
+                "konnektor.uri", "https://example.org:443",
+                "credentials.path", keystore.toString(),
+                "environment", "REF"));
+
+    var main = new Main(cfg);
+    var result = invokeLoadConfig(main, cfg);
+
+    assertEquals(Environment.REF, result.environment());
+  }
+
+  @Test
   void loadConfig_missingKonnektorUri_throws() {
     var keystore = createEmptyPkcs12(tempDir.resolve("keys-missing-uri.p12"), "0000");
     var cfg = mapProvider(Map.of("credentials.path", keystore.toString()));
