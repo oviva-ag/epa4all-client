@@ -137,7 +137,7 @@ public class Main implements AutoCloseable {
   private List<TrustManager> loadTelematikTrustManagers(Environment env) {
     return switch (env) {
       case PU -> List.of(TelematikTrustRoots.createPuTrustManager());
-      case RU -> List.of(TelematikTrustRoots.createRuTrustManager());
+      case REF, RU -> List.of(TelematikTrustRoots.createRuTrustManager());
     };
   }
 

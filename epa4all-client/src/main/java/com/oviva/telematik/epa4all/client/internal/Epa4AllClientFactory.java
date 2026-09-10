@@ -182,6 +182,7 @@ public class Epa4AllClientFactory implements AutoCloseable {
         switch (environment) {
           case PU -> InformationService.Environment.PU;
           case RU -> InformationService.Environment.DEV;
+          case REF -> InformationService.Environment.REF;
         };
 
     return new InformationService(outerHttpClient, informationServiceEnvironment, providers);
