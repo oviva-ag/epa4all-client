@@ -23,10 +23,9 @@ class E2eEpa4AllClientImplTest {
   private static final int KONNEKTOR_PROXY_PORT = 3128;
 
   @Test
-  void writeDocument() {
+  void writeDocument_RU() {
 
-    var telematikIdTinaGraefin = "9-SMC-B-Testkarte-883110000145356";
-    var telematikIdFeliGraefin = "9-SMC-B-Testkarte-883110000157665";
+    var telematikIdSmB = "9-2.282.42015942"; // Oviva Direkt Hypertension TEST
 
     System.setProperty("jdk.httpclient.HttpClient.log", "errors,requests,headers");
 
@@ -34,13 +33,12 @@ class E2eEpa4AllClientImplTest {
         Epa4AllClientFactoryBuilder.newBuilder()
             .konnektorProxyAddress(
                 new InetSocketAddress(KONNEKTOR_PROXY_HOST, KONNEKTOR_PROXY_PORT))
-            .konnektorService(TestKonnektors.riseKonnektor_RU())
-            .telematikId(telematikIdTinaGraefin)
+            .konnektorService(TestKonnektors.infitityGate_RU())
+            .telematikId(telematikIdSmB)
             .environment(Environment.RU)
             .build()) {
 
-      // Oviva RISE FdV
-      final var insurantId = "X110661675";
+      final var insurantId = "X110674241"; // IBM Kollaborationsakte
 
       var client = cf.newClient();
 

@@ -19,25 +19,26 @@ import org.apache.commons.io.IOUtils;
 
 public class TestKonnektors {
 
-  public static KonnektorService riseKonnektor_RU() {
+  public static KonnektorService infitityGate_RU() {
 
     try {
       var proxyAdress = "127.0.0.1";
       var proxyPort = 3128;
 
-      var tiKonnektorUri = "https://10.156.145.103:443";
-      var keystoreFile = "keys/konnektor_keys.p12";
+      var tiKonnektorUri = "https://10.29.128.239:443";
+      var keystoreFile = "keys/c01.p12";
       var keystorePassword = "0000";
-      var workplaceId = "a";
-      var clientSystemId = "c";
-      var mandantId = "m";
+      var workplaceId = "w01";
+      var clientSystemId = "c01";
+      var mandantId = "m01";
       var userId = "admin";
 
-      // these are the TLS client credentials as received from the Konnektor provider (e.g. RISE)
+      // these are the TLS client credentials as received from the Konnektor provider
       var keys = loadKeys(keystoreFile, keystorePassword);
       var uri = URI.create(tiKonnektorUri);
 
       var tm = TelematikTrustRoots.createRuTrustManager();
+
       var cf =
           KonnektorConnectionFactoryBuilder.newBuilder()
               .clientKeys(keys)
