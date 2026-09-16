@@ -84,4 +84,4 @@ docker run --rm \
 | `EPA4ALL_ENVIRONMENT`*                  | The telematik environment, either RU or PU.                                                 | `PU`                                       | 
 | `EPA4ALL_TELEMETRY_OPTOUT`              | Basic telemetry to help with development.                                                   | `false`                                    | 
 | `EPA4ALL_TELEMATIK_ID`                  | The telematik id of the SMC-B card                                                          |                                            | 
-| `EPA4ALL_AUTHOR_SPECIALTY`              | The author specialty OID.                                                                   | `25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO` | 
+| `EPA4ALL_AUTHOR_SPECIALTY`              | The [author specialty OID](https://gemspec.gematik.de/docs/gemSpec/gemSpec_DM_ePA_EU-Pilot/gemSpec_DM_ePA_EU-Pilot_V1.53.1/#5). | `25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO` | 
