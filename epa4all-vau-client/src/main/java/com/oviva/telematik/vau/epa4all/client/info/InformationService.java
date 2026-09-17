@@ -69,7 +69,7 @@ public class InformationService {
   }
 
   public enum Environment {
-    //    RU("ref"), // RU is not the actual RU but something else! Use "DEV" instead.
+    REF("ref"),
     DEV("dev"), // also known as RU2
     TEST("test"),
     PU("prod");
