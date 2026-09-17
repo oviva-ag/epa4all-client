@@ -110,7 +110,8 @@ public class Main implements AutoCloseable {
         () -> buildKonnektorService(konnektorFactory, config),
         proxySocket,
         config.environment(),
-        config.telematikId());
+        config.telematikId(),
+        config.authorSpecialty());
   }
 
   private KonnektorService buildKonnektorService(
@@ -155,7 +156,8 @@ public class Main implements AutoCloseable {
       String address,
       int port,
       Environment environment,
-      String telematikId) {}
+      String telematikId,
+      String authorSpecialty) {}
 
   private Config loadConfig(ConfigProvider configProvider) {
 
@@ -229,6 +231,9 @@ public class Main implements AutoCloseable {
             .filter(s -> !s.isBlank())
             .orElse(null);
 
+    var authorSpecialty =
+        configProvider.get("author.specialty").orElse("25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO");
+
     return new Config(
         uri,
         servername,
@@ -243,7 +248,8 @@ public class Main implements AutoCloseable {
         address,
         port,
         environment,
-        telematikId);
+        telematikId,
+        authorSpecialty);
   }
 
   private Optional<String> mustLoad(String key) {
