@@ -47,7 +47,7 @@ class MainE2ETest {
   @Test
   void writeDocument() {
 
-    final var insurantId = "X110661675";
+    final var insurantId = "X110674241"; // IBM Kollaborationsakte
 
     var documentId = UUID.randomUUID();
     var content = loadDocument(documentId);
@@ -64,7 +64,7 @@ class MainE2ETest {
   @Test
   void replaceDocument() {
 
-    final var insurantId = "X110661675";
+    final var insurantId = "X110674241"; // IBM Kollaborationsakte
 
     var bundleId = UUID.randomUUID();
 
@@ -113,11 +113,15 @@ class MainE2ETest {
     config.load(
         new StringReader(
             """
-            konnektor.uri=https://10.156.145.103:443
+            konnektor.uri=https://10.29.128.239:443
             proxy.address=127.0.0.1
             port=0
             environment=RU
             log.level=DEBUG
+            credentials.path=src/test/resources/keys/c01_ehex_ru.p12
+            client_system.id=c01
+            mandant.id=m01
+            workplace.id=w01
             """));
 
     var executor = Executors.newFixedThreadPool(1);
