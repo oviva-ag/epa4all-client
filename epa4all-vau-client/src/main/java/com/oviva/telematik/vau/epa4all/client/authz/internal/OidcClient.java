@@ -86,9 +86,42 @@ public class OidcClient {
       discoveryValidator.validate(SignedJWT.parse(jwt));
 
       var payload = SignedJWT.parse(jwt).getPayload();
-      return JsonCodec.readBytes(payload.toBytes(), OidcDiscoveryResponse.class);
+      var discoveryResponse = JsonCodec.readBytes(payload.toBytes(), OidcDiscoveryResponse.class);
+
+      /*
+       * Prevent SSRF: the discovery document is otherwise trusted (valid signature from a TI
+       * IDP-Dienst certificate), but its key URIs must not be able to point anywhere other than
+       * the issuer's own host. Without this, a manipulated/malicious discovery response could
+       * redirect the subsequent, non-blind fetchJwk() request to an arbitrary host.
+       */
+      verifySameHostAsIssuer(discoveryResponse);
+
+      return discoveryResponse;
     } catch (ParseException e) {
       throw new AuthorizationException("Failed to parse JWT", e);
+    }
+  }
+
+  private void verifySameHostAsIssuer(OidcDiscoveryResponse discoveryResponse) {
+    var issuerHost =
+        discoveryResponse.issuer() != null ? discoveryResponse.issuer().getHost() : null;
+    if (issuerHost == null) {
+      throw new AuthorizationException("Discovery document is missing an issuer");
+    }
+
+    verifySameHost(issuerHost, discoveryResponse.jwksUri());
+    verifySameHost(issuerHost, discoveryResponse.uriPukIdpEnc());
+    verifySameHost(issuerHost, discoveryResponse.uriPukIdpSig());
+  }
+
+  private void verifySameHost(String issuerHost, URI uri) {
+    if (uri == null) {
+      return;
+    }
+    if (!issuerHost.equalsIgnoreCase(uri.getHost())) {
+      throw new AuthorizationException(
+          "Discovery document key URI host '%s' does not match issuer host '%s'"
+              .formatted(uri.getHost(), issuerHost));
     }
   }
 
