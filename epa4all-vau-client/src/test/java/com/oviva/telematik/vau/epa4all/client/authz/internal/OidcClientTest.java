@@ -4,6 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationException;
 import java.net.URI;
@@ -153,6 +158,63 @@ class OidcClientTest {
     assertThrows(AuthorizationException.class, () -> oidcClient.fetchOidcDiscoveryDocument(issuer));
   }
 
+  @Test
+  void fetchOidcDiscoveryDocument_jwksUriHostMismatch_throwsAuthorizationException()
+      throws Exception {
+    var issuer = URI.create("https://idp.example.test");
+    var fakeJwt =
+        buildFakeDiscoveryJwt(
+            "https://idp.example.test",
+            "https://attacker.evil.test/certs",
+            "https://idp.example.test/certs/puk_idp_enc",
+            "https://idp.example.test/certs/puk_idp_sig");
+    setupMockResponse(200, "application/jwt", fakeJwt);
+
+    assertThrows(AuthorizationException.class, () -> oidcClient.fetchOidcDiscoveryDocument(issuer));
+  }
+
+  @Test
+  void fetchOidcDiscoveryDocument_pukIdpSigHostMismatch_throwsAuthorizationException()
+      throws Exception {
+    var issuer = URI.create("https://idp.example.test");
+    var fakeJwt =
+        buildFakeDiscoveryJwt(
+            "https://idp.example.test",
+            "https://idp.example.test/certs",
+            "https://idp.example.test/certs/puk_idp_enc",
+            "https://attacker.evil.test/certs/puk_idp_sig");
+    setupMockResponse(200, "application/jwt", fakeJwt);
+
+    assertThrows(AuthorizationException.class, () -> oidcClient.fetchOidcDiscoveryDocument(issuer));
+  }
+
+  @Test
+  void fetchOidcDiscoveryDocument_missingIssuer_throwsAuthorizationException() throws Exception {
+    var issuer = URI.create("https://idp.example.test");
+    var fakeJwt =
+        buildFakeDiscoveryJwtWithoutIssuer(
+            "https://idp.example.test/certs",
+            "https://idp.example.test/certs/puk_idp_enc",
+            "https://idp.example.test/certs/puk_idp_sig");
+    setupMockResponse(200, "application/jwt", fakeJwt);
+
+    assertThrows(AuthorizationException.class, () -> oidcClient.fetchOidcDiscoveryDocument(issuer));
+  }
+
+  @Test
+  void fetchOidcDiscoveryDocument_missingOptionalKeyUri_returnsResponse() throws Exception {
+    var issuer = URI.create("https://idp.example.test");
+    var fakeJwt =
+        buildFakeDiscoveryJwtWithoutPukIdpEnc(
+            "https://idp.example.test", "https://idp.example.test/certs/puk_idp_sig");
+    setupMockResponse(200, "application/jwt", fakeJwt);
+
+    var response = oidcClient.fetchOidcDiscoveryDocument(issuer);
+
+    assertNotNull(response);
+    assertNull(response.uriPukIdpEnc());
+  }
+
   // -- fetchJwk --
 
   @Test
@@ -204,6 +266,70 @@ class OidcClientTest {
   }
 
   // -- helpers --
+
+  /**
+   * Builds a structurally-valid signed JWT for test purposes only. The signature key is arbitrary:
+   * {@code discoveryValidator} is mocked in these tests, so signature trust establishment is never
+   * actually exercised here — only the parsing/host-check logic under test.
+   */
+  private String buildFakeDiscoveryJwt(
+      String issuer, String jwksUri, String uriPukIdpEnc, String uriPukIdpSig) throws Exception {
+    var payload =
+        new Payload(
+            """
+            {
+              "issuer": "%s",
+              "iat": 1700000000,
+              "exp": 1700003600,
+              "uri_puk_idp_enc": "%s",
+              "uri_puk_idp_sig": "%s",
+              "jwks_uri": "%s"
+            }
+            """
+                .formatted(issuer, uriPukIdpEnc, uriPukIdpSig, jwksUri));
+    return sign(payload);
+  }
+
+  private String buildFakeDiscoveryJwtWithoutIssuer(
+      String jwksUri, String uriPukIdpEnc, String uriPukIdpSig) throws Exception {
+    var payload =
+        new Payload(
+            """
+            {
+              "iat": 1700000000,
+              "exp": 1700003600,
+              "uri_puk_idp_enc": "%s",
+              "uri_puk_idp_sig": "%s",
+              "jwks_uri": "%s"
+            }
+            """
+                .formatted(uriPukIdpEnc, uriPukIdpSig, jwksUri));
+    return sign(payload);
+  }
+
+  private String buildFakeDiscoveryJwtWithoutPukIdpEnc(String issuer, String uriPukIdpSig)
+      throws Exception {
+    var payload =
+        new Payload(
+            """
+            {
+              "issuer": "%s",
+              "iat": 1700000000,
+              "exp": 1700003600,
+              "uri_puk_idp_sig": "%s",
+              "jwks_uri": "%s"
+            }
+            """
+                .formatted(issuer, uriPukIdpSig, issuer + "/certs"));
+    return sign(payload);
+  }
+
+  private String sign(Payload payload) throws Exception {
+    var header = new JWSHeader(JWSAlgorithm.HS256);
+    var jwsObject = new JWSObject(header, payload);
+    jwsObject.sign(new MACSigner("01234567890123456789012345678901"));
+    return jwsObject.serialize();
+  }
 
   @SuppressWarnings("unchecked")
   private void setupMockResponse(int status, String contentType, String body) throws Exception {
