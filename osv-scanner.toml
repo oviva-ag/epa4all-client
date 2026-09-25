@@ -1,0 +1,9 @@
+[[IgnoredVulns]]
+id = "CVE-2026-8763"
+ignoreUntil = 2026-11-25
+reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik; reviewed and accepted per Thomas Richner."
+
+[[IgnoredVulns]]
+id = "CVE-2026-13506"
+ignoreUntil = 2026-11-25
+reason = "Same root cause as CVE-2026-8763: org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo without breaking the Kyber/ML-KEM VAU handshake. Reviewed and accepted per Thomas Richner."
