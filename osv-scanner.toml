@@ -72,3 +72,114 @@ reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this re
 id = "CVE-2026-12185"
 ignoreUntil = 2026-10-19
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-231096"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-89900"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-943399"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-415437"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-695180"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-817610"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-434834"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-593908"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-656738"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-526143"
+ignoreUntil = 2026-12-05
+reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "CVE-2026-44900"
+reason = "False positive: the finding matches this project's own artifact (com.oviva.telematik:epa4all-client) at its unreleased 1.0.0-SNAPSHOT version. The fix is already released (v1.2.x tags) and this repo is at a newer version."
+
+[[IgnoredVulns]]
+id = "CVE-2026-45574"
+reason = "False positive: the finding matches this project's own artifact (com.oviva.telematik:epa4all-client) at its unreleased 1.0.0-SNAPSHOT version. The fix is already released (v1.2.x tags) and this repo is at a newer version."
+
+[[IgnoredVulns]]
+id = "CVE-2026-45575"
+reason = "False positive: the finding matches this project's own artifact (com.oviva.telematik:epa4all-client) at its unreleased 1.0.0-SNAPSHOT version. The fix is already released (v1.2.x tags) and this repo is at a newer version."
+
+[[IgnoredVulns]]
+id = "CVE-2026-47672"
+reason = "False positive: the finding matches this project's own artifact (com.oviva.telematik:epa4all-rest-service) at its unreleased 1.0.0-SNAPSHOT version. The fix is already released (v1.2.x tags) and this repo is at a newer version."
+
+[[IgnoredVulns]]
+id = "245686488"
+ignoreUntil = 2026-12-04
+reason = "False positive / accepted: the URL comes from the OIDC discovery document of the identity provider, which is signature-verified before use; it is not user-controlled input. No code fix planned."
+
+[[IgnoredVulns]]
+id = "245686487"
+ignoreUntil = 2026-12-04
+reason = "False positive / accepted: the URL comes from the OIDC discovery document of the identity provider, which is signature-verified before use; it is not user-controlled input. No code fix planned."
+
+[[IgnoredVulns]]
+id = "245686483"
+ignoreUntil = 2026-12-04
+reason = "False positive: JsonEncoder writes stack traces into JSON log output for operators, it does not return them to end users."
+
+[[IgnoredVulns]]
+id = "366714175"
+ignoreUntil = 2026-12-04
+reason = "False positive: public truststore / test fixture (truststore-pu.p12), contains certificates or test data, no production private key."
+
+[[IgnoredVulns]]
+id = "366714178"
+ignoreUntil = 2026-12-04
+reason = "False positive: public truststore / test fixture (truststore-test.p12), contains certificates or test data, no production private key."
+
+[[IgnoredVulns]]
+id = "366714180"
+ignoreUntil = 2026-12-04
+reason = "False positive: public truststore / test fixture (test-keystore.p12 in epa4all-rest-service), contains certificates or test data, no production private key."
+
+[[IgnoredVulns]]
+id = "366714183"
+ignoreUntil = 2026-12-04
+reason = "False positive: public truststore / test fixture (truststore-tiaas-ru.p12), contains certificates or test data, no production private key."
+
+[[IgnoredVulns]]
+id = "366714186"
+ignoreUntil = 2026-12-04
+reason = "False positive: public truststore / test fixture (test-keystore.p12 in konnektor-client), contains certificates or test data, no production private key."
+
+[[IgnoredVulns]]
+id = "366714193"
+ignoreUntil = 2026-12-04
+reason = "False positive: public truststore / test fixture (truststore-test.p12 in vau-httpclient), contains certificates or test data, no production private key."
