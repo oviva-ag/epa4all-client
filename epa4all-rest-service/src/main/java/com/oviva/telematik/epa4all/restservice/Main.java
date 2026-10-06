@@ -1,6 +1,7 @@
 package com.oviva.telematik.epa4all.restservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.KonnektorServiceBuilder;
 import com.oviva.epa.client.konn.KonnektorConnectionFactory;
@@ -273,6 +274,7 @@ public class Main implements AutoCloseable {
   private HttpHandler buildHandler(Epa4allClientService clientService) {
 
     var om = new ObjectMapper();
+    om.registerModule(new JavaTimeModule());
     return new DisableCacheHandler(
         new BlockingHandler(
             withErrorHandling(
@@ -295,7 +297,10 @@ public class Main implements AutoCloseable {
 
                           var res =
                               clientService.writeDocument(
-                                  req.insurantId(), req.contentType(), req.content());
+                                  req.insurantId(),
+                                  req.contentType(),
+                                  req.content(),
+                                  req.metadata());
 
                           om.writeValue(
                               ex.getOutputStream(),
@@ -312,7 +317,11 @@ public class Main implements AutoCloseable {
                           var req = om.readValue(ex.getInputStream(), DocumentCreateRequest.class);
                           var res =
                               clientService.replaceDocument(
-                                  req.insurantId(), req.contentType(), req.content(), documentId);
+                                  req.insurantId(),
+                                  req.contentType(),
+                                  req.content(),
+                                  documentId,
+                                  req.metadata());
 
                           om.writeValue(
                               ex.getOutputStream(),

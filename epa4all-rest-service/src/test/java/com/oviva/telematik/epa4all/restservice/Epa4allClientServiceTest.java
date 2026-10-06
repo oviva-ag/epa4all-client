@@ -1,7 +1,9 @@
 package com.oviva.telematik.epa4all.restservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,8 +16,16 @@ import com.oviva.epa.client.KonnektorService;
 import com.oviva.telematik.epa4all.client.Environment;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
 import com.oviva.telematik.epa4all.client.Epa4AllClientFactoryBuilder;
+import de.gematik.epa.conversion.internal.enumerated.ClassCode;
+import de.gematik.epa.conversion.internal.enumerated.ConfidentialityCode;
+import de.gematik.epa.conversion.internal.enumerated.EventCode;
+import de.gematik.epa.conversion.internal.enumerated.HealthcareFacilityCode;
+import de.gematik.epa.conversion.internal.enumerated.PracticeSettingCode;
+import de.gematik.epa.conversion.internal.enumerated.TypeCode;
 import de.gematik.epa.ihe.model.simple.AuthorInstitution;
 import java.net.InetSocketAddress;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -135,7 +145,7 @@ class Epa4allClientServiceTest {
       var mime = "text/plain";
       var data = "hello".getBytes();
 
-      var response = service.writeDocument(kvnr, mime, data);
+      var response = service.writeDocument(kvnr, mime, data, null);
 
       assertNotNull(response);
       assertNotNull(response.documentId());
@@ -175,7 +185,7 @@ class Epa4allClientServiceTest {
       var data = "hello".getBytes();
       var toReplace = UUID.randomUUID();
 
-      var response = service.replaceDocument(kvnr, mime, data, toReplace);
+      var response = service.replaceDocument(kvnr, mime, data, toReplace, null);
 
       assertNotNull(response);
       assertNotNull(response.documentId());
@@ -185,14 +195,82 @@ class Epa4allClientServiceTest {
   }
 
   @Test
+  void buildDocumentMetadata_appliesMetadataOverrides() {
+    var author = new AuthorInstitution("name", "TELMATIK-ID");
+    var meta =
+        new DocumentMetaDataSchema(
+            null,
+            null,
+            "My Title",
+            "some comment",
+            ConfidentialityCode.NORMAL,
+            ClassCode.DURCHFUEHRUNGSPROTOKOLL,
+            List.of(EventCode.VIRTUAL_ENCOUNTER),
+            HealthcareFacilityCode.PATIENT_AUSSERHALB_BETREUUNG,
+            PracticeSettingCode.PATIENT_AUSSERHALB_BETREUUNG,
+            TypeCode.PATIENTENEIGENE_DOKUMENTE);
+
+    var result =
+        new Epa4allClientService(konnektorFactory, proxy, environment, telematikId, authorSpecialty)
+            .buildDocumentMetadata(
+                UUID.randomUUID(), "X123", author, "text/plain", "hello".getBytes(), meta);
+
+    assertEquals("My Title", result.title());
+    assertEquals("some comment", result.comments());
+    assertEquals(List.of(ConfidentialityCode.NORMAL.getValue()), result.confidentialityCode());
+    assertEquals(List.of(EventCode.VIRTUAL_ENCOUNTER.getValue()), result.eventCodeList());
+  }
+
+  @Test
+  void buildDocumentMetadata_emptySchemaKeepsDefaults() {
+    var author = new AuthorInstitution("name", "TELMATIK-ID");
+    var service =
+        new Epa4allClientService(
+            konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+
+    var empty =
+        service.buildDocumentMetadata(
+            UUID.randomUUID(),
+            "X123",
+            author,
+            "text/plain",
+            "hello".getBytes(),
+            DocumentMetaDataSchema.empty());
+
+    assertEquals("Export name", empty.title());
+    assertEquals("", empty.comments());
+    assertNull(empty.confidentialityCode());
+    assertEquals(ClassCode.DURCHFUEHRUNGSPROTOKOLL.getValue(), empty.classCode());
+    assertNull(empty.serviceStartTime());
+    assertNull(empty.serviceStopTime());
+
+    var start = LocalDateTime.of(2026, 1, 1, 9, 0);
+    var stop = LocalDateTime.of(2026, 1, 1, 12, 0);
+    var timed =
+        service.buildDocumentMetadata(
+            UUID.randomUUID(),
+            "X123",
+            author,
+            "text/plain",
+            "hello".getBytes(),
+            new DocumentMetaDataSchema(
+                start, stop, null, null, null, null, null, null, null, null));
+
+    assertEquals(start, timed.serviceStartTime());
+    assertEquals(stop, timed.serviceStopTime());
+  }
+
+  @Test
   void writeDocument_shouldValidateInputs() {
     var service =
         new Epa4allClientService(
             konnektorFactory, proxy, environment, telematikId, authorSpecialty);
 
-    assertThrows(BadRequestException.class, () -> service.writeDocument(null, "m", new byte[0]));
-    assertThrows(BadRequestException.class, () -> service.writeDocument("kvnr", null, new byte[0]));
-    assertThrows(BadRequestException.class, () -> service.writeDocument("kvnr", "m", null));
+    assertThrows(
+        BadRequestException.class, () -> service.writeDocument(null, "m", new byte[0], null));
+    assertThrows(
+        BadRequestException.class, () -> service.writeDocument("kvnr", null, new byte[0], null));
+    assertThrows(BadRequestException.class, () -> service.writeDocument("kvnr", "m", null, null));
   }
 
   @Test
@@ -203,14 +281,15 @@ class Epa4allClientServiceTest {
 
     assertThrows(
         BadRequestException.class,
-        () -> service.replaceDocument(null, "m", new byte[0], UUID.randomUUID()));
+        () -> service.replaceDocument(null, "m", new byte[0], UUID.randomUUID(), null));
     assertThrows(
         BadRequestException.class,
-        () -> service.replaceDocument("kvnr", null, new byte[0], UUID.randomUUID()));
+        () -> service.replaceDocument("kvnr", null, new byte[0], UUID.randomUUID(), null));
     assertThrows(
         BadRequestException.class,
-        () -> service.replaceDocument("kvnr", "m", null, UUID.randomUUID()));
+        () -> service.replaceDocument("kvnr", "m", null, UUID.randomUUID(), null));
     assertThrows(
-        BadRequestException.class, () -> service.replaceDocument("kvnr", "m", new byte[0], null));
+        BadRequestException.class,
+        () -> service.replaceDocument("kvnr", "m", new byte[0], null, null));
   }
 }

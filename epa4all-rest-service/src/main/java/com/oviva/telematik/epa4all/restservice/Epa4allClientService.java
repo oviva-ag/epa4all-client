@@ -42,7 +42,10 @@ public class Epa4allClientService {
   }
 
   public Epa4allClientService.WriteDocumentResponse writeDocument(
-      @Nullable String insurantId, @Nullable String contentType, @Nullable byte[] contents) {
+      @Nullable String insurantId,
+      @Nullable String contentType,
+      @Nullable byte[] contents,
+      @Nullable DocumentMetaDataSchema metadata) {
 
     requireNonNull(insurantId, "insurantId");
     requireNonNull(contentType, "contentType");
@@ -50,11 +53,12 @@ public class Epa4allClientService {
 
     return withClient(
         client -> {
+          var meta = metadata != null ? metadata : DocumentMetaDataSchema.empty();
           var authorInstitution = client.authorInstitution();
           var documentId = UUID.randomUUID();
           var document =
               buildDocumentPayload(
-                  documentId, insurantId, authorInstitution, contentType, contents);
+                  documentId, insurantId, authorInstitution, contentType, contents, meta);
           client.writeDocument(insurantId, document);
           return new WriteDocumentResponse(documentId);
         });
@@ -70,7 +74,8 @@ public class Epa4allClientService {
       @NonNull String insurantId,
       @NonNull String contentType,
       @NonNull byte[] contents,
-      @NonNull UUID documentToReplaceId) {
+      @NonNull UUID documentToReplaceId,
+      @Nullable DocumentMetaDataSchema metadata) {
 
     requireNonNull(insurantId, "insurantId");
     requireNonNull(contentType, "contentType");
@@ -79,11 +84,12 @@ public class Epa4allClientService {
 
     return withClient(
         client -> {
+          var meta = metadata != null ? metadata : DocumentMetaDataSchema.empty();
           var authorInstitution = client.authorInstitution();
           var newDocumentId = UUID.randomUUID();
           var document =
               buildDocumentPayload(
-                  newDocumentId, insurantId, authorInstitution, contentType, contents);
+                  newDocumentId, insurantId, authorInstitution, contentType, contents, meta);
           client.replaceDocument(insurantId, document, documentToReplaceId);
           return new WriteDocumentResponse(newDocumentId);
         });
@@ -121,7 +127,8 @@ public class Epa4allClientService {
       String insurantId,
       AuthorInstitution authorInstitution,
       String mimeType,
-      byte[] contents) {
+      byte[] contents,
+      DocumentMetaDataSchema meta) {
 
     // IMPORTANT: Without the urn prefix we can't replace it later
     var documentUuid = "urn:uuid:" + id;
@@ -130,7 +137,34 @@ public class Epa4allClientService {
     var createdAt = LocalDateTime.now().minusHours(3);
 
     // NOTE: These constants are a mix of values from IHE specs, Gematik specs as well as
-    // trial-and-error
+    // trial-and-error. A non-null field in {@code meta} overrides the default below; a null
+    // field keeps the existing value, so callers may set only the fields they care about.
+    var title =
+        meta.title() != null ? meta.title() : "Export %s".formatted(authorInstitution.name());
+    var confidentiality =
+        meta.confidential() != null ? List.of(meta.confidential().getValue()) : null;
+    var classCode =
+        meta.classCode() != null
+            ? meta.classCode().getValue()
+            : ClassCode.DURCHFUEHRUNGSPROTOKOLL.getValue();
+    var comments = meta.comments() != null ? meta.comments() : "";
+    var eventCodeList =
+        meta.eventCodeList() != null && !meta.eventCodeList().isEmpty()
+            ? meta.eventCodeList().stream().map(EventCode::getValue).toList()
+            : List.of(
+                EventCode.VIRTUAL_ENCOUNTER.getValue(), EventCode.PATIENTEN_MITGEBRACHT.getValue());
+    var healthcareFacilityTypeCode =
+        meta.healthcareFacilityTypeCode() != null
+            ? meta.healthcareFacilityTypeCode().getValue()
+            : HealthcareFacilityCode.PATIENT_AUSSERHALB_BETREUUNG.getValue();
+    var practiceSettingCode =
+        meta.practiceSettingCode() != null
+            ? meta.practiceSettingCode().getValue()
+            : PracticeSettingCode.PATIENT_AUSSERHALB_BETREUUNG.getValue();
+    var typeCode =
+        meta.typeCode() != null
+            ? meta.typeCode().getValue()
+            : TypeCode.PATIENTENEIGENE_DOKUMENTE.getValue();
     return new DocumentMetadata(
         List.of(
             // https://gemspec.gematik.de/docs/gemSpec/gemSpec_DM_ePA_EU-Pilot/gemSpec_DM_ePA_EU-Pilot_V1.53.1/#2.1.4.3.1
@@ -154,27 +188,27 @@ public class Epa4allClientService {
                 List.of(authorSpecialty),
                 List.of())),
         "AVAILABLE",
-        null,
-        ClassCode.DURCHFUEHRUNGSPROTOKOLL.getValue(),
-        "",
+        confidentiality,
+        classCode,
+        comments,
         createdAt,
         documentUuid,
-        List.of(EventCode.VIRTUAL_ENCOUNTER.getValue(), EventCode.PATIENTEN_MITGEBRACHT.getValue()),
+        eventCodeList,
         FormatCode.DIGA.getValue(),
         "",
-        HealthcareFacilityCode.PATIENT_AUSSERHALB_BETREUUNG.getValue(),
+        healthcareFacilityTypeCode,
         "de-DE",
         "",
         mimeType,
-        PracticeSettingCode.PATIENT_AUSSERHALB_BETREUUNG.getValue(),
+        practiceSettingCode,
         List.of(),
-        null,
-        null,
+        meta.startService(),
+        meta.endService(),
         contents.length,
-        "Export %s".formatted(authorInstitution.name()),
-        TypeCode.PATIENTENEIGENE_DOKUMENTE.getValue(),
+        title,
+        typeCode,
         documentUuid,
-        "Export %s".formatted(authorInstitution.name()),
+        title,
         "",
         "",
         insurantId,
@@ -182,9 +216,14 @@ public class Epa4allClientService {
   }
 
   public Document buildDocumentPayload(
-      UUID id, String kvnr, AuthorInstitution authorInstitution, String mimeType, byte[] contents) {
+      UUID id,
+      String kvnr,
+      AuthorInstitution authorInstitution,
+      String mimeType,
+      byte[] contents,
+      DocumentMetaDataSchema meta) {
 
-    var metadata = buildDocumentMetadata(id, kvnr, authorInstitution, mimeType, contents);
+    var metadata = buildDocumentMetadata(id, kvnr, authorInstitution, mimeType, contents, meta);
     return new Document(contents, metadata, null);
   }
 
