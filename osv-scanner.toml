@@ -1,76 +1,91 @@
 [[IgnoredVulns]]
 id = "CVE-2026-8763"
-ignoreUntil = 2026-10-10
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik; reviewed and accepted per Thomas Richner."
 
 [[IgnoredVulns]]
 id = "CVE-2026-59650"
-ignoreUntil = 2026-10-10
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-58062"
-ignoreUntil = 2026-10-10
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
+id = "AIKIDO-2026-677785"
+ignoreUntil = 2026-12-08
+reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik; reviewed and accepted per Thomas Richner."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-845849"
+ignoreUntil = 2026-12-08
+reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik; reviewed and accepted per Thomas Richner."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-582928"
+ignoreUntil = 2026-12-08
+reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik; reviewed and accepted per Thomas Richner."
+
+[[IgnoredVulns]]
 id = "CVE-2026-12803"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-14682"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-58061"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-13506"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-12816"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-12860"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-58060"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-71889"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-18036"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-18040"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-59651"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
 id = "CVE-2026-12185"
-ignoreUntil = 2026-10-19
+ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
@@ -151,35 +166,108 @@ reason = "False positive / accepted: the URL comes from the OIDC discovery docum
 
 [[IgnoredVulns]]
 id = "245686483"
-ignoreUntil = 2026-12-04
 reason = "False positive: JsonEncoder writes stack traces into JSON log output for operators, it does not return them to end users."
 
 [[IgnoredVulns]]
 id = "366714175"
-ignoreUntil = 2026-12-04
 reason = "False positive: public truststore / test fixture (truststore-pu.p12), contains certificates or test data, no production private key."
 
 [[IgnoredVulns]]
 id = "366714178"
-ignoreUntil = 2026-12-04
 reason = "False positive: public truststore / test fixture (truststore-test.p12), contains certificates or test data, no production private key."
 
 [[IgnoredVulns]]
 id = "366714180"
-ignoreUntil = 2026-12-04
 reason = "False positive: public truststore / test fixture (test-keystore.p12 in epa4all-rest-service), contains certificates or test data, no production private key."
 
 [[IgnoredVulns]]
 id = "366714183"
-ignoreUntil = 2026-12-04
 reason = "False positive: public truststore / test fixture (truststore-tiaas-ru.p12), contains certificates or test data, no production private key."
 
 [[IgnoredVulns]]
 id = "366714186"
-ignoreUntil = 2026-12-04
 reason = "False positive: public truststore / test fixture (test-keystore.p12 in konnektor-client), contains certificates or test data, no production private key."
 
 [[IgnoredVulns]]
 id = "366714193"
-ignoreUntil = 2026-12-04
 reason = "False positive: public truststore / test fixture (truststore-test.p12 in vau-httpclient), contains certificates or test data, no production private key."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-190638"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-190638: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-307106"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-307106: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-38955"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-38955: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-391408"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-391408: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-439774"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-439774: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-448914"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-448914: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-473893"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-473893: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-495603"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-495603: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-511225"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-511225: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-572912"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-572912: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-62304"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-62304: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-652915"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-652915: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-758882"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-758882: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-790923"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-790923: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-978773"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-978773: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "AIKIDO-2026-98906"
+ignoreUntil = 2026-12-05
+reason = "AIKIDO-2026-98906: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
