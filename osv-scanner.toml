@@ -271,3 +271,8 @@ reason = "AIKIDO-2026-978773: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upg
 id = "AIKIDO-2026-98906"
 ignoreUntil = 2026-12-05
 reason = "AIKIDO-2026-98906: org.bouncycastle:bcprov-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik. Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "GHSA-3x3v-w654-m28m"
+ignoreUntil = 2026-12-08
+reason = "io.undertow:undertow-core (CVE-2026-3260, DoS via multipart/form-data parsing on GET requests) has no fixed release: OSV lists no fixed version and 2.4.4.Final, the latest on Maven Central, is still affected. Monitoring upstream for a patch."
