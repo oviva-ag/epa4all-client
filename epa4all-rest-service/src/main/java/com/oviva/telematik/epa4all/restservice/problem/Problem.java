@@ -11,7 +11,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * contain sensitive data.
  */
 public abstract sealed class Problem
-    permits BadRequestProblem, NotEntitledProblem, DuplicateDocumentProblem, InternalErrorProblem {
+    permits BadRequestProblem,
+        NotEntitledProblem,
+        DuplicateDocumentProblem,
+        InternalErrorProblem,
+        RecordUnavailableProblem,
+        InformationServiceUnavailableProblem {
 
   private final int status;
   private final String type;

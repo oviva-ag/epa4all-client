@@ -9,15 +9,19 @@ import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
+import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
 import com.oviva.telematik.epa4all.restservice.problem.BadRequestProblem;
 import com.oviva.telematik.epa4all.restservice.problem.DuplicateDocumentProblem;
+import com.oviva.telematik.epa4all.restservice.problem.InformationServiceUnavailableProblem;
 import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
 import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
 import com.oviva.telematik.epa4all.restservice.problem.Problem;
+import com.oviva.telematik.epa4all.restservice.problem.RecordUnavailableProblem;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -30,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Path;
 import java.security.*;
+import java.time.Duration;
 import java.util.*;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
@@ -47,6 +52,10 @@ public class Main implements AutoCloseable {
 
   public static final String CONFIG_PREFIX = "EPA4ALL";
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
+  private static final long RECORD_UNAVAILABLE_RETRY_AFTER = Duration.ofHours(24).toSeconds();
+  private static final long INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER =
+      Duration.ofMinutes(10).toSeconds();
 
   private final ConfigProvider configProvider;
   private Undertow server;
@@ -335,6 +344,16 @@ public class Main implements AutoCloseable {
     return exchange -> {
       try {
         next.handleRequest(exchange);
+      } catch (EpaRecordUnavailableClientException e) {
+        logger.atInfo().setCause(e).log("ePA record unavailable: {}", e.getMessage());
+        exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
+        sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
+      } catch (EpaInformationServiceUnavailableClientException e) {
+        logger.atError().setCause(e).log("ePA Information Service failed: {}", e.getMessage());
+        exchange
+            .getResponseHeaders()
+            .put(Headers.RETRY_AFTER, INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER);
+        sendProblem(exchange, objectMapper, new InformationServiceUnavailableProblem());
       } catch (BadRequestException e) {
         logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
         sendProblem(exchange, objectMapper, new BadRequestProblem());

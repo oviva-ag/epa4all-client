@@ -5,6 +5,8 @@ import static org.hamcrest.Matchers.*;
 
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
+import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -24,6 +26,42 @@ class MainErrorHandlingTest {
     if (server != null) {
       server.stop();
     }
+  }
+
+  @Test
+  void recordUnavailable_returns503WithRetryAfter24h() {
+    var baseUri =
+        start(
+            () ->
+                new EpaRecordUnavailableClientException(
+                    "ePA record temporarily unavailable", new RuntimeException("409")));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(503)
+        .header("Retry-After", "86400")
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/epa-record-unavailable"));
+  }
+
+  @Test
+  void informationServiceUnavailable_returns503WithRetryAfter10min() {
+    var baseUri =
+        start(
+            () ->
+                new EpaInformationServiceUnavailableClientException(
+                    "failed to determine ePA record status", new RuntimeException("500")));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(503)
+        .header("Retry-After", "600")
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/information-service-unavailable"));
   }
 
   @Test

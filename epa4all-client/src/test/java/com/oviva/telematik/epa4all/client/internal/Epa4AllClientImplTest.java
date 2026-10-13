@@ -6,10 +6,14 @@ import static org.mockito.Mockito.*;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
+import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
+import com.oviva.telematik.vau.epa4all.client.info.HealthRecordUnavailableException;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
 import de.gematik.epa.ihe.model.Author;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.document.DocumentMetadata;
@@ -190,6 +194,28 @@ class Epa4AllClientImplTest {
 
     // Verify exception message
     assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
+  }
+
+  @Test
+  void writeDocument_recordUnavailable_throwsEpaRecordUnavailableClientException() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(new HealthRecordUnavailableException("SUSPENDED"));
+
+    assertThrows(
+        EpaRecordUnavailableClientException.class,
+        () -> client.writeDocument(INSURANT_ID, mockDocument()));
+  }
+
+  @Test
+  void
+      replaceDocument_informationServiceFailed_throwsEpaInformationServiceUnavailableClientException() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(new InformationServiceException("500 internalError"));
+    var documentToReplaceId = UUID.randomUUID();
+
+    assertThrows(
+        EpaInformationServiceUnavailableClientException.class,
+        () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
   }
 
   private Document mockDocument() {
