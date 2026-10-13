@@ -4,6 +4,7 @@ import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
+import com.oviva.telematik.epa4all.client.EpaEndpointNotFoundClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epaapi.*;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
@@ -81,7 +82,9 @@ public class Epa4AllClientImpl implements Epa4AllClient {
         informationService
             .findAccountEndpoint(insurantId)
             .orElseThrow(
-                () -> new ClientException("endpoint for KVNR %s not found".formatted(insurantId)));
+                () ->
+                    new EpaEndpointNotFoundClientException(
+                        "endpoint for KVNR %s not found".formatted(insurantId)));
 
     authorizationService.authorizeVauWithSmcB(endpoint, insurantId);
 
