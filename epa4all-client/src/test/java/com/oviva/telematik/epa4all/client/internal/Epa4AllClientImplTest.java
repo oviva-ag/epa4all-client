@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
@@ -18,6 +19,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
@@ -25,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import telematik.ws.phr.wsdl.IDocumentManagementPortType;
 
@@ -67,6 +71,62 @@ class Epa4AllClientImplTest {
       // When & Then
       assertDoesNotThrow(() -> client.writeDocument(INSURANT_ID, document));
     }
+  }
+
+  @Test
+  void writeDocument_notEntitled_throwsNotAuthorizedClientException() {
+    // Given
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenReturn(Optional.of(HTTPS_ENDPOINT_URI));
+    var documentManagementPort = mockDocumentManagementPort(notEntitledRegistryResponse());
+    var document = mockDocumentWithAuthor(TELEMATIK_ID, HOLDER_NAME);
+
+    try (var m = mockStatic(ClientProxy.class)) {
+      mockClientProxy(m, documentManagementPort);
+
+      // When & Then
+      assertThrows(
+          NotAuthorizedClientException.class, () -> client.writeDocument(INSURANT_ID, document));
+    }
+  }
+
+  @Test
+  void replaceDocument_notEntitled_throwsNotAuthorizedClientException() {
+    // Given
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenReturn(Optional.of(HTTPS_ENDPOINT_URI));
+    var documentManagementPort = mockDocumentManagementPort(notEntitledRegistryResponse());
+    var document = mockDocumentWithAuthor(TELEMATIK_ID, HOLDER_NAME);
+    var documentToReplaceId = UUID.randomUUID();
+
+    try (var m = mockStatic(ClientProxy.class)) {
+      mockClientProxy(m, documentManagementPort);
+
+      // When & Then
+      assertThrows(
+          NotAuthorizedClientException.class,
+          () -> client.replaceDocument(INSURANT_ID, document, documentToReplaceId));
+    }
+  }
+
+  private void mockClientProxy(
+      MockedStatic<ClientProxy> m, IDocumentManagementPortType documentManagementPort) {
+    var endpoint = mock(Client.class);
+    when(endpoint.getRequestContext()).thenReturn(new java.util.HashMap<>());
+    m.when(() -> ClientProxy.getClient(documentManagementPort)).thenReturn(endpoint);
+  }
+
+  private RegistryResponseType notEntitledRegistryResponse() {
+    var error = new RegistryError();
+    error.setErrorCode("NotEntitled");
+
+    var errorList = new RegistryErrorList();
+    errorList.getRegistryError().add(error);
+
+    var regRes = new RegistryResponseType();
+    regRes.setStatus("urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Failure");
+    regRes.setRegistryErrorList(errorList);
+    return regRes;
   }
 
   private RegistryResponseType mockRegistryResponseType() {
