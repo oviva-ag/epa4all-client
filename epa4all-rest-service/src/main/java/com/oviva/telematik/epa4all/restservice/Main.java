@@ -1,5 +1,6 @@
 package com.oviva.telematik.epa4all.restservice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.KonnektorServiceBuilder;
@@ -8,6 +9,8 @@ import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
+import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
@@ -15,13 +18,16 @@ import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.server.handlers.DisableCacheHandler;
+import io.undertow.util.Headers;
 import io.undertow.util.PathTemplateMatch;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Path;
 import java.security.*;
+import java.time.Duration;
 import java.util.*;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
@@ -39,6 +45,11 @@ public class Main implements AutoCloseable {
 
   public static final String CONFIG_PREFIX = "EPA4ALL";
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
+  // retry intervals documented in I_Information_Service: 409 approx. 24h, 500 approx. 10min
+  private static final long RECORD_UNAVAILABLE_RETRY_AFTER = Duration.ofHours(24).toSeconds();
+  private static final long INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER =
+      Duration.ofMinutes(10).toSeconds();
 
   private final ConfigProvider configProvider;
   private Undertow server;
@@ -321,11 +332,36 @@ public class Main implements AutoCloseable {
                         }))));
   }
 
-  private HttpHandler withErrorHandling(HttpHandler next) {
+  static HttpHandler withErrorHandling(HttpHandler next) {
     // TODO problem response?
+    var om = new ObjectMapper();
     return exchange -> {
       try {
         next.handleRequest(exchange);
+      } catch (EpaRecordUnavailableClientException e) {
+        // record is SUSPENDED (relocation) or INACCESSIBLE, documented retry interval approx. 24h
+        logger.atInfo().setCause(e).log("ePA record unavailable: {}", causeMessage(e));
+        exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
+        sendError(
+            exchange,
+            om,
+            503,
+            new ErrorResponse(
+                "EPA_RECORD_UNAVAILABLE",
+                "The patient's ePA record is temporarily unavailable (relocation or maintenance)"));
+      } catch (EpaInformationServiceUnavailableClientException e) {
+        // documented retry interval for Information Service errors is approx. 10min
+        logger.atError().setCause(e).log("ePA Information Service failed: {}", causeMessage(e));
+        exchange
+            .getResponseHeaders()
+            .put(Headers.RETRY_AFTER, INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER);
+        sendError(
+            exchange,
+            om,
+            503,
+            new ErrorResponse(
+                "EPA_INFORMATION_SERVICE_UNAVAILABLE",
+                "Could not determine the status of the patient's ePA record"));
       } catch (BadRequestException e) {
         logger.atDebug().setCause(e).log("bad request: {}", e.getMessage());
         exchange.setStatusCode(400).endExchange();
@@ -340,6 +376,21 @@ public class Main implements AutoCloseable {
         exchange.setStatusCode(500).endExchange();
       }
     };
+  }
+
+  private static void sendError(
+      HttpServerExchange exchange, ObjectMapper om, int status, ErrorResponse error)
+      throws JsonProcessingException {
+    exchange.setStatusCode(status);
+    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+    // the sender ends the exchange once the body is written
+    exchange.getResponseSender().send(om.writeValueAsString(error));
+  }
+
+  private static String causeMessage(Exception e) {
+    return e.getCause() != null
+        ? "%s: %s".formatted(e.getMessage(), e.getCause().getMessage())
+        : e.getMessage();
   }
 
   private UUID uuidFromString(String uuid) {

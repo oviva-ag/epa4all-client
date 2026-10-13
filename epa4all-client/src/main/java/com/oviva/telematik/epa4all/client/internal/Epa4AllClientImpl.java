@@ -4,13 +4,18 @@ import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
+import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epaapi.*;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
+import com.oviva.telematik.vau.epa4all.client.info.HealthRecordUnavailableException;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.simple.AuthorInstitution;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.net.URI;
 import java.util.UUID;
 
 public class Epa4AllClientImpl implements Epa4AllClient {
@@ -79,11 +84,7 @@ public class Epa4AllClientImpl implements Epa4AllClient {
 
   private PhrService openPhrServiceForInsurant(String insurantId) {
 
-    var endpoint =
-        informationService
-            .findAccountEndpoint(insurantId)
-            .orElseThrow(
-                () -> new ClientException("endpoint for KVNR %s not found".formatted(insurantId)));
+    var endpoint = findAccountEndpoint(insurantId);
 
     authorizationService.authorizeVauWithSmcB(endpoint, insurantId);
 
@@ -93,5 +94,19 @@ public class Epa4AllClientImpl implements Epa4AllClient {
 
     var phrPort = soapClientFactory.getIDocumentManagementPort(phrEndpoint);
     return new PhrService(phrPort);
+  }
+
+  private URI findAccountEndpoint(String insurantId) {
+    try {
+      return informationService
+          .findAccountEndpoint(insurantId)
+          .orElseThrow(
+              () -> new ClientException("endpoint for KVNR %s not found".formatted(insurantId)));
+    } catch (HealthRecordUnavailableException e) {
+      throw new EpaRecordUnavailableClientException("ePA record temporarily unavailable", e);
+    } catch (InformationServiceException e) {
+      throw new EpaInformationServiceUnavailableClientException(
+          "failed to determine ePA record status", e);
+    }
   }
 }
