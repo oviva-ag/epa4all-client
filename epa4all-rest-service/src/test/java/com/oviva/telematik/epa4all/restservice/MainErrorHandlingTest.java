@@ -67,7 +67,7 @@ class MainErrorHandlingTest {
   }
 
   @Test
-  void badRequest_returns400WithDetail() {
+  void badRequest_returns400WithoutExceptionMessage() {
     var baseUri = start(() -> new BadRequestException("invalid UUID"));
 
     given()
@@ -78,7 +78,11 @@ class MainErrorHandlingTest {
         .contentType("application/json")
         .body("type", equalTo("/epa4all/bad-request"))
         .body("title", equalTo("Bad Request"))
-        .body("detail", equalTo("invalid UUID"));
+        .body(
+            "detail",
+            equalTo(
+                "The request is invalid, e.g. a required field is missing or a value has an"
+                    + " invalid format"));
   }
 
   private String start(Supplier<RuntimeException> exception) {

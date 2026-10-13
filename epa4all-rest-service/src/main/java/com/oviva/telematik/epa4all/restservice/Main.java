@@ -37,7 +37,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 
 public class Main implements AutoCloseable {
 
@@ -337,29 +336,26 @@ public class Main implements AutoCloseable {
       try {
         next.handleRequest(exchange);
       } catch (BadRequestException e) {
-        sendProblem(exchange, objectMapper, new BadRequestProblem(e.getMessage()), e);
+        logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new BadRequestProblem());
       } catch (DuplicateDocumentClientException e) {
-        sendProblem(exchange, objectMapper, new DuplicateDocumentProblem(), e);
+        logger.atWarn().setCause(e).log("Duplicate document: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
       } catch (NotAuthorizedClientException e) {
-        sendProblem(exchange, objectMapper, new NotEntitledProblem(), e);
+        logger.atWarn().setCause(e).log("Not entitled: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new NotEntitledProblem());
       } catch (ApplicationException | ClientException e) {
-        sendProblem(exchange, objectMapper, new InternalErrorProblem(), e);
+        logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
     };
   }
 
-  private static void sendProblem(
-      HttpServerExchange exchange, ObjectMapper objectMapper, Problem problem, Exception cause)
+  private void sendProblem(HttpServerExchange exchange, ObjectMapper objectMapper, Problem problem)
       throws JsonProcessingException {
-    var level = problem.status() >= 500 ? Level.ERROR : Level.WARN;
-    logger
-        .atLevel(level)
-        .setCause(cause)
-        .log("{} ({}): {}", problem.title(), problem.status(), cause.getMessage());
-
     exchange.setStatusCode(problem.status());
     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-    // the sender ends the exchange once the body is written
+
     exchange.getResponseSender().send(objectMapper.writeValueAsString(problem));
   }
 
