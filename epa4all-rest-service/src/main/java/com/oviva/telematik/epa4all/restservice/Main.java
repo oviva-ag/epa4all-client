@@ -13,6 +13,11 @@ import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
+import com.oviva.telematik.epa4all.restservice.problem.BadRequestProblem;
+import com.oviva.telematik.epa4all.restservice.problem.DuplicateDocumentProblem;
+import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
+import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
+import com.oviva.telematik.epa4all.restservice.problem.Problem;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -32,6 +37,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 public class Main implements AutoCloseable {
 
@@ -324,57 +330,37 @@ public class Main implements AutoCloseable {
                         }))));
   }
 
-  static HttpHandler withErrorHandling(HttpHandler next) {
-    var om = new ObjectMapper();
+  HttpHandler withErrorHandling(HttpHandler next) {
+    var objectMapper = new ObjectMapper();
+
     return exchange -> {
       try {
         next.handleRequest(exchange);
       } catch (BadRequestException e) {
-        logger.atDebug().setCause(e).log("bad request: {}", e.getMessage());
-        sendProblem(
-            exchange, om, 400, new Problem("/epa4all/bad-request", "Bad Request", e.getMessage()));
+        sendProblem(exchange, objectMapper, new BadRequestProblem(e.getMessage()), e);
       } catch (DuplicateDocumentClientException e) {
-        logger.atDebug().setCause(e).log("conflict: {}", e.getMessage());
-        sendProblem(
-            exchange,
-            om,
-            409,
-            new Problem(
-                "/epa4all/duplicate-document",
-                "Duplicate Document",
-                "The document already exists in the patient's ePA record"));
+        sendProblem(exchange, objectMapper, new DuplicateDocumentProblem(), e);
       } catch (NotAuthorizedClientException e) {
-        logger.atDebug().setCause(e).log("not authorized: {}", e.getMessage());
-        sendProblem(
-            exchange,
-            om,
-            403,
-            new Problem(
-                "/epa4all/not-entitled",
-                "Not Entitled",
-                "No valid entitlement to access the patient's ePA record"));
+        sendProblem(exchange, objectMapper, new NotEntitledProblem(), e);
       } catch (ApplicationException | ClientException e) {
-        logger.atError().setCause(e).log("internal error: {}", e.getMessage());
-        // the exception message may contain sensitive data, e.g. the KVNR
-        sendProblem(
-            exchange,
-            om,
-            500,
-            new Problem(
-                "/epa4all/internal-error",
-                "Internal Error",
-                "An internal error occurred while processing the request"));
+        sendProblem(exchange, objectMapper, new InternalErrorProblem(), e);
       }
     };
   }
 
   private static void sendProblem(
-      HttpServerExchange exchange, ObjectMapper om, int status, Problem problem)
+      HttpServerExchange exchange, ObjectMapper objectMapper, Problem problem, Exception cause)
       throws JsonProcessingException {
-    exchange.setStatusCode(status);
+    var level = problem.status() >= 500 ? Level.ERROR : Level.WARN;
+    logger
+        .atLevel(level)
+        .setCause(cause)
+        .log("{} ({}): {}", problem.title(), problem.status(), cause.getMessage());
+
+    exchange.setStatusCode(problem.status());
     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
     // the sender ends the exchange once the body is written
-    exchange.getResponseSender().send(om.writeValueAsString(problem));
+    exchange.getResponseSender().send(objectMapper.writeValueAsString(problem));
   }
 
   private UUID uuidFromString(String uuid) {

@@ -10,6 +10,7 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.BlockingHandler;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -88,7 +89,8 @@ class MainErrorHandlingTest {
     server =
         Undertow.builder()
             .addHttpListener(0, "127.0.0.1")
-            .setHandler(new BlockingHandler(Main.withErrorHandling(throwing)))
+            .setHandler(
+                new BlockingHandler(new Main(name -> Optional.empty()).withErrorHandling(throwing)))
             .build();
     server.start();
     var address = (InetSocketAddress) server.getListenerInfo().get(0).getAddress();
