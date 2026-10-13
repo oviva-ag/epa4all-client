@@ -8,6 +8,7 @@ import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
+import com.oviva.telematik.epa4all.client.EpaEndpointNotFoundClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
@@ -17,6 +18,7 @@ import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.server.handlers.DisableCacheHandler;
+import io.undertow.util.Headers;
 import io.undertow.util.PathTemplateMatch;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -321,11 +323,25 @@ public class Main implements AutoCloseable {
                         }))));
   }
 
-  private HttpHandler withErrorHandling(HttpHandler next) {
+  static HttpHandler withErrorHandling(HttpHandler next) {
     // TODO problem response?
+    var om = new ObjectMapper();
     return exchange -> {
       try {
         next.handleRequest(exchange);
+      } catch (EpaEndpointNotFoundClientException e) {
+        // permanent failure, e.g. the insurant opted out or has no resolvable Aktensystem
+        logger.atError().setCause(e).log("internal error: {}", e.getMessage());
+
+        exchange.setStatusCode(422);
+        exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+        exchange
+            .getResponseSender()
+            .send(
+                om.writeValueAsString(
+                    new ErrorResponse(
+                        "EPA_ENDPOINT_NOT_FOUND",
+                        "No ePA account/endpoint found for the patient's KVNR")));
       } catch (BadRequestException e) {
         logger.atDebug().setCause(e).log("bad request: {}", e.getMessage());
         exchange.setStatusCode(400).endExchange();

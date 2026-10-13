@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import com.oviva.epa.client.model.SmcbCard;
-import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.EpaEndpointNotFoundClientException;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
@@ -110,7 +110,8 @@ class Epa4AllClientImplTest {
     // When & Then
     var exception =
         assertThrows(
-            ClientException.class, () -> client.writeDocument(INSURANT_ID, mockDocument()));
+            EpaEndpointNotFoundClientException.class,
+            () -> client.writeDocument(INSURANT_ID, mockDocument()));
 
     // Verify exception message
     assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
@@ -125,7 +126,7 @@ class Epa4AllClientImplTest {
     // When & Then
     var exception =
         assertThrows(
-            ClientException.class,
+            EpaEndpointNotFoundClientException.class,
             () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
 
     // Verify exception message
