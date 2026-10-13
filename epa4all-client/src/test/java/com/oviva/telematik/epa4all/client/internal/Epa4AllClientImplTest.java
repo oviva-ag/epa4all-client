@@ -201,9 +201,12 @@ class Epa4AllClientImplTest {
     when(informationService.findAccountEndpoint(INSURANT_ID))
         .thenThrow(new HealthRecordUnavailableException("SUSPENDED"));
 
-    assertThrows(
-        EpaRecordUnavailableClientException.class,
-        () -> client.writeDocument(INSURANT_ID, mockDocument()));
+    var exception =
+        assertThrows(
+            EpaRecordUnavailableClientException.class,
+            () -> client.writeDocument(INSURANT_ID, mockDocument()));
+
+    assertEquals("ePA record for KVNR X123456789 temporarily unavailable", exception.getMessage());
   }
 
   @Test
@@ -213,9 +216,13 @@ class Epa4AllClientImplTest {
         .thenThrow(new InformationServiceException("500 internalError"));
     var documentToReplaceId = UUID.randomUUID();
 
-    assertThrows(
-        EpaInformationServiceUnavailableClientException.class,
-        () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
+    var exception =
+        assertThrows(
+            EpaInformationServiceUnavailableClientException.class,
+            () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
+
+    assertEquals(
+        "failed to determine ePA record status for KVNR X123456789", exception.getMessage());
   }
 
   private Document mockDocument() {

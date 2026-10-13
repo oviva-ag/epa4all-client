@@ -103,10 +103,11 @@ public class Epa4AllClientImpl implements Epa4AllClient {
           .orElseThrow(
               () -> new ClientException("endpoint for KVNR %s not found".formatted(insurantId)));
     } catch (HealthRecordUnavailableException e) {
-      throw new EpaRecordUnavailableClientException("ePA record temporarily unavailable", e);
+      throw new EpaRecordUnavailableClientException(
+          "ePA record for KVNR %s temporarily unavailable".formatted(insurantId), e);
     } catch (InformationServiceException e) {
       throw new EpaInformationServiceUnavailableClientException(
-          "failed to determine ePA record status", e);
+          "failed to determine ePA record status for KVNR %s".formatted(insurantId), e);
     }
   }
 }
