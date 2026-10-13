@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import com.oviva.telematik.vau.httpclient.HttpClient;
 import com.oviva.telematik.vau.httpclient.HttpHeader;
 import com.oviva.telematik.vau.httpclient.HttpRequest;
@@ -13,6 +14,7 @@ import de.gematik.vau.lib.exceptions.VauProtocolException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -217,6 +219,24 @@ class ConnectionFactoryTest {
 
     // Verify the factory was called
     verify(mockTrustValidatorFactory).create(any());
+  }
+
+  @Test
+  void connect_includesVauErrorInException() throws Exception {
+    when(mockVauClientStateMachine.generateMessage1()).thenReturn("msg1".getBytes());
+    when(mockTrustValidatorFactory.create(any())).thenReturn(mockVauClientStateMachine);
+    var body =
+        new CBORMapper()
+            .writeValueAsBytes(
+                Map.of(
+                    "MessageType", "Error", "ErrorCode", 2, "ErrorMessage", "Missing Parameters"));
+    when(mockHttpClient.call(any()))
+        .thenReturn(new HttpResponse(400, Collections.emptyList(), body));
+
+    var e = assertThrows(HttpExceptionWithInfo.class, () -> connectionFactory.connect(testVauUri));
+
+    assertTrue(e.getMessage().contains("\"ErrorCode\" : 2"));
+    assertTrue(e.getMessage().contains("Missing Parameters"));
   }
 
   @Test

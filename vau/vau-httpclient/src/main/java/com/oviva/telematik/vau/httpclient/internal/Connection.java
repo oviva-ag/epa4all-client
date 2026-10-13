@@ -52,11 +52,12 @@ public class Connection {
     }
 
     if (res.status() != 200) {
+      var responseBody = ConnectionFactory.cborBytesToJsonString(res.body());
       throw new HttpExceptionWithInfo(
           res.status(),
           METHOD_POST,
           sessionUri,
-          "bad status code %d != 200, cid=%s".formatted(res.status(), cid));
+          "bad status code %d != 200, cid=%s, body: %s".formatted(res.status(), cid, responseBody));
     }
     var ciphertextResponse = res.body();
     return client.decryptVauMessage(ciphertextResponse);
