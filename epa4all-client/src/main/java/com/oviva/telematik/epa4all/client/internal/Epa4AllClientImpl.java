@@ -70,6 +70,8 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       phrService.replaceDocument(insurantId, document, documentToReplaceId);
     } catch (DuplicateDocumentException e) {
       throw new DuplicateDocumentClientException("duplicate document", e);
+    } catch (NotAuthorizedDocumentException e) {
+      throw new NotAuthorizedClientException("PHR not authorized", e);
     } catch (WriteDocumentException e) {
       throw new ClientException("failed to write document", e);
     }
