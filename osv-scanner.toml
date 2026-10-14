@@ -89,9 +89,19 @@ ignoreUntil = 2026-12-08
 reason = "org.bouncycastle:bcprov-jdk18on cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Escalated to Gematik."
 
 [[IgnoredVulns]]
+id = "CVE-2026-12802"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-231096."
+
+[[IgnoredVulns]]
 id = "AIKIDO-2026-231096"
 ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "CVE-2026-59639"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-89900."
 
 [[IgnoredVulns]]
 id = "AIKIDO-2026-89900"
@@ -99,9 +109,19 @@ ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
 
 [[IgnoredVulns]]
+id = "CVE-2026-59642"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-943399."
+
+[[IgnoredVulns]]
 id = "AIKIDO-2026-943399"
 ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "CVE-2026-71888"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-415437."
 
 [[IgnoredVulns]]
 id = "AIKIDO-2026-415437"
@@ -114,9 +134,19 @@ ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
 
 [[IgnoredVulns]]
+id = "CVE-2026-59647"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-817610."
+
+[[IgnoredVulns]]
 id = "AIKIDO-2026-817610"
 ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "CVE-2026-71892"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-434834."
 
 [[IgnoredVulns]]
 id = "AIKIDO-2026-434834"
@@ -124,14 +154,29 @@ ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
 
 [[IgnoredVulns]]
+id = "CVE-2026-15055"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-593908."
+
+[[IgnoredVulns]]
 id = "AIKIDO-2026-593908"
 ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
 
 [[IgnoredVulns]]
+id = "CVE-2026-17508"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcpkix-jdk18on 1.84 cannot be upgraded in this repo: bcpkix/bcutil 1.85+ pull in bcprov 1.85+, which fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. Mixing newer bcpkix/bcutil with bcprov 1.84 was tested and breaks (NoClassDefFoundError: org/bouncycastle/asn1/iana/IANAObjectIdentifiers). gematik's VAU handshake (de.gematik.vau) still requires Kyber768, so a protocol migration agreed with Gematik is needed first. Same finding as AIKIDO-2026-656738."
+
+[[IgnoredVulns]]
 id = "AIKIDO-2026-656738"
 ignoreUntil = 2026-12-05
 reason = "bouncycastle bcpkix/bcutil 1.84 cannot be upgraded to 1.85+ in this repo: it removes Kyber support and the ML-KEM replacement is incompatible with gematik's VAU handshake (de.gematik.vau / BouncyCastlePQCProvider). Same constraint as the bcprov CVEs above."
+
+[[IgnoredVulns]]
+id = "CVE-2026-59645"
+ignoreUntil = 2026-12-05
+reason = "org.bouncycastle:bcutil-jdk18on 1.84 cannot be upgraded to 1.85+ in this repo: 1.85 compiles but fails at runtime (no such algorithm: KYBER, Kyber was removed from the BouncyCastle PQC provider) and 1.86 no longer compiles. gematik's VAU handshake (de.gematik.vau) still requires Kyber768 and the ML-KEM replacement is not wire-compatible, so a protocol migration agreed with Gematik is needed first. Same constraint as the bcprov CVEs above (AIKIDO-2026-526143)."
 
 [[IgnoredVulns]]
 id = "AIKIDO-2026-526143"
@@ -152,7 +197,8 @@ reason = "False positive: the finding matches this project's own artifact (com.o
 
 [[IgnoredVulns]]
 id = "CVE-2026-47672"
-reason = "False positive: the finding matches this project's own artifact (com.oviva.telematik:epa4all-rest-service) at its unreleased 1.0.0-SNAPSHOT version. The fix is already released (v1.2.x tags) and this repo is at a newer version."
+ignoreUntil = 2026-12-05
+reason = "Accepted risk: epa4all-rest-service deliberately has no authentication or authorization (see its README CAUTION), so any caller that can reach it can write documents using the configured SMC-B card. No fixed version exists. Mitigation: it only runs as a sidecar in the epa-exporter pod (helm epaInstances, ports 8081/8082), the Kubernetes Service exposes only the exporter port 8080, so the adapter is reachable only from inside the cluster via the pod IP. The README production example now binds the port to 127.0.0.1. Review before the ignore expires: confirm with a NetworkPolicy or by adding authentication that only the exporter can reach the sidecar."
 
 [[IgnoredVulns]]
 id = "245686488"
