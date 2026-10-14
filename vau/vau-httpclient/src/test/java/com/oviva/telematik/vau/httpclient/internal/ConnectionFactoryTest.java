@@ -240,6 +240,18 @@ class ConnectionFactoryTest {
   }
 
   @Test
+  void cborBytesToJsonString_null_returnsEmpty() {
+    assertEquals("", ConnectionFactory.cborBytesToJsonString(null));
+  }
+
+  @Test
+  void cborBytesToJsonString_invalidCbor_returnsPlaceholder() {
+    // 0x1f is a reserved CBOR initial byte
+    assertEquals(
+        "<invalid cbor bytes>", ConnectionFactory.cborBytesToJsonString(new byte[] {0x1f}));
+  }
+
+  @Test
   void connect_shouldCorrectlyParseUserAgentHeader() {
     // Given
     // Setup VauClientStateMachine behavior
