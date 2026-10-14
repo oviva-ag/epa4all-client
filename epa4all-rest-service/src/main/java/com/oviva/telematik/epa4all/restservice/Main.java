@@ -345,26 +345,38 @@ public class Main implements AutoCloseable {
       try {
         next.handleRequest(exchange);
       } catch (EpaRecordUnavailableClientException e) {
-        logger.atInfo().setCause(e).log("ePA record unavailable: {}", e.getMessage());
+        logger.atWarn().setCause(e).log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
+
         exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
+
         sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
       } catch (EpaInformationServiceUnavailableClientException e) {
-        logger.atError().setCause(e).log("ePA Information Service failed: {}", e.getMessage());
+        logger.atWarn().setCause(e)
+            .log(
+                "ePA Information Service failed: {}: {}",
+                e.getMessage(),
+                e.getCause().getMessage());
+
         exchange
             .getResponseHeaders()
             .put(Headers.RETRY_AFTER, INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER);
+
         sendProblem(exchange, objectMapper, new InformationServiceUnavailableProblem());
       } catch (BadRequestException e) {
         logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+
         sendProblem(exchange, objectMapper, new BadRequestProblem());
       } catch (DuplicateDocumentClientException e) {
         logger.atWarn().setCause(e).log("Duplicate document: {}", e.getMessage());
+
         sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
       } catch (NotAuthorizedClientException e) {
         logger.atWarn().setCause(e).log("Not entitled: {}", e.getMessage());
+
         sendProblem(exchange, objectMapper, new NotEntitledProblem());
       } catch (ApplicationException | ClientException e) {
         logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
+
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
     };

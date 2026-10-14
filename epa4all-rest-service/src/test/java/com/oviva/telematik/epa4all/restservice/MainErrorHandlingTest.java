@@ -34,7 +34,8 @@ class MainErrorHandlingTest {
         start(
             () ->
                 new EpaRecordUnavailableClientException(
-                    "ePA record temporarily unavailable", new RuntimeException("409")));
+                    "ePA record temporarily unavailable",
+                    new RuntimeException("409 statusMismatch")));
 
     given()
         .baseUri(baseUri)
@@ -43,7 +44,12 @@ class MainErrorHandlingTest {
         .statusCode(503)
         .header("Retry-After", "86400")
         .contentType("application/json")
-        .body("type", equalTo("/epa4all/epa-record-unavailable"));
+        .body("type", equalTo("/epa4all/epa-record-unavailable"))
+        .body("title", equalTo("ePA Record Unavailable"))
+        .body(
+            "detail",
+            equalTo(
+                "The patient's ePA record is temporarily unavailable (relocation or maintenance)"));
   }
 
   @Test
@@ -52,7 +58,8 @@ class MainErrorHandlingTest {
         start(
             () ->
                 new EpaInformationServiceUnavailableClientException(
-                    "failed to determine ePA record status", new RuntimeException("500")));
+                    "failed to determine ePA record status",
+                    new RuntimeException("500 internalError")));
 
     given()
         .baseUri(baseUri)
@@ -61,7 +68,9 @@ class MainErrorHandlingTest {
         .statusCode(503)
         .header("Retry-After", "600")
         .contentType("application/json")
-        .body("type", equalTo("/epa4all/information-service-unavailable"));
+        .body("type", equalTo("/epa4all/information-service-unavailable"))
+        .body("title", equalTo("ePA Information Service Unavailable"))
+        .body("detail", equalTo("Could not determine the status of the patient's ePA record"));
   }
 
   @Test
