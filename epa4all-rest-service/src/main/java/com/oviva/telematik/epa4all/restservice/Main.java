@@ -1,5 +1,6 @@
 package com.oviva.telematik.epa4all.restservice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.KonnektorServiceBuilder;
@@ -12,11 +13,18 @@ import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
+import com.oviva.telematik.epa4all.restservice.problem.BadRequestProblem;
+import com.oviva.telematik.epa4all.restservice.problem.DuplicateDocumentProblem;
+import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
+import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
+import com.oviva.telematik.epa4all.restservice.problem.Problem;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.server.handlers.DisableCacheHandler;
+import io.undertow.util.Headers;
 import io.undertow.util.PathTemplateMatch;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -321,25 +329,34 @@ public class Main implements AutoCloseable {
                         }))));
   }
 
-  private HttpHandler withErrorHandling(HttpHandler next) {
-    // TODO problem response?
+  HttpHandler withErrorHandling(HttpHandler next) {
+    var objectMapper = new ObjectMapper();
+
     return exchange -> {
       try {
         next.handleRequest(exchange);
       } catch (BadRequestException e) {
-        logger.atDebug().setCause(e).log("bad request: {}", e.getMessage());
-        exchange.setStatusCode(400).endExchange();
+        logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new BadRequestProblem());
       } catch (DuplicateDocumentClientException e) {
-        logger.atDebug().setCause(e).log("conflict: {}", e.getMessage());
-        exchange.setStatusCode(409).endExchange();
+        logger.atWarn().setCause(e).log("Duplicate document: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
       } catch (NotAuthorizedClientException e) {
-        logger.atDebug().setCause(e).log("not authorized: {}", e.getMessage());
-        exchange.setStatusCode(403).endExchange();
+        logger.atWarn().setCause(e).log("Not entitled: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new NotEntitledProblem());
       } catch (ApplicationException | ClientException e) {
-        logger.atError().setCause(e).log("internal error: {}", e.getMessage());
-        exchange.setStatusCode(500).endExchange();
+        logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
     };
+  }
+
+  private void sendProblem(HttpServerExchange exchange, ObjectMapper objectMapper, Problem problem)
+      throws JsonProcessingException {
+    exchange.setStatusCode(problem.status());
+    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+
+    exchange.getResponseSender().send(objectMapper.writeValueAsString(problem));
   }
 
   private UUID uuidFromString(String uuid) {
