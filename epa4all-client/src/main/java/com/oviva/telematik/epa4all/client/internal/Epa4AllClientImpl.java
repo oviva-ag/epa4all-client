@@ -102,18 +102,15 @@ public class Epa4AllClientImpl implements Epa4AllClient {
     try {
       return informationService
           .findAccountEndpoint(insurantId)
-          .orElseThrow(
-              () -> new ClientException("endpoint for KVNR %s not found".formatted(insurantId)));
+          .orElseThrow(() -> new ClientException("ePA endpoint not found"));
     } catch (HealthRecordUnavailableException e) {
-      throw new EpaRecordUnavailableClientException(
-          "ePA record for KVNR %s temporarily unavailable".formatted(insurantId), e);
+      throw new EpaRecordUnavailableClientException("ePA record temporarily unavailable", e);
     } catch (InformationServiceMalformedRequestException e) {
       throw new EpaInformationServiceMalformedRequestClientException(
-          "Information Service rejected the request for KVNR %s as malformed".formatted(insurantId),
-          e);
+          "Information Service rejected the request as malformed", e);
     } catch (InformationServiceException e) {
       throw new EpaInformationServiceUnavailableClientException(
-          "failed to determine ePA record status for KVNR %s".formatted(insurantId), e);
+          "failed to determine ePA record status", e);
     }
   }
 }

@@ -179,7 +179,7 @@ class Epa4AllClientImplTest {
             ClientException.class, () -> client.writeDocument(INSURANT_ID, mockDocument()));
 
     // Verify exception message
-    assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
+    assertEquals("ePA endpoint not found", exception.getMessage());
   }
 
   @Test
@@ -195,7 +195,7 @@ class Epa4AllClientImplTest {
             () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
 
     // Verify exception message
-    assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
+    assertEquals("ePA endpoint not found", exception.getMessage());
   }
 
   @Test
@@ -208,9 +208,7 @@ class Epa4AllClientImplTest {
             EpaInformationServiceMalformedRequestClientException.class,
             () -> client.writeDocument(INSURANT_ID, mockDocument()));
 
-    assertEquals(
-        "Information Service rejected the request for KVNR X123456789 as malformed",
-        exception.getMessage());
+    assertEquals("Information Service rejected the request as malformed", exception.getMessage());
   }
 
   @Test
@@ -235,7 +233,7 @@ class Epa4AllClientImplTest {
             EpaRecordUnavailableClientException.class,
             () -> client.writeDocument(INSURANT_ID, mockDocument()));
 
-    assertEquals("ePA record for KVNR X123456789 temporarily unavailable", exception.getMessage());
+    assertEquals("ePA record temporarily unavailable", exception.getMessage());
   }
 
   @Test
@@ -250,8 +248,7 @@ class Epa4AllClientImplTest {
             EpaInformationServiceUnavailableClientException.class,
             () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
 
-    assertEquals(
-        "failed to determine ePA record status for KVNR X123456789", exception.getMessage());
+    assertEquals("failed to determine ePA record status", exception.getMessage());
   }
 
   private Document mockDocument() {

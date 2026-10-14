@@ -5,18 +5,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.net.ssl.SSLSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -345,6 +350,37 @@ class InformationServiceTest {
                         && r.headers().firstValue("x-insurantid").orElse("").equals(INSURANT_ID)
                         && r.headers().firstValue("x-useragent").isPresent()),
             any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {400, 409, 500})
+  void findAccountEndpoint_doesNotLogKvnr(int status) throws Exception {
+    var body =
+        "{\"errorCode\":\"someError\",\"errorDetail\":\"insurant %s\"}".formatted(INSURANT_ID);
+    doReturn(response(status, body)).when(httpClient).send(any(), any());
+    var service =
+        new InformationService(
+            httpClient,
+            InformationService.Environment.DEV,
+            List.of(InformationService.EpaProvider.IBM));
+
+    var logs = captureStdErr(() -> service.findAccountEndpoint(INSURANT_ID));
+
+    assertTrue(logs.contains("someError"), logs);
+    assertFalse(logs.contains(INSURANT_ID), logs);
+  }
+
+  private static String captureStdErr(Runnable action) {
+    var original = System.err;
+    var captured = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(captured, true, StandardCharsets.UTF_8));
+    try {
+      action.run();
+    } catch (RuntimeException ignored) {
+    } finally {
+      System.setErr(original);
+    }
+    return captured.toString(StandardCharsets.UTF_8);
   }
 
   private InformationService twoProviderService() {

@@ -80,7 +80,7 @@ class MainErrorHandlingTest {
         start(
             () ->
                 new EpaInformationServiceMalformedRequestClientException(
-                    "Information Service rejected the request for KVNR X123456789 as malformed",
+                    "Information Service rejected the request as malformed",
                     new RuntimeException("400 malformedRequest")));
 
     given()

@@ -122,10 +122,9 @@ public class InformationService {
       HttpResponse<String> res, ErrorType error, String insurantId, String message) {
     log.atInfo()
         .addKeyValue("endpoint", res.uri())
-        .addKeyValue("insurantId", insurantId)
         .addKeyValue("status", res.statusCode())
         .addKeyValue("errorCode", errorCodeOf(error))
-        .addKeyValue("errorDetail", error != null ? error.errorDetail() : null)
+        .addKeyValue("errorDetail", error != null ? mask(error.errorDetail(), insurantId) : null)
         .log(
             "{} at '{}': status={}, errorCode={}",
             message,
@@ -145,23 +144,29 @@ public class InformationService {
         .addKeyValue("request.method", req.method())
         .addKeyValue("request.uri", req.uri())
         .addKeyValue("request.header.x-useragent", USER_AGENT)
-        .addKeyValue("request.header.x-insurantid", insurantId)
         .addKeyValue("request.insurantId.length", insurantId == null ? null : insurantId.length())
         .addKeyValue(
             "request.insurantId.matchesKvnrFormat",
             insurantId != null && KVNR_FORMAT.matcher(insurantId).matches())
         .addKeyValue("response.status", res.statusCode())
         .addKeyValue("response.version", res.version())
-        .addKeyValue("response.body", res.body())
+        .addKeyValue("response.body", mask(res.body(), insurantId))
         .addKeyValue("errorCode", errorCodeOf(error))
-        .addKeyValue("errorDetail", error != null ? error.errorDetail() : null)
+        .addKeyValue("errorDetail", error != null ? mask(error.errorDetail(), insurantId) : null)
         .log(
             "Information Service rejected getRecordStatus as malformed at '{}': status={},"
                 + " errorCode={}, errorDetail={}",
             res.uri(),
             res.statusCode(),
             errorCodeOf(error),
-            error != null ? error.errorDetail() : null);
+            error != null ? mask(error.errorDetail(), insurantId) : null);
+  }
+
+  private static String mask(String value, String insurantId) {
+    if (value == null || insurantId == null || insurantId.isEmpty()) {
+      return value;
+    }
+    return value.replace(insurantId, "<insurantId>");
   }
 
   private static String errorCodeOf(ErrorType error) {
@@ -175,6 +180,7 @@ public class InformationService {
     try {
       return JsonCodec.readString(body, ErrorType.class);
     } catch (IllegalArgumentException e) {
+      log.atInfo().setCause(e).log("Failed to parse error body as ErrorType");
       return null;
     }
   }
