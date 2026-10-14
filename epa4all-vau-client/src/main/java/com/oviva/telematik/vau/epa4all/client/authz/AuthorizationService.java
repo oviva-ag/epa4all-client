@@ -204,7 +204,11 @@ public class AuthorizationService {
               HttpRequest.newBuilder(idpAuthEndpoint).GET().build(),
               HttpResponse.BodyHandlers.ofByteArray());
       if (res.statusCode() != 200) {
-        throw unexpectedStatus("GET", idpAuthEndpoint.toString(), res.statusCode(), res.body());
+        // the IDP might answer errors with an HTML error page, too large and not useful in the
+        // message
+        throw new IllegalStateException(
+            "Unexpected status during authorization 'GET %s' %d"
+                .formatted(idpAuthEndpoint, res.statusCode()));
       }
       return JsonCodec.readBytes(res.body(), AuthorizationRequestResponse.class);
     } catch (IOException e) {
@@ -252,7 +256,7 @@ public class AuthorizationService {
 
   private RuntimeException unexpectedStatus(String method, String path, int status, byte[] body) {
     return new IllegalStateException(
-        "unexpected status '%s %s' %d, body: %s"
+        "Unexpected status during authorization '%s %s' %d, body: %s"
             .formatted(
                 method,
                 path,

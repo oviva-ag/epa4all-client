@@ -358,11 +358,9 @@ public class Main implements AutoCloseable {
             .atError()
             .setCause(e)
             .log(
-                "Unexpected error for {} {}: {}: {}",
+                "Unexpected error for {} {}",
                 exchange.getRequestMethod(),
-                exchange.getRequestPath(),
-                e.getClass().getName(),
-                e.getMessage());
+                exchange.getRequestPath());
 
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }

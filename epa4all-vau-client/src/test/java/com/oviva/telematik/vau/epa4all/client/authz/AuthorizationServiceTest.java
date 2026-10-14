@@ -51,7 +51,9 @@ class AuthorizationServiceTest {
         assertThrows(
             IllegalStateException.class, () -> service.getNonce(VAU_ENDPOINT, INSURANT_ID));
 
-    assertEquals("unexpected status 'GET " + NONCE_PATH + "' 500, body: ", e.getMessage());
+    assertEquals(
+        "Unexpected status during authorization 'GET " + NONCE_PATH + "' 500, body: ",
+        e.getMessage());
   }
 
   @Test
@@ -70,13 +72,17 @@ class AuthorizationServiceTest {
             () -> service.authorizeVauWithSmcB(VAU_ENDPOINT, INSURANT_ID));
 
     assertEquals(
-        "unexpected status 'GET " + AUTHZ_REQUEST_PATH + "' 403, body: " + body, e.getMessage());
+        "Unexpected status during authorization 'GET "
+            + AUTHZ_REQUEST_PATH
+            + "' 403, body: "
+            + body,
+        e.getMessage());
   }
 
   @Test
-  void authorize_idpAuthorizationEndpointFails_includesErrorBodyInException() throws Exception {
+  void authorize_idpAuthorizationEndpointFails_omitsErrorPageFromException() throws Exception {
     var outer = mock(HttpClient.class);
-    var idpResponse = outerResponse(500, "idp down".getBytes(), Map.of());
+    var idpResponse = outerResponse(500, "<html>idp down</html>".getBytes(), Map.of());
     doReturn(idpResponse).when(outer).send(any(), any());
 
     var service = new AuthorizationService(inner(Map.of()), outer, null, null);
@@ -87,7 +93,8 @@ class AuthorizationServiceTest {
             () -> service.authorizeVauWithSmcB(VAU_ENDPOINT, INSURANT_ID));
 
     assertEquals(
-        "unexpected status 'GET " + IDP_AUTH_ENDPOINT + "' 500, body: idp down", e.getMessage());
+        "Unexpected status during authorization 'GET " + IDP_AUTH_ENDPOINT + "' 500",
+        e.getMessage());
   }
 
   @Test
@@ -122,7 +129,8 @@ class AuthorizationServiceTest {
             () -> service.authorizeVauWithSmcB(VAU_ENDPOINT, INSURANT_ID));
 
     assertEquals(
-        "unexpected status 'POST " + AUTHCODE_PATH + "' 409, body: " + body, e.getMessage());
+        "Unexpected status during authorization 'POST " + AUTHCODE_PATH + "' 409, body: " + body,
+        e.getMessage());
   }
 
   /** Inner (VAU) client that succeeds for every step unless {@code overrides} has the path. */
