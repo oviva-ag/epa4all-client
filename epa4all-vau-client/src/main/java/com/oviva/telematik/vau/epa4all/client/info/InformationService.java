@@ -9,9 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +21,7 @@ public class InformationService {
   private static final String RECORD_STATUS_PATH = "/information/api/v1/ehr";
   private static final String USER_AGENT = "Oviva/0.0.1";
 
-  // unchangeable part of the KVNR: one capital letter followed by nine digits
   private static final Pattern KVNR_FORMAT = Pattern.compile("[A-Z][0-9]{9}");
-  private static final int MAX_LOGGED_BODY_LENGTH = 2000;
   private final HttpClient outerHttpClient;
 
   private final List<URI> epaEndpoints;
@@ -39,18 +35,10 @@ public class InformationService {
     epaEndpoints = providers.stream().map(p -> deriveEndpoint(environment, p)).toList();
   }
 
-  /**
-   * Finds the Aktensystem holding the insurant's health record.
-   *
-   * @return the endpoint of the Aktensystem with the record in state ACTIVATED, or empty if every
-   *     Aktensystem answered '404 noHealthRecord'
-   * @throws HealthRecordUnavailableException if the record exists but is SUSPENDED or INACCESSIBLE
-   * @throws InformationServiceException if the record status could not be determined, e.g. because
-   *     an Aktensystem was unreachable or returned an error
-   */
   public Optional<URI> findAccountEndpoint(String insurantId) {
     var outcomes = new ArrayList<String>();
     var unavailable = false;
+    var malformed = false;
     var failed = false;
 
     for (URI epaEndpoint : epaEndpoints) {
@@ -64,6 +52,7 @@ public class InformationService {
           // keep looking, the record may be held by another Aktensystem
         }
         case STATUS_MISMATCH -> unavailable = true;
+        case MALFORMED_REQUEST -> malformed = true;
         case ERROR -> failed = true;
       }
     }
@@ -73,6 +62,10 @@ public class InformationService {
           "health record is not in state ACTIVATED (SUSPENDED or INACCESSIBLE): %s"
               .formatted(outcomes));
     }
+    if (malformed) {
+      throw new InformationServiceMalformedRequestException(
+          "Information Service rejected the request as malformed: %s".formatted(outcomes));
+    }
     if (failed) {
       throw new InformationServiceException(
           "could not determine health record status: %s".formatted(outcomes));
@@ -81,29 +74,29 @@ public class InformationService {
   }
 
   private RecordStatus getRecordStatus(String insurantId, URI endpoint) {
-    var req =
+    var httpRequest =
         HttpRequest.newBuilder(endpoint.resolve(RECORD_STATUS_PATH))
             .headers("x-useragent", USER_AGENT, "x-insurantid", insurantId)
             .GET()
             .build();
 
-    HttpResponse<String> res;
+    HttpResponse<String> httpResponse;
     try {
-      res = outerHttpClient.send(req, HttpResponse.BodyHandlers.ofString());
+      httpResponse = outerHttpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
     } catch (IOException e) {
       log.atInfo()
           .addKeyValue("endpoint", endpoint)
           .setCause(e)
-          .log("failed to reach Information Service at '{}': {}", endpoint, e.getMessage());
+          .log("failed to reach epa record at '{}': {}", endpoint, e.getMessage());
       return new RecordStatus(Result.ERROR, "unreachable (%s)".formatted(e.getMessage()));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new InformationServiceException(
-          "interrupted while querying Information Service at '%s'".formatted(endpoint), e);
+          "interrupted while querying epa record at '%s'".formatted(endpoint), e);
     }
 
     // status code mapping according to I_Information_Service getRecordStatus
-    var status = res.statusCode();
+    var status = httpResponse.statusCode();
     if (status == 204) {
       return new RecordStatus(Result.ACTIVATED, "204");
     }
@@ -111,17 +104,17 @@ public class InformationService {
       return new RecordStatus(Result.NO_HEALTH_RECORD, "404");
     }
 
-    var error = parseError(res.body());
+    var error = parseError(httpResponse.body());
     var description = "%d %s".formatted(status, errorCodeOf(error)).strip();
     if (status == 400) {
-      logMalformedRequest(req, res, error, insurantId);
-      return new RecordStatus(Result.ERROR, description);
+      logMalformedRequest(httpRequest, httpResponse, error, insurantId);
+      return new RecordStatus(Result.MALFORMED_REQUEST, description);
     }
     if (status == 409) {
-      logErrorResponse(res, error, insurantId, "health record is not in state ACTIVATED");
+      logErrorResponse(httpResponse, error, insurantId, "health record is not in state ACTIVATED");
       return new RecordStatus(Result.STATUS_MISMATCH, description);
     }
-    logErrorResponse(res, error, insurantId, "Information Service returned an error");
+    logErrorResponse(httpResponse, error, insurantId, "Information Service returned an error");
     return new RecordStatus(Result.ERROR, description);
   }
 
@@ -147,7 +140,7 @@ public class InformationService {
    */
   private void logMalformedRequest(
       HttpRequest req, HttpResponse<String> res, ErrorType error, String insurantId) {
-    log.atError()
+    log.atWarn()
         .addKeyValue("endpoint", res.uri())
         .addKeyValue("request.method", req.method())
         .addKeyValue("request.uri", req.uri())
@@ -159,8 +152,7 @@ public class InformationService {
             insurantId != null && KVNR_FORMAT.matcher(insurantId).matches())
         .addKeyValue("response.status", res.statusCode())
         .addKeyValue("response.version", res.version())
-        .addKeyValue("response.headers", loggableHeaders(res))
-        .addKeyValue("response.body", truncate(res.body()))
+        .addKeyValue("response.body", res.body())
         .addKeyValue("errorCode", errorCodeOf(error))
         .addKeyValue("errorDetail", error != null ? error.errorDetail() : null)
         .log(
@@ -170,14 +162,6 @@ public class InformationService {
             res.statusCode(),
             errorCodeOf(error),
             error != null ? error.errorDetail() : null);
-  }
-
-  private static Map<String, List<String>> loggableHeaders(HttpResponse<?> res) {
-    var headers = new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER);
-    headers.putAll(res.headers().map());
-    // may carry session credentials
-    headers.remove("set-cookie");
-    return headers;
   }
 
   private static String errorCodeOf(ErrorType error) {
@@ -195,24 +179,19 @@ public class InformationService {
     }
   }
 
-  private static String truncate(String value) {
-    if (value == null || value.length() <= MAX_LOGGED_BODY_LENGTH) {
-      return value;
-    }
-    return value.substring(0, MAX_LOGGED_BODY_LENGTH) + "...(truncated)";
-  }
-
+  // based on
+  // https://github.com/gematik/ePA-Basic/blob/3186ad27a1a865bc3b9ccbe6a4d4c697883903e6/src/openapi/I_Information_Service.yaml#L112-L116
   private enum Result {
     ACTIVATED,
     NO_HEALTH_RECORD,
     STATUS_MISMATCH,
+    MALFORMED_REQUEST,
     ERROR
   }
 
   private record RecordStatus(Result result, String description) {}
 
-  /** Error body of the Information Service, see I_Information_Service 'ErrorType'. */
-  record ErrorType(
+  private record ErrorType(
       @JsonProperty("errorCode") String errorCode,
       @JsonProperty("errorDetail") String errorDetail) {}
 

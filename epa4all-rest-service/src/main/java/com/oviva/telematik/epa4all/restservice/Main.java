@@ -9,6 +9,7 @@ import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
 import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
 import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
@@ -345,13 +346,18 @@ public class Main implements AutoCloseable {
       try {
         next.handleRequest(exchange);
       } catch (EpaRecordUnavailableClientException e) {
-        logger.atWarn().setCause(e).log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
+        logger
+            .atWarn()
+            .setCause(e)
+            .log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
 
         exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
 
         sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
       } catch (EpaInformationServiceUnavailableClientException e) {
-        logger.atWarn().setCause(e)
+        logger
+            .atWarn()
+            .setCause(e)
             .log(
                 "ePA Information Service failed: {}: {}",
                 e.getMessage(),
@@ -362,6 +368,15 @@ public class Main implements AutoCloseable {
             .put(Headers.RETRY_AFTER, INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER);
 
         sendProblem(exchange, objectMapper, new InformationServiceUnavailableProblem());
+      } catch (EpaInformationServiceMalformedRequestClientException e) {
+        logger
+            .atError()
+            .setCause(e)
+            .log(
+                "ePA Information Service rejected request: {}: {}",
+                e.getMessage(),
+                e.getCause().getMessage());
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
       } catch (BadRequestException e) {
         logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
 

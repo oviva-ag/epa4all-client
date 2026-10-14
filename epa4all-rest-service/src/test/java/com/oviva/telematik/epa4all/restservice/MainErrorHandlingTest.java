@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.*;
 
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
 import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
 import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
@@ -71,6 +72,26 @@ class MainErrorHandlingTest {
         .body("type", equalTo("/epa4all/information-service-unavailable"))
         .body("title", equalTo("ePA Information Service Unavailable"))
         .body("detail", equalTo("Could not determine the status of the patient's ePA record"));
+  }
+
+  @Test
+  void informationServiceMalformedRequest_returns500WithoutRetryAfter() {
+    var baseUri =
+        start(
+            () ->
+                new EpaInformationServiceMalformedRequestClientException(
+                    "Information Service rejected the request for KVNR X123456789 as malformed",
+                    new RuntimeException("400 malformedRequest")));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(500)
+        .header("Retry-After", nullValue())
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/internal-error"))
+        .body("detail", not(containsString("X123456789")));
   }
 
   @Test

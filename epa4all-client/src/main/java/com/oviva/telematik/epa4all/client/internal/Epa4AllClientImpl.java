@@ -4,6 +4,7 @@ import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
 import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
 import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
@@ -12,6 +13,7 @@ import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.HealthRecordUnavailableException;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceMalformedRequestException;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.simple.AuthorInstitution;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -105,6 +107,10 @@ public class Epa4AllClientImpl implements Epa4AllClient {
     } catch (HealthRecordUnavailableException e) {
       throw new EpaRecordUnavailableClientException(
           "ePA record for KVNR %s temporarily unavailable".formatted(insurantId), e);
+    } catch (InformationServiceMalformedRequestException e) {
+      throw new EpaInformationServiceMalformedRequestClientException(
+          "Information Service rejected the request for KVNR %s as malformed".formatted(insurantId),
+          e);
     } catch (InformationServiceException e) {
       throw new EpaInformationServiceUnavailableClientException(
           "failed to determine ePA record status for KVNR %s".formatted(insurantId), e);

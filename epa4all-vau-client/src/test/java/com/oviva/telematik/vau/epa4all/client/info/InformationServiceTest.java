@@ -25,6 +25,9 @@ class InformationServiceTest {
 
   private static final String INSURANT_ID = "X123456789";
   private static final String NO_HEALTH_RECORD_BODY = "{\"errorCode\":\"noHealthRecord\"}";
+  private static final String MALFORMED_REQUEST_BODY =
+      "{\"errorCode\":\"malformedRequest\",\"errorDetail\":\"invalid x-insurantid '%s'\"}"
+          .formatted(INSURANT_ID);
 
   @Mock HttpClient httpClient;
 
@@ -264,15 +267,8 @@ class InformationServiceTest {
   }
 
   @Test
-  void findAccountEndpoint_throwsInformationServiceException_whenMalformedRequest()
-      throws Exception {
-    doReturn(
-            response(
-                400,
-                "{\"errorCode\":\"malformedRequest\",\"errorDetail\":\"invalid x-insurantid '%s'\"}"
-                    .formatted(INSURANT_ID)))
-        .when(httpClient)
-        .send(any(), any());
+  void findAccountEndpoint_throwsMalformedRequestException_whenMalformedRequest() throws Exception {
+    doReturn(response(400, MALFORMED_REQUEST_BODY)).when(httpClient).send(any(), any());
 
     var service =
         new InformationService(
@@ -282,9 +278,48 @@ class InformationServiceTest {
 
     var e =
         assertThrows(
-            InformationServiceException.class, () -> service.findAccountEndpoint(INSURANT_ID));
+            InformationServiceMalformedRequestException.class,
+            () -> service.findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("400 malformedRequest"));
     assertFalse(e.getMessage().contains(INSURANT_ID));
+  }
+
+  @Test
+  void findAccountEndpoint_throwsMalformedRequestException_whenOtherProviderHasNoRecord()
+      throws Exception {
+    doReturn(response(404, NO_HEALTH_RECORD_BODY))
+        .doReturn(response(400, MALFORMED_REQUEST_BODY))
+        .when(httpClient)
+        .send(any(), any());
+
+    assertThrows(
+        InformationServiceMalformedRequestException.class,
+        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+  }
+
+  @Test
+  void findAccountEndpoint_prefersMalformedRequest_overErrorOfOtherProvider() throws Exception {
+    doReturn(response(500, "{\"errorCode\":\"internalError\"}"))
+        .doReturn(response(400, MALFORMED_REQUEST_BODY))
+        .when(httpClient)
+        .send(any(), any());
+
+    assertThrows(
+        InformationServiceMalformedRequestException.class,
+        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+  }
+
+  @Test
+  void findAccountEndpoint_prefersStatusMismatch_overMalformedRequestOfOtherProvider()
+      throws Exception {
+    doReturn(response(400, MALFORMED_REQUEST_BODY))
+        .doReturn(response(409, "{\"errorCode\":\"statusMismatch\"}"))
+        .when(httpClient)
+        .send(any(), any());
+
+    assertThrows(
+        HealthRecordUnavailableException.class,
+        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
   }
 
   @Test

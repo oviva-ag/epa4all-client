@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
+import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
 import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
 import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
 import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
@@ -14,6 +15,7 @@ import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.HealthRecordUnavailableException;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceMalformedRequestException;
 import de.gematik.epa.ihe.model.Author;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.document.DocumentMetadata;
@@ -194,6 +196,33 @@ class Epa4AllClientImplTest {
 
     // Verify exception message
     assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
+  }
+
+  @Test
+  void writeDocument_malformedRequest_throwsEpaInformationServiceMalformedRequestClientException() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(new InformationServiceMalformedRequestException("400 malformedRequest"));
+
+    var exception =
+        assertThrows(
+            EpaInformationServiceMalformedRequestClientException.class,
+            () -> client.writeDocument(INSURANT_ID, mockDocument()));
+
+    assertEquals(
+        "Information Service rejected the request for KVNR X123456789 as malformed",
+        exception.getMessage());
+  }
+
+  @Test
+  void
+      replaceDocument_malformedRequest_throwsEpaInformationServiceMalformedRequestClientException() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(new InformationServiceMalformedRequestException("400 malformedRequest"));
+    var documentToReplaceId = UUID.randomUUID();
+
+    assertThrows(
+        EpaInformationServiceMalformedRequestClientException.class,
+        () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
   }
 
   @Test
