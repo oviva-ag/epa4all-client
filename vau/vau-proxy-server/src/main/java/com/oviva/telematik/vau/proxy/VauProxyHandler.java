@@ -48,20 +48,19 @@ public class VauProxyHandler implements HttpHandler {
         .getReceiver()
         .receiveFullBytes(
             (fbex, requestBytes) -> {
-
-              // open or re-use a VAU tunnel
-              var httpClient = getOrCreateUpstream(fbex);
-              var req = prepareRequest(fbex, requestBytes);
               HttpResponse res = null;
               try {
-                res = httpClient.call(req);
-              } catch (HttpClient.HttpException e) {
-                log.atDebug()
-                    .setCause(e)
-                    .log("upstream VAU call failed: %s".formatted(e.getMessage()));
+                // open or re-use a VAU tunnel
+                var httpClient = getOrCreateUpstream(fbex);
+                var httpRequest = prepareRequest(fbex, requestBytes);
+                res = httpClient.call(httpRequest);
+              } catch (RuntimeException e) {
+                log.atWarn().setCause(e).log("upstream VAU call failed: {}", e.getMessage());
+
                 fbex.setStatusCode(StatusCodes.BAD_GATEWAY).endExchange();
                 return;
               }
+
               sendResponse(fbex, res);
             });
   }

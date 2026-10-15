@@ -353,6 +353,16 @@ public class Main implements AutoCloseable {
         logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
+      } catch (RuntimeException e) {
+        logger
+            .atError()
+            .setCause(e)
+            .log(
+                "Unexpected error for {} {}",
+                exchange.getRequestMethod(),
+                exchange.getRequestPath());
+
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
     };
   }

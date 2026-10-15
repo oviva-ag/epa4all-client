@@ -92,8 +92,7 @@ public class AuthorizationService {
 
     var res = innerHttpClient.call(req);
     if (res.status() != 302) {
-      throw new IllegalStateException(
-          "unexpected status '%s %s' %d".formatted(method, path, res.status()));
+      throw unexpectedStatus(method, path, res.status(), res.body());
     }
     var location = parseLocationHeader(res);
     // TODO: more error checking in redirect_uri
@@ -192,8 +191,7 @@ public class AuthorizationService {
 
     var res = innerHttpClient.call(req1);
     if (res.status() != 200) {
-      throw new IllegalStateException(
-          "unexpected status '%s %s' %d".formatted(method, path, res.status()));
+      throw unexpectedStatus(method, path, res.status(), res.body());
     }
 
     return JsonCodec.readBytes(res.body(), NonceResponse.class);
@@ -206,7 +204,11 @@ public class AuthorizationService {
               HttpRequest.newBuilder(idpAuthEndpoint).GET().build(),
               HttpResponse.BodyHandlers.ofByteArray());
       if (res.statusCode() != 200) {
-        throw unexpectedStatus("GET", idpAuthEndpoint.toString(), res.statusCode());
+        // the IDP might answer errors with an HTML error page, too large and not useful in the
+        // message
+        throw new IllegalStateException(
+            "Unexpected status during authorization 'GET %s' %d"
+                .formatted(idpAuthEndpoint, res.statusCode()));
       }
       return JsonCodec.readBytes(res.body(), AuthorizationRequestResponse.class);
     } catch (IOException e) {
@@ -248,13 +250,18 @@ public class AuthorizationService {
             body,
             res.body() != null ? new String(res.body(), StandardCharsets.UTF_8) : "");
       }
-      throw unexpectedStatus(method, path, res.status());
+      throw unexpectedStatus(method, path, res.status(), res.body());
     }
   }
 
-  private RuntimeException unexpectedStatus(String method, String path, int status) {
+  private RuntimeException unexpectedStatus(String method, String path, int status, byte[] body) {
     return new IllegalStateException(
-        "unexpected status '%s %s' %d".formatted(method, path, status));
+        "Unexpected status during authorization '%s %s' %d, body: %s"
+            .formatted(
+                method,
+                path,
+                status,
+                body != null ? new String(body, StandardCharsets.UTF_8) : ""));
   }
 
   record SendAuthcodeSmbCBody(

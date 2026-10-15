@@ -119,11 +119,12 @@ public class ConnectionFactory implements VauClientFactory {
 
     var res = outerClient.call(req);
     if (res.status() != 200) {
+      var responseBody = cborBytesToJsonString(res.body());
       throw new HttpExceptionWithInfo(
           res.status(),
           METHOD_POST,
           uri,
-          "bad status got: %d , expected: 200".formatted(res.status()));
+          "bad status got: %d , expected: 200, body: %s".formatted(res.status(), responseBody));
     }
 
     log.atDebug()
@@ -166,7 +167,10 @@ public class ConnectionFactory implements VauClientFactory {
   }
 
   @SuppressWarnings("java:S1166")
-  private String cborBytesToJsonString(byte[] cborBytes) {
+  static String cborBytesToJsonString(byte[] cborBytes) {
+    if (cborBytes == null) {
+      return "";
+    }
 
     var cm =
         CBORMapper.builder()

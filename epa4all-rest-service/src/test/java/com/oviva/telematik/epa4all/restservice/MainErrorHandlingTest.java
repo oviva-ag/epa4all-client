@@ -134,6 +134,22 @@ class MainErrorHandlingTest {
   }
 
   @Test
+  void unexpectedException_returns500() {
+    var baseUri =
+        start(
+            () -> new IllegalStateException("unexpected status 'GET /epa/authz/v1/getNonce' 409"));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(500)
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/internal-error"))
+        .body("detail", not(containsString("getNonce")));
+  }
+
+  @Test
   void badRequest_returns400WithoutExceptionMessage() {
     var baseUri = start(() -> new BadRequestException("invalid UUID"));
 
