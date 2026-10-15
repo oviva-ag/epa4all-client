@@ -7,12 +7,7 @@ import com.oviva.epa.client.KonnektorServiceBuilder;
 import com.oviva.epa.client.konn.KonnektorConnectionFactory;
 import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
-import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
-import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
-import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
@@ -348,7 +343,25 @@ public class Main implements AutoCloseable {
     return exchange -> {
       try {
         next.handleRequest(exchange);
-      } catch (EpaRecordUnavailableClientException e) {
+      } catch (BadRequestException e) {
+        logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new BadRequestProblem());
+      } catch (ClientException e) {
+        handleClientException(exchange, objectMapper, e);
+      } catch (ApplicationException e) {
+        logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
+      }
+    };
+  }
+
+  private void handleClientException(
+      HttpServerExchange exchange, ObjectMapper objectMapper, ClientException e)
+      throws JsonProcessingException {
+    switch (e.reason()) {
+      case RECORD_UNAVAILABLE -> {
         logger
             .atWarn()
             .setCause(e)
@@ -357,7 +370,8 @@ public class Main implements AutoCloseable {
         exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
 
         sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
-      } catch (EpaInformationServiceUnavailableClientException e) {
+      }
+      case INFORMATION_SERVICE_UNAVAILABLE -> {
         logger
             .atWarn()
             .setCause(e)
@@ -371,7 +385,8 @@ public class Main implements AutoCloseable {
             .put(Headers.RETRY_AFTER, INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER);
 
         sendProblem(exchange, objectMapper, new InformationServiceUnavailableProblem());
-      } catch (EpaInformationServiceMalformedRequestClientException e) {
+      }
+      case INFORMATION_SERVICE_MALFORMED_REQUEST -> {
         logger
             .atError()
             .setCause(e)
@@ -379,25 +394,25 @@ public class Main implements AutoCloseable {
                 "ePA Information Service rejected request: {}: {}",
                 e.getMessage(),
                 e.getCause().getMessage());
-        sendProblem(exchange, objectMapper, new InternalErrorProblem());
-      } catch (BadRequestException e) {
-        logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
 
-        sendProblem(exchange, objectMapper, new BadRequestProblem());
-      } catch (DuplicateDocumentClientException e) {
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
+      }
+      case DUPLICATE_DOCUMENT -> {
         logger.atWarn().setCause(e).log("Duplicate document: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
-      } catch (NotAuthorizedClientException e) {
+      }
+      case NOT_AUTHORIZED -> {
         logger.atWarn().setCause(e).log("Not entitled: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new NotEntitledProblem());
-      } catch (ApplicationException | ClientException e) {
+      }
+      case INTERNAL -> {
         logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
-    };
+    }
   }
 
   private void sendProblem(HttpServerExchange exchange, ObjectMapper objectMapper, Problem problem)

@@ -2,6 +2,7 @@ package com.oviva.telematik.vau.epa4all.client.info;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.JsonCodec;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException.Reason;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -66,27 +67,30 @@ public class InformationService {
 
     if (unavailable) {
       throw withSuppressed(
-          new HealthRecordUnavailableException(
+          new InformationServiceException(
+              Reason.RECORD_UNAVAILABLE,
               "health record is not in state ACTIVATED (SUSPENDED or INACCESSIBLE): %s"
                   .formatted(outcomes)),
           causes);
     }
     if (malformed) {
       throw withSuppressed(
-          new InformationServiceMalformedRequestException(
+          new InformationServiceException(
+              Reason.MALFORMED_REQUEST,
               "Information Service rejected the request as malformed: %s".formatted(outcomes)),
           causes);
     }
     if (failed) {
       throw withSuppressed(
           new InformationServiceException(
-              "could not determine health record status: %s".formatted(outcomes)),
+              Reason.ERROR, "could not determine health record status: %s".formatted(outcomes)),
           causes);
     }
     return Optional.empty();
   }
 
-  private static <T extends Exception> T withSuppressed(T exception, List<Exception> causes) {
+  private static InformationServiceException withSuppressed(
+      InformationServiceException exception, List<Exception> causes) {
     causes.forEach(exception::addSuppressed);
     return exception;
   }
@@ -110,7 +114,7 @@ public class InformationService {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new InformationServiceException(
-          "interrupted while querying epa record at '%s'".formatted(endpoint), e);
+          Reason.ERROR, "interrupted while querying epa record at '%s'".formatted(endpoint), e);
     }
 
     // status code mapping according to I_Information_Service getRecordStatus

@@ -4,11 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
-import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
-import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
-import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
+import com.oviva.telematik.epa4all.client.ClientException.Reason;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.BlockingHandler;
@@ -34,7 +30,8 @@ class MainErrorHandlingTest {
     var baseUri =
         start(
             () ->
-                new EpaRecordUnavailableClientException(
+                new ClientException(
+                    Reason.RECORD_UNAVAILABLE,
                     "ePA record temporarily unavailable",
                     new RuntimeException("409 statusMismatch")));
 
@@ -58,7 +55,8 @@ class MainErrorHandlingTest {
     var baseUri =
         start(
             () ->
-                new EpaInformationServiceUnavailableClientException(
+                new ClientException(
+                    Reason.INFORMATION_SERVICE_UNAVAILABLE,
                     "failed to determine ePA record status",
                     new RuntimeException("500 internalError")));
 
@@ -79,7 +77,8 @@ class MainErrorHandlingTest {
     var baseUri =
         start(
             () ->
-                new EpaInformationServiceMalformedRequestClientException(
+                new ClientException(
+                    Reason.INFORMATION_SERVICE_MALFORMED_REQUEST,
                     "Information Service rejected the request as malformed",
                     new RuntimeException("400 malformedRequest")));
 
@@ -96,7 +95,7 @@ class MainErrorHandlingTest {
 
   @Test
   void duplicateDocument_returns409() {
-    var baseUri = start(() -> new DuplicateDocumentClientException("duplicate"));
+    var baseUri = start(() -> new ClientException(Reason.DUPLICATE_DOCUMENT, "duplicate"));
 
     given()
         .baseUri(baseUri)
@@ -109,7 +108,7 @@ class MainErrorHandlingTest {
 
   @Test
   void notAuthorized_returns403() {
-    var baseUri = start(() -> new NotAuthorizedClientException("not authorized"));
+    var baseUri = start(() -> new ClientException(Reason.NOT_AUTHORIZED, "not authorized"));
 
     given()
         .baseUri(baseUri)

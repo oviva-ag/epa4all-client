@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException.Reason;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import javax.net.ssl.SSLSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
@@ -80,9 +82,7 @@ class InformationServiceTest {
             InformationService.Environment.DEV,
             List.of(InformationService.EpaProvider.IBM));
 
-    var e =
-        assertThrows(
-            InformationServiceException.class, () -> service.findAccountEndpoint(INSURANT_ID));
+    var e = assertReason(Reason.ERROR, () -> service.findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("unreachable (connection refused)"));
   }
 
@@ -93,10 +93,7 @@ class InformationServiceTest {
     var second = new IOException("connection reset");
     doThrow(first, second).when(httpClient).send(any(HttpRequest.class), any());
 
-    var e =
-        assertThrows(
-            InformationServiceException.class,
-            () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+    var e = assertReason(Reason.ERROR, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
 
     assertArrayEquals(new Throwable[] {first, second}, e.getSuppressed());
   }
@@ -111,9 +108,8 @@ class InformationServiceTest {
         .send(any(HttpRequest.class), any());
 
     var e =
-        assertThrows(
-            HealthRecordUnavailableException.class,
-            () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+        assertReason(
+            Reason.RECORD_UNAVAILABLE, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
 
     assertArrayEquals(new Throwable[] {unreachable}, e.getSuppressed());
   }
@@ -128,7 +124,7 @@ class InformationServiceTest {
             InformationService.Environment.DEV,
             List.of(InformationService.EpaProvider.IBM));
 
-    assertThrows(InformationServiceException.class, () -> service.findAccountEndpoint(INSURANT_ID));
+    assertReason(Reason.ERROR, () -> service.findAccountEndpoint(INSURANT_ID));
     assertTrue(Thread.interrupted()); // verify and clear the interrupted flag
   }
 
@@ -232,9 +228,8 @@ class InformationServiceTest {
         .send(any(), any());
 
     var e =
-        assertThrows(
-            HealthRecordUnavailableException.class,
-            () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+        assertReason(
+            Reason.RECORD_UNAVAILABLE, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("https://epa-as-1.prod.epa4all.de: 409 statusMismatch"));
   }
 
@@ -245,9 +240,8 @@ class InformationServiceTest {
         .when(httpClient)
         .send(any(), any());
 
-    assertThrows(
-        HealthRecordUnavailableException.class,
-        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+    assertReason(
+        Reason.RECORD_UNAVAILABLE, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
   }
 
   @Test
@@ -262,9 +256,7 @@ class InformationServiceTest {
             InformationService.Environment.DEV,
             List.of(InformationService.EpaProvider.IBM));
 
-    var e =
-        assertThrows(
-            InformationServiceException.class, () -> service.findAccountEndpoint(INSURANT_ID));
+    var e = assertReason(Reason.ERROR, () -> service.findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("500 internalError"));
   }
 
@@ -278,10 +270,7 @@ class InformationServiceTest {
         .when(httpClient)
         .send(any(), any());
 
-    var e =
-        assertThrows(
-            InformationServiceException.class,
-            () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+    var e = assertReason(Reason.ERROR, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("https://epa-as-1.prod.epa4all.de: 404"));
     assertTrue(e.getMessage().contains("https://epa-as-2.prod.epa4all.de: 500 internalError"));
   }
@@ -297,9 +286,7 @@ class InformationServiceTest {
             InformationService.Environment.DEV,
             List.of(InformationService.EpaProvider.IBM));
 
-    var e =
-        assertThrows(
-            InformationServiceException.class, () -> service.findAccountEndpoint(INSURANT_ID));
+    var e = assertReason(Reason.ERROR, () -> service.findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("502"));
   }
 
@@ -313,10 +300,7 @@ class InformationServiceTest {
             InformationService.Environment.DEV,
             List.of(InformationService.EpaProvider.IBM));
 
-    var e =
-        assertThrows(
-            InformationServiceMalformedRequestException.class,
-            () -> service.findAccountEndpoint(INSURANT_ID));
+    var e = assertReason(Reason.MALFORMED_REQUEST, () -> service.findAccountEndpoint(INSURANT_ID));
     assertTrue(e.getMessage().contains("400 malformedRequest"));
     assertFalse(e.getMessage().contains(INSURANT_ID));
   }
@@ -329,9 +313,8 @@ class InformationServiceTest {
         .when(httpClient)
         .send(any(), any());
 
-    assertThrows(
-        InformationServiceMalformedRequestException.class,
-        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+    assertReason(
+        Reason.MALFORMED_REQUEST, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
   }
 
   @Test
@@ -341,9 +324,8 @@ class InformationServiceTest {
         .when(httpClient)
         .send(any(), any());
 
-    assertThrows(
-        InformationServiceMalformedRequestException.class,
-        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+    assertReason(
+        Reason.MALFORMED_REQUEST, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
   }
 
   @Test
@@ -354,9 +336,8 @@ class InformationServiceTest {
         .when(httpClient)
         .send(any(), any());
 
-    assertThrows(
-        HealthRecordUnavailableException.class,
-        () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+    assertReason(
+        Reason.RECORD_UNAVAILABLE, () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
   }
 
   @Test
@@ -413,6 +394,12 @@ class InformationServiceTest {
       System.setErr(original);
     }
     return captured.toString(StandardCharsets.UTF_8);
+  }
+
+  private static InformationServiceException assertReason(Reason expected, Executable action) {
+    var e = assertThrows(InformationServiceException.class, action);
+    assertEquals(expected, e.reason());
+    return e;
   }
 
   private InformationService twoProviderService() {

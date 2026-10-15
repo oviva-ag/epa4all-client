@@ -2,18 +2,12 @@ package com.oviva.telematik.epa4all.client.internal;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
+import com.oviva.telematik.epa4all.client.ClientException.Reason;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
-import com.oviva.telematik.epa4all.client.EpaInformationServiceMalformedRequestClientException;
-import com.oviva.telematik.epa4all.client.EpaInformationServiceUnavailableClientException;
-import com.oviva.telematik.epa4all.client.EpaRecordUnavailableClientException;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epaapi.*;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
-import com.oviva.telematik.vau.epa4all.client.info.HealthRecordUnavailableException;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
-import com.oviva.telematik.vau.epa4all.client.info.InformationServiceMalformedRequestException;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.simple.AuthorInstitution;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -59,9 +53,9 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       var phrService = openPhrServiceForInsurant(insurantId);
       phrService.writeDocument(insurantId, document);
     } catch (DuplicateDocumentException e) {
-      throw new DuplicateDocumentClientException("duplicate document", e);
+      throw new ClientException(Reason.DUPLICATE_DOCUMENT, "duplicate document", e);
     } catch (NotAuthorizedDocumentException e) {
-      throw new NotAuthorizedClientException("PHR not authorized", e);
+      throw new ClientException(Reason.NOT_AUTHORIZED, "PHR not authorized", e);
     } catch (WriteDocumentException e) {
       throw new ClientException("failed to write document", e);
     }
@@ -76,9 +70,9 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       var phrService = openPhrServiceForInsurant(insurantId);
       phrService.replaceDocument(insurantId, document, documentToReplaceId);
     } catch (DuplicateDocumentException e) {
-      throw new DuplicateDocumentClientException("duplicate document", e);
+      throw new ClientException(Reason.DUPLICATE_DOCUMENT, "duplicate document", e);
     } catch (NotAuthorizedDocumentException e) {
-      throw new NotAuthorizedClientException("PHR not authorized", e);
+      throw new ClientException(Reason.NOT_AUTHORIZED, "PHR not authorized", e);
     } catch (WriteDocumentException e) {
       throw new ClientException("failed to write document", e);
     }
@@ -103,14 +97,19 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       return informationService
           .findAccountEndpoint(insurantId)
           .orElseThrow(() -> new ClientException("ePA endpoint not found"));
-    } catch (HealthRecordUnavailableException e) {
-      throw new EpaRecordUnavailableClientException("ePA record temporarily unavailable", e);
-    } catch (InformationServiceMalformedRequestException e) {
-      throw new EpaInformationServiceMalformedRequestClientException(
-          "Information Service rejected the request as malformed", e);
     } catch (InformationServiceException e) {
-      throw new EpaInformationServiceUnavailableClientException(
-          "failed to determine ePA record status", e);
+      throw switch (e.reason()) {
+        case RECORD_UNAVAILABLE ->
+            new ClientException(Reason.RECORD_UNAVAILABLE, "ePA record temporarily unavailable", e);
+        case MALFORMED_REQUEST ->
+            new ClientException(
+                Reason.INFORMATION_SERVICE_MALFORMED_REQUEST,
+                "Information Service rejected the request as malformed",
+                e);
+        case ERROR ->
+            new ClientException(
+                Reason.INFORMATION_SERVICE_UNAVAILABLE, "failed to determine ePA record status", e);
+      };
     }
   }
 }
