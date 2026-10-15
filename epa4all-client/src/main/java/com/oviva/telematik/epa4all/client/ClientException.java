@@ -11,6 +11,7 @@ public class ClientException extends RuntimeException {
     /**
      * The insurant's ePA record exists but is temporarily not usable (SUSPENDED or INACCESSIBLE).
      * The Information Service documents a retry interval of approx. 24 hours for this case.
+     * https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml#L19
      */
     RECORD_UNAVAILABLE,
 

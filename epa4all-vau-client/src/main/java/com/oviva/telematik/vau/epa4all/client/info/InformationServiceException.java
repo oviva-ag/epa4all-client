@@ -15,7 +15,7 @@ public class InformationServiceException extends Epa4AllClientException {
      *
      * <ul>
      *   <li>409 statusMismatch and retry interval of getRecordStatus:
-     *       https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml
+     *       https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml#L19
      *   <li>record states (section 3.1.2):
      *       https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/gemSpec_Aktensystem_ePAfueralle_V1.8.2/
      * </ul>

@@ -51,7 +51,7 @@ public class Main implements AutoCloseable {
 
   // Retry intervals documented for getRecordStatus in I_Information_Service 1.5.1 (409: approx. 24
   // hours, 500: approx. 10 minutes), see "Retry interval" in
-  // https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml
+  // https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml#L16-L21
   private static final long RECORD_UNAVAILABLE_RETRY_AFTER = Duration.ofHours(24).toSeconds();
   private static final long INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER =
       Duration.ofMinutes(10).toSeconds();
@@ -363,7 +363,7 @@ public class Main implements AutoCloseable {
     switch (e.reason()) {
       case RECORD_UNAVAILABLE -> {
         logger
-            .atWarn()
+            .atDebug()
             .setCause(e)
             .log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
 
@@ -373,7 +373,7 @@ public class Main implements AutoCloseable {
       }
       case INFORMATION_SERVICE_UNAVAILABLE -> {
         logger
-            .atWarn()
+            .atDebug()
             .setCause(e)
             .log(
                 "ePA Information Service failed: {}: {}",
@@ -398,12 +398,12 @@ public class Main implements AutoCloseable {
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
       case DUPLICATE_DOCUMENT -> {
-        logger.atWarn().setCause(e).log("Duplicate document: {}", e.getMessage());
+        logger.atDebug().setCause(e).log("Duplicate document: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
       }
       case NOT_AUTHORIZED -> {
-        logger.atWarn().setCause(e).log("Not entitled: {}", e.getMessage());
+        logger.atDebug().setCause(e).log("Not entitled: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new NotEntitledProblem());
       }
