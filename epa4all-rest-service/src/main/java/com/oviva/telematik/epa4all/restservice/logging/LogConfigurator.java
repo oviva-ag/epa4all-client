@@ -32,7 +32,15 @@ public class LogConfigurator extends ContextAwareBase implements Configurator {
 
     getLevel().ifPresent(rootLogger::setLevel);
 
+    if (isHttpDebugLogEnabled()) {
+      context.getLogger("http-debug").setLevel(Level.DEBUG);
+    }
+
     return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY;
+  }
+
+  private boolean isHttpDebugLogEnabled() {
+    return Boolean.parseBoolean(System.getenv(Main.CONFIG_PREFIX + "_HTTP_DEBUG_LOG"));
   }
 
   private Optional<Level> getLevel() {

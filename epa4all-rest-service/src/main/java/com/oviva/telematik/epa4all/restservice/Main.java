@@ -54,6 +54,9 @@ public class Main implements AutoCloseable {
   public static final String CONFIG_PREFIX = "EPA4ALL";
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+  // Retry intervals documented for getRecordStatus in I_Information_Service 1.5.1 (409: approx. 24
+  // hours, 500: approx. 10 minutes), see "Retry interval" in
+  // https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml
   private static final long RECORD_UNAVAILABLE_RETRY_AFTER = Duration.ofHours(24).toSeconds();
   private static final long INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER =
       Duration.ofMinutes(10).toSeconds();

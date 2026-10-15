@@ -87,6 +87,38 @@ class InformationServiceTest {
   }
 
   @Test
+  void findAccountEndpoint_addsIoExceptionsAsSuppressed_whenProvidersUnreachable()
+      throws Exception {
+    var first = new IOException("connection refused");
+    var second = new IOException("connection reset");
+    doThrow(first, second).when(httpClient).send(any(HttpRequest.class), any());
+
+    var e =
+        assertThrows(
+            InformationServiceException.class,
+            () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+
+    assertArrayEquals(new Throwable[] {first, second}, e.getSuppressed());
+  }
+
+  @Test
+  void findAccountEndpoint_addsIoExceptionAsSuppressed_whenOtherProviderHasStatusMismatch()
+      throws Exception {
+    var unreachable = new IOException("connection refused");
+    doThrow(unreachable)
+        .doReturn(response(409, "{\"errorCode\":\"statusMismatch\"}"))
+        .when(httpClient)
+        .send(any(HttpRequest.class), any());
+
+    var e =
+        assertThrows(
+            HealthRecordUnavailableException.class,
+            () -> twoProviderService().findAccountEndpoint(INSURANT_ID));
+
+    assertArrayEquals(new Throwable[] {unreachable}, e.getSuppressed());
+  }
+
+  @Test
   void findAccountEndpoint_setsInterruptedFlagAndThrows_whenInterrupted() throws Exception {
     doThrow(new InterruptedException()).when(httpClient).send(any(HttpRequest.class), any());
 

@@ -18,6 +18,9 @@ public class InformationService {
 
   private static final Logger log = LoggerFactory.getLogger(InformationService.class);
 
+  // full request/response dumps, enabled with EPA4ALL_HTTP_DEBUG_LOG=true
+  private static final Logger httpDebugLog = LoggerFactory.getLogger("http-debug");
+
   private static final String RECORD_STATUS_PATH = "/information/api/v1/ehr";
   private static final String USER_AGENT = "Oviva/0.0.1";
 
@@ -37,6 +40,7 @@ public class InformationService {
 
   public Optional<URI> findAccountEndpoint(String insurantId) {
     var outcomes = new ArrayList<String>();
+    var causes = new ArrayList<Exception>();
     var unavailable = false;
     var malformed = false;
     var failed = false;
@@ -44,6 +48,9 @@ public class InformationService {
     for (URI epaEndpoint : epaEndpoints) {
       var status = getRecordStatus(insurantId, epaEndpoint);
       outcomes.add("%s: %s".formatted(epaEndpoint, status.description()));
+      if (status.cause() != null) {
+        causes.add(status.cause());
+      }
       switch (status.result()) {
         case ACTIVATED -> {
           return Optional.of(epaEndpoint);
@@ -58,19 +65,30 @@ public class InformationService {
     }
 
     if (unavailable) {
-      throw new HealthRecordUnavailableException(
-          "health record is not in state ACTIVATED (SUSPENDED or INACCESSIBLE): %s"
-              .formatted(outcomes));
+      throw withSuppressed(
+          new HealthRecordUnavailableException(
+              "health record is not in state ACTIVATED (SUSPENDED or INACCESSIBLE): %s"
+                  .formatted(outcomes)),
+          causes);
     }
     if (malformed) {
-      throw new InformationServiceMalformedRequestException(
-          "Information Service rejected the request as malformed: %s".formatted(outcomes));
+      throw withSuppressed(
+          new InformationServiceMalformedRequestException(
+              "Information Service rejected the request as malformed: %s".formatted(outcomes)),
+          causes);
     }
     if (failed) {
-      throw new InformationServiceException(
-          "could not determine health record status: %s".formatted(outcomes));
+      throw withSuppressed(
+          new InformationServiceException(
+              "could not determine health record status: %s".formatted(outcomes)),
+          causes);
     }
     return Optional.empty();
+  }
+
+  private static <T extends Exception> T withSuppressed(T exception, List<Exception> causes) {
+    causes.forEach(exception::addSuppressed);
+    return exception;
   }
 
   private RecordStatus getRecordStatus(String insurantId, URI endpoint) {
@@ -88,7 +106,7 @@ public class InformationService {
           .addKeyValue("endpoint", endpoint)
           .setCause(e)
           .log("failed to reach epa record at '{}': {}", endpoint, e.getMessage());
-      return new RecordStatus(Result.ERROR, "unreachable (%s)".formatted(e.getMessage()));
+      return new RecordStatus(Result.ERROR, "unreachable (%s)".formatted(e.getMessage()), e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new InformationServiceException(
@@ -98,24 +116,35 @@ public class InformationService {
     // status code mapping according to I_Information_Service getRecordStatus
     var status = httpResponse.statusCode();
     if (status == 204) {
-      return new RecordStatus(Result.ACTIVATED, "204");
+      return new RecordStatus(Result.ACTIVATED, "204", null);
     }
     if (status == 404) {
-      return new RecordStatus(Result.NO_HEALTH_RECORD, "404");
+      return new RecordStatus(Result.NO_HEALTH_RECORD, "404", null);
     }
 
     var error = parseError(httpResponse.body());
     var description = "%d %s".formatted(status, errorCodeOf(error)).strip();
     if (status == 400) {
-      logMalformedRequest(httpRequest, httpResponse, error, insurantId);
-      return new RecordStatus(Result.MALFORMED_REQUEST, description);
+      log.atWarn()
+          .addKeyValue("endpoint", httpResponse.uri())
+          .addKeyValue("status", status)
+          .addKeyValue("errorCode", errorCodeOf(error))
+          .addKeyValue("errorDetail", error != null ? mask(error.errorDetail(), insurantId) : null)
+          .log(
+              "Information Service rejected getRecordStatus as malformed at '{}': status={},"
+                  + " errorCode={}",
+              httpResponse.uri(),
+              status,
+              errorCodeOf(error));
+      debugLogMalformedRequest(httpRequest, httpResponse, insurantId);
+      return new RecordStatus(Result.MALFORMED_REQUEST, description, null);
     }
     if (status == 409) {
       logErrorResponse(httpResponse, error, insurantId, "health record is not in state ACTIVATED");
-      return new RecordStatus(Result.STATUS_MISMATCH, description);
+      return new RecordStatus(Result.STATUS_MISMATCH, description, null);
     }
     logErrorResponse(httpResponse, error, insurantId, "Information Service returned an error");
-    return new RecordStatus(Result.ERROR, description);
+    return new RecordStatus(Result.ERROR, description, null);
   }
 
   private void logErrorResponse(
@@ -135,12 +164,15 @@ public class InformationService {
 
   /**
    * A '400 malformedRequest' means our request did not match the Information Service schema, so
-   * retrying won't help. Log everything we know about the request and response to debug it.
+   * retrying won't help. Dump the request and response to debug it, without the KVNR itself.
    */
-  private void logMalformedRequest(
-      HttpRequest req, HttpResponse<String> res, ErrorType error, String insurantId) {
-    log.atWarn()
-        .addKeyValue("endpoint", res.uri())
+  private void debugLogMalformedRequest(
+      HttpRequest req, HttpResponse<String> res, String insurantId) {
+    if (!httpDebugLog.isDebugEnabled()) {
+      return;
+    }
+    httpDebugLog
+        .atDebug()
         .addKeyValue("request.method", req.method())
         .addKeyValue("request.uri", req.uri())
         .addKeyValue("request.header.x-useragent", USER_AGENT)
@@ -151,15 +183,7 @@ public class InformationService {
         .addKeyValue("response.status", res.statusCode())
         .addKeyValue("response.version", res.version())
         .addKeyValue("response.body", mask(res.body(), insurantId))
-        .addKeyValue("errorCode", errorCodeOf(error))
-        .addKeyValue("errorDetail", error != null ? mask(error.errorDetail(), insurantId) : null)
-        .log(
-            "Information Service rejected getRecordStatus as malformed at '{}': status={},"
-                + " errorCode={}, errorDetail={}",
-            res.uri(),
-            res.statusCode(),
-            errorCodeOf(error),
-            error != null ? mask(error.errorDetail(), insurantId) : null);
+        .log("< Information Service response: {} {}", req.method(), req.uri());
   }
 
   private static String mask(String value, String insurantId) {
@@ -195,7 +219,7 @@ public class InformationService {
     ERROR
   }
 
-  private record RecordStatus(Result result, String description) {}
+  private record RecordStatus(Result result, String description, Exception cause) {}
 
   private record ErrorType(
       @JsonProperty("errorCode") String errorCode,
