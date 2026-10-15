@@ -7,17 +7,17 @@ import com.oviva.epa.client.KonnektorServiceBuilder;
 import com.oviva.epa.client.konn.KonnektorConnectionFactory;
 import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
 import com.oviva.telematik.epa4all.client.Environment;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
 import com.oviva.telematik.epa4all.restservice.problem.BadRequestProblem;
 import com.oviva.telematik.epa4all.restservice.problem.DuplicateDocumentProblem;
+import com.oviva.telematik.epa4all.restservice.problem.InformationServiceUnavailableProblem;
 import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
 import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
 import com.oviva.telematik.epa4all.restservice.problem.Problem;
+import com.oviva.telematik.epa4all.restservice.problem.RecordUnavailableProblem;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Path;
 import java.security.*;
+import java.time.Duration;
 import java.util.*;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
@@ -47,6 +48,13 @@ public class Main implements AutoCloseable {
 
   public static final String CONFIG_PREFIX = "EPA4ALL";
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
+  // Retry intervals documented for getRecordStatus in I_Information_Service 1.5.1 (409: approx. 24
+  // hours, 500: approx. 10 minutes), see "Retry interval" in
+  // https://github.com/gematik/ePA-Basic/blob/ePA-3.1.3/src/openapi/I_Information_Service.yaml#L16-L21
+  private static final long RECORD_UNAVAILABLE_RETRY_AFTER = Duration.ofHours(24).toSeconds();
+  private static final long INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER =
+      Duration.ofMinutes(10).toSeconds();
 
   private final ConfigProvider configProvider;
   private Undertow server;
@@ -337,18 +345,74 @@ public class Main implements AutoCloseable {
         next.handleRequest(exchange);
       } catch (BadRequestException e) {
         logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+
         sendProblem(exchange, objectMapper, new BadRequestProblem());
-      } catch (DuplicateDocumentClientException e) {
-        logger.atWarn().setCause(e).log("Duplicate document: {}", e.getMessage());
-        sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
-      } catch (NotAuthorizedClientException e) {
-        logger.atWarn().setCause(e).log("Not entitled: {}", e.getMessage());
-        sendProblem(exchange, objectMapper, new NotEntitledProblem());
-      } catch (ApplicationException | ClientException e) {
+      } catch (ClientException e) {
+        handleClientException(exchange, objectMapper, e);
+      } catch (ApplicationException e) {
         logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
+
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
     };
+  }
+
+  private void handleClientException(
+      HttpServerExchange exchange, ObjectMapper objectMapper, ClientException e)
+      throws JsonProcessingException {
+    switch (e.reason()) {
+      case RECORD_UNAVAILABLE -> {
+        logger
+            .atDebug()
+            .setCause(e)
+            .log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
+
+        exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
+
+        sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
+      }
+      case INFORMATION_SERVICE_UNAVAILABLE -> {
+        logger
+            .atDebug()
+            .setCause(e)
+            .log(
+                "ePA Information Service failed: {}: {}",
+                e.getMessage(),
+                e.getCause().getMessage());
+
+        exchange
+            .getResponseHeaders()
+            .put(Headers.RETRY_AFTER, INFORMATION_SERVICE_UNAVAILABLE_RETRY_AFTER);
+
+        sendProblem(exchange, objectMapper, new InformationServiceUnavailableProblem());
+      }
+      case INFORMATION_SERVICE_MALFORMED_REQUEST -> {
+        logger
+            .atError()
+            .setCause(e)
+            .log(
+                "ePA Information Service rejected request: {}: {}",
+                e.getMessage(),
+                e.getCause().getMessage());
+
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
+      }
+      case DUPLICATE_DOCUMENT -> {
+        logger.atDebug().setCause(e).log("Duplicate document: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
+      }
+      case NOT_AUTHORIZED -> {
+        logger.atDebug().setCause(e).log("Not entitled: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new NotEntitledProblem());
+      }
+      case INTERNAL -> {
+        logger.atError().setCause(e).log("Internal error: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new InternalErrorProblem());
+      }
+    }
   }
 
   private void sendProblem(HttpServerExchange exchange, ObjectMapper objectMapper, Problem problem)

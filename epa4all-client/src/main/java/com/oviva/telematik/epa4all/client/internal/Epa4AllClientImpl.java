@@ -2,15 +2,16 @@ package com.oviva.telematik.epa4all.client.internal;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
+import com.oviva.telematik.epa4all.client.ClientException.Reason;
 import com.oviva.telematik.epa4all.client.Epa4AllClient;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
 import com.oviva.telematik.epaapi.*;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.simple.AuthorInstitution;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.net.URI;
 import java.util.UUID;
 
 public class Epa4AllClientImpl implements Epa4AllClient {
@@ -52,9 +53,9 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       var phrService = openPhrServiceForInsurant(insurantId);
       phrService.writeDocument(insurantId, document);
     } catch (DuplicateDocumentException e) {
-      throw new DuplicateDocumentClientException("duplicate document", e);
+      throw new ClientException(Reason.DUPLICATE_DOCUMENT, "duplicate document", e);
     } catch (NotAuthorizedDocumentException e) {
-      throw new NotAuthorizedClientException("PHR not authorized", e);
+      throw new ClientException(Reason.NOT_AUTHORIZED, "PHR not authorized", e);
     } catch (WriteDocumentException e) {
       throw new ClientException("failed to write document", e);
     }
@@ -69,9 +70,9 @@ public class Epa4AllClientImpl implements Epa4AllClient {
       var phrService = openPhrServiceForInsurant(insurantId);
       phrService.replaceDocument(insurantId, document, documentToReplaceId);
     } catch (DuplicateDocumentException e) {
-      throw new DuplicateDocumentClientException("duplicate document", e);
+      throw new ClientException(Reason.DUPLICATE_DOCUMENT, "duplicate document", e);
     } catch (NotAuthorizedDocumentException e) {
-      throw new NotAuthorizedClientException("PHR not authorized", e);
+      throw new ClientException(Reason.NOT_AUTHORIZED, "PHR not authorized", e);
     } catch (WriteDocumentException e) {
       throw new ClientException("failed to write document", e);
     }
@@ -79,11 +80,7 @@ public class Epa4AllClientImpl implements Epa4AllClient {
 
   private PhrService openPhrServiceForInsurant(String insurantId) {
 
-    var endpoint =
-        informationService
-            .findAccountEndpoint(insurantId)
-            .orElseThrow(
-                () -> new ClientException("endpoint for KVNR %s not found".formatted(insurantId)));
+    var endpoint = findAccountEndpoint(insurantId);
 
     authorizationService.authorizeVauWithSmcB(endpoint, insurantId);
 
@@ -93,5 +90,26 @@ public class Epa4AllClientImpl implements Epa4AllClient {
 
     var phrPort = soapClientFactory.getIDocumentManagementPort(phrEndpoint);
     return new PhrService(phrPort);
+  }
+
+  private URI findAccountEndpoint(String insurantId) {
+    try {
+      return informationService
+          .findAccountEndpoint(insurantId)
+          .orElseThrow(() -> new ClientException("ePA endpoint not found"));
+    } catch (InformationServiceException e) {
+      throw switch (e.reason()) {
+        case RECORD_UNAVAILABLE ->
+            new ClientException(Reason.RECORD_UNAVAILABLE, "ePA record temporarily unavailable", e);
+        case MALFORMED_REQUEST ->
+            new ClientException(
+                Reason.INFORMATION_SERVICE_MALFORMED_REQUEST,
+                "Information Service rejected the request as malformed",
+                e);
+        case ERROR ->
+            new ClientException(
+                Reason.INFORMATION_SERVICE_UNAVAILABLE, "failed to determine ePA record status", e);
+      };
+    }
   }
 }

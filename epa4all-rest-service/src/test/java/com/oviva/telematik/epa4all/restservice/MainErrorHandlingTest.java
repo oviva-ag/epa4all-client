@@ -4,8 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.DuplicateDocumentClientException;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
+import com.oviva.telematik.epa4all.client.ClientException.Reason;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.BlockingHandler;
@@ -27,8 +26,76 @@ class MainErrorHandlingTest {
   }
 
   @Test
+  void recordUnavailable_returns503WithRetryAfter24h() {
+    var baseUri =
+        start(
+            () ->
+                new ClientException(
+                    Reason.RECORD_UNAVAILABLE,
+                    "ePA record temporarily unavailable",
+                    new RuntimeException("409 statusMismatch")));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(503)
+        .header("Retry-After", "86400")
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/epa-record-unavailable"))
+        .body("title", equalTo("ePA Record Unavailable"))
+        .body(
+            "detail",
+            equalTo(
+                "The patient's ePA record is temporarily unavailable (relocation or maintenance)"));
+  }
+
+  @Test
+  void informationServiceUnavailable_returns503WithRetryAfter10min() {
+    var baseUri =
+        start(
+            () ->
+                new ClientException(
+                    Reason.INFORMATION_SERVICE_UNAVAILABLE,
+                    "failed to determine ePA record status",
+                    new RuntimeException("500 internalError")));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(503)
+        .header("Retry-After", "600")
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/information-service-unavailable"))
+        .body("title", equalTo("ePA Information Service Unavailable"))
+        .body("detail", equalTo("Could not determine the status of the patient's ePA record"));
+  }
+
+  @Test
+  void informationServiceMalformedRequest_returns500WithoutRetryAfter() {
+    var baseUri =
+        start(
+            () ->
+                new ClientException(
+                    Reason.INFORMATION_SERVICE_MALFORMED_REQUEST,
+                    "Information Service rejected the request as malformed",
+                    new RuntimeException("400 malformedRequest")));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(500)
+        .header("Retry-After", nullValue())
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/internal-error"))
+        .body("detail", not(containsString("X123456789")));
+  }
+
+  @Test
   void duplicateDocument_returns409() {
-    var baseUri = start(() -> new DuplicateDocumentClientException("duplicate"));
+    var baseUri = start(() -> new ClientException(Reason.DUPLICATE_DOCUMENT, "duplicate"));
 
     given()
         .baseUri(baseUri)
@@ -41,7 +108,7 @@ class MainErrorHandlingTest {
 
   @Test
   void notAuthorized_returns403() {
-    var baseUri = start(() -> new NotAuthorizedClientException("not authorized"));
+    var baseUri = start(() -> new ClientException(Reason.NOT_AUTHORIZED, "not authorized"));
 
     given()
         .baseUri(baseUri)

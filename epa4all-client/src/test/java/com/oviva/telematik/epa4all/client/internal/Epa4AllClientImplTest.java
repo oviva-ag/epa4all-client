@@ -6,10 +6,11 @@ import static org.mockito.Mockito.*;
 
 import com.oviva.epa.client.model.SmcbCard;
 import com.oviva.telematik.epa4all.client.ClientException;
-import com.oviva.telematik.epa4all.client.NotAuthorizedClientException;
+import com.oviva.telematik.epa4all.client.ClientException.Reason;
 import com.oviva.telematik.epaapi.SoapClientFactory;
 import com.oviva.telematik.vau.epa4all.client.authz.AuthorizationService;
 import com.oviva.telematik.vau.epa4all.client.info.InformationService;
+import com.oviva.telematik.vau.epa4all.client.info.InformationServiceException;
 import de.gematik.epa.ihe.model.Author;
 import de.gematik.epa.ihe.model.document.Document;
 import de.gematik.epa.ihe.model.document.DocumentMetadata;
@@ -74,7 +75,7 @@ class Epa4AllClientImplTest {
   }
 
   @Test
-  void writeDocument_notEntitled_throwsNotAuthorizedClientException() {
+  void writeDocument_notEntitled_throwsNotAuthorized() {
     // Given
     when(informationService.findAccountEndpoint(INSURANT_ID))
         .thenReturn(Optional.of(HTTPS_ENDPOINT_URI));
@@ -85,13 +86,14 @@ class Epa4AllClientImplTest {
       mockClientProxy(m, documentManagementPort);
 
       // When & Then
-      assertThrows(
-          NotAuthorizedClientException.class, () -> client.writeDocument(INSURANT_ID, document));
+      var e =
+          assertThrows(ClientException.class, () -> client.writeDocument(INSURANT_ID, document));
+      assertEquals(Reason.NOT_AUTHORIZED, e.reason());
     }
   }
 
   @Test
-  void replaceDocument_notEntitled_throwsNotAuthorizedClientException() {
+  void replaceDocument_notEntitled_throwsNotAuthorized() {
     // Given
     when(informationService.findAccountEndpoint(INSURANT_ID))
         .thenReturn(Optional.of(HTTPS_ENDPOINT_URI));
@@ -103,9 +105,11 @@ class Epa4AllClientImplTest {
       mockClientProxy(m, documentManagementPort);
 
       // When & Then
-      assertThrows(
-          NotAuthorizedClientException.class,
-          () -> client.replaceDocument(INSURANT_ID, document, documentToReplaceId));
+      var e =
+          assertThrows(
+              ClientException.class,
+              () -> client.replaceDocument(INSURANT_ID, document, documentToReplaceId));
+      assertEquals(Reason.NOT_AUTHORIZED, e.reason());
     }
   }
 
@@ -173,7 +177,7 @@ class Epa4AllClientImplTest {
             ClientException.class, () -> client.writeDocument(INSURANT_ID, mockDocument()));
 
     // Verify exception message
-    assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
+    assertEquals("ePA endpoint not found", exception.getMessage());
   }
 
   @Test
@@ -189,7 +193,73 @@ class Epa4AllClientImplTest {
             () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
 
     // Verify exception message
-    assertEquals("endpoint for KVNR X123456789 not found", exception.getMessage());
+    assertEquals("ePA endpoint not found", exception.getMessage());
+  }
+
+  @Test
+  void writeDocument_malformedRequest_throwsInformationServiceMalformedRequest() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(
+            new InformationServiceException(
+                InformationServiceException.Reason.MALFORMED_REQUEST, "400 malformedRequest"));
+
+    var exception =
+        assertThrows(
+            ClientException.class, () -> client.writeDocument(INSURANT_ID, mockDocument()));
+
+    assertEquals(Reason.INFORMATION_SERVICE_MALFORMED_REQUEST, exception.reason());
+
+    assertEquals("Information Service rejected the request as malformed", exception.getMessage());
+  }
+
+  @Test
+  void replaceDocument_malformedRequest_throwsInformationServiceMalformedRequest() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(
+            new InformationServiceException(
+                InformationServiceException.Reason.MALFORMED_REQUEST, "400 malformedRequest"));
+    var documentToReplaceId = UUID.randomUUID();
+
+    var exception =
+        assertThrows(
+            ClientException.class,
+            () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
+
+    assertEquals(Reason.INFORMATION_SERVICE_MALFORMED_REQUEST, exception.reason());
+  }
+
+  @Test
+  void writeDocument_recordUnavailable_throwsRecordUnavailable() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(
+            new InformationServiceException(
+                InformationServiceException.Reason.RECORD_UNAVAILABLE, "SUSPENDED"));
+
+    var exception =
+        assertThrows(
+            ClientException.class, () -> client.writeDocument(INSURANT_ID, mockDocument()));
+
+    assertEquals(Reason.RECORD_UNAVAILABLE, exception.reason());
+
+    assertEquals("ePA record temporarily unavailable", exception.getMessage());
+  }
+
+  @Test
+  void replaceDocument_informationServiceFailed_throwsInformationServiceUnavailable() {
+    when(informationService.findAccountEndpoint(INSURANT_ID))
+        .thenThrow(
+            new InformationServiceException(
+                InformationServiceException.Reason.ERROR, "500 internalError"));
+    var documentToReplaceId = UUID.randomUUID();
+
+    var exception =
+        assertThrows(
+            ClientException.class,
+            () -> client.replaceDocument(INSURANT_ID, mockDocument(), documentToReplaceId));
+
+    assertEquals(Reason.INFORMATION_SERVICE_UNAVAILABLE, exception.reason());
+
+    assertEquals("failed to determine ePA record status", exception.getMessage());
   }
 
   private Document mockDocument() {
