@@ -18,6 +18,7 @@ package de.gematik.vau.exception;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mockStatic;
 
@@ -30,7 +31,6 @@ import de.gematik.vau.lib.data.EccKyberKeyPair;
 import de.gematik.vau.lib.data.KdfMessage;
 import de.gematik.vau.lib.data.SignedPublicVauKeys;
 import de.gematik.vau.lib.data.VauPublicKeys;
-import de.gematik.vau.lib.exceptions.VauKyberCryptoException;
 import de.gematik.vau.lib.exceptions.VauProtocolException;
 import de.gematik.vau.lib.util.DigestUtils;
 import java.math.BigInteger;
@@ -42,7 +42,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.bouncycastle.util.BigIntegers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,13 +51,12 @@ import org.mockito.Mockito;
 class ExceptionTest {
   @BeforeEach
   void removeBCProviders() {
-    removeBCProvider(new BouncyCastlePQCProvider());
     removeBCProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
   }
 
   @Test
   void testEccProviderException() {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Arrays.stream(Security.getProviders())
         .toList()
         .indexOf(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -69,39 +67,32 @@ class ExceptionTest {
   }
 
   @Test
-  void testKyberGenerationProviderException() {
+  void testKyberGeneration() {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-    assertThatThrownBy(KyberEncoding::generateKeyPair).isInstanceOf(VauKyberCryptoException.class);
+
+    // when
+    var kp = KyberEncoding.generateKeyPair();
+
+    // then
+    assertNotNull(kp);
   }
 
   @Test
-  void testKyberGenerateEncryptionProviderException() {
+  void testKyberGenerateEncryption() {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-    Security.addProvider(new BouncyCastlePQCProvider());
-    Arrays.stream(Security.getProviders()).toList().indexOf(new BouncyCastlePQCProvider());
+
     var publicKey = KyberEncoding.generateKeyPair().getPublic();
-    removeBCProvider(new BouncyCastlePQCProvider());
-    assertThatThrownBy(() -> KyberEncoding.pqcGenerateEncryptionKey(publicKey))
-        .isInstanceOf(VauKyberCryptoException.class);
-  }
 
-  @Test
-  void testKyberGenerateDecryptionProviderException() {
-    Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-    int index = Security.addProvider(new BouncyCastlePQCProvider()) - 1;
-    var privateKey = KyberEncoding.generateKeyPair().getPrivate();
-    for (Object a : Security.getProviders()[index].values()) {
-      Security.removeProvider(a.toString());
-    }
-    byte[] encapsulatedKeyDoesNotMatter = new byte[0];
-    assertThatThrownBy(
-            () -> KyberEncoding.pqcGenerateDecryptionKey(privateKey, encapsulatedKeyDoesNotMatter))
-        .isInstanceOf(VauKyberCryptoException.class);
+    // when
+    var secret = KyberEncoding.pqcGenerateEncryptionKey(publicKey);
+
+    // then
+    assertNotNull(secret);
   }
 
   @Test
   void testSignatureException() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EdDSA");
@@ -115,6 +106,7 @@ class ExceptionTest {
     byte[] ocspReponseAutCertificate =
         Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der"));
 
+    // when & then
     assertThatThrownBy(
             () ->
                 SignedPublicVauKeys.sign(
@@ -129,7 +121,7 @@ class ExceptionTest {
 
   @Test
   void testEccGetSharedSecretIllegalPrivateKeyException() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyPairGenerator wrongKeyGen = KeyPairGenerator.getInstance("EdDSA");
@@ -150,7 +142,7 @@ class ExceptionTest {
 
   @Test
   void testVauAndClientNotEqualException() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC", "SunEC");
@@ -189,7 +181,7 @@ class ExceptionTest {
 
   @Test
   void testIatExpException() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC");
@@ -216,7 +208,7 @@ class ExceptionTest {
 
   @Test
   void testVauServerHashDoNotEqualException() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC", "SunEC");
@@ -374,7 +366,7 @@ class ExceptionTest {
 
   @Test
   void testEllipticCurveGetSharedSecret() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC", "SunEC");

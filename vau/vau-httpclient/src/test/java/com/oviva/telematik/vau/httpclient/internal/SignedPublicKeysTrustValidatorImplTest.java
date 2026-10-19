@@ -21,13 +21,11 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.Test;
 
 class SignedPublicKeysTrustValidatorImplTest {
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

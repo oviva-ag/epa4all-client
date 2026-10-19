@@ -41,7 +41,7 @@ public class KyberKeys {
       var x509EncodedKeySpec =
           new X509EncodedKeySpec(
               ArrayUtils.unionByteArrays(KYBER_PUBLIC_KEY_ENCODING_HEADER, keyBytes));
-      var keyFactory = KeyFactory.getInstance("KYBER", "BCPQC");
+      var keyFactory = KeyFactory.getInstance("ML-KEM", "BC");
       return keyFactory.generatePublic(x509EncodedKeySpec);
     } catch (NoSuchProviderException | NoSuchAlgorithmException | InvalidKeySpecException e) {
       throw new VauKyberCryptoException("Kyber Public Key Bytes are not well formed.", e);

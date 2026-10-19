@@ -41,10 +41,11 @@
 
   <modules>
     <module>epa4all-client</module>
-    <module>epa4all-rest-service</module>
     <module>epa4all-phr-client</module>
+    <module>epa4all-rest-service</module>
     <module>epa4all-vau-client</module>
     <module>konnektor</module>
+    <module>telematik-tsl</module>
     <module>vau</module>
   </modules>
 
@@ -61,19 +62,18 @@
 
     <source-maven-plugin.version>3.4.0</source-maven-plugin.version>
     <javadoc-maven-plugin.version>3.12.0</javadoc-maven-plugin.version>
-    <version.maven-surefire-plugin>3.5.6</version.maven-surefire-plugin>
+    <version.maven-surefire-plugin>3.6.0</version.maven-surefire-plugin>
     <jacoco.version>0.8.15</jacoco.version>
 
-    <spotless.version>3.10.1</spotless.version>
-    <jackson.version>2.22.3</jackson.version>
-    <slf4j.version>2.0.18</slf4j.version>
-    <apache-cxf.version>4.2.3</apache-cxf.version>
+    <spotless.version>3.10.4</spotless.version>
+    <jackson.version>2.22.4</jackson.version>
+    <slf4j.version>2.0.20</slf4j.version>
+    <apache-cxf.version>4.2.4</apache-cxf.version>
     <cxf-xjc.version>4.2.0</cxf-xjc.version>
     <xml.bind.jaxb.version>2.3.1</xml.bind.jaxb.version>
     <jaxb.fluent.api.version>3.0</jaxb.fluent.api.version>
-    <!-- bouncycastle 1.85 no longer supports KYBER and the ML-KEM alternative doesn't work -->
-    <bouncycastle.version>1.84</bouncycastle.version>
-    <logback-classic.version>1.6.3</logback-classic.version>
+    <bouncycastle.version>1.86.2</bouncycastle.version>
+    <logback-classic.version>1.6.5</logback-classic.version>
 
     <sonar.organization>oviva-ag</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -89,13 +89,10 @@
     <dependencies>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk18on</artifactId>
+        <artifactId>bc-jdk18on-bom</artifactId>
         <version>${bouncycastle.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcutil-jdk18on</artifactId>
-        <version>${bouncycastle.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
       <dependency>
@@ -107,13 +104,13 @@
       <dependency>
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
-        <version>1.18.46</version>
+        <version>1.18.48</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
-        <version>4.10.4</version>
+        <version>4.10.5</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.code.findbugs</groupId>
@@ -139,7 +136,7 @@
         <groupId>org.apache.neethi</groupId>
         <artifactId>neethi</artifactId>
         <!-- fixing GHSA-287c-fxr7-3w6c , GHSA-2hfh-9h53-qc24, GHSA-g36m-9g3m-2vmp -->
-        <version>3.2.3</version>
+        <version>3.2.4</version>
       </dependency>
       <dependency>
         <groupId>org.apache.cxf</groupId>
@@ -171,7 +168,7 @@
       <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>nimbus-jose-jwt</artifactId>
-        <version>10.9.1</version>
+        <version>10.10</version>
       </dependency>
       <dependency>
         <groupId>com.nimbusds</groupId>
@@ -181,13 +178,13 @@
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-api</artifactId>
-        <version>1.65.0</version>
+        <version>1.67.0</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.20.0</version>
+        <version>3.21.0</version>
       </dependency>
 
       <dependency>
@@ -205,7 +202,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-bom</artifactId>
-        <version>5.23.0</version>
+        <version>5.24.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -213,7 +210,7 @@
       <dependency>
         <groupId>io.undertow</groupId>
         <artifactId>undertow-core</artifactId>
-        <version>2.4.3.Final</version>
+        <version>2.4.4.Final</version>
       </dependency>
 
       <dependency>
@@ -285,7 +282,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>3.6.2</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
@@ -379,7 +376,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>versions-maven-plugin</artifactId>
-        <version>2.21.0</version>
+        <version>2.23.0</version>
         <configuration>
           <generateBackupPoms>false</generateBackupPoms>
           <ignoredVersions>.*[-.]M.*,.*-(RC|rc)[0-9]+,.*-redhat.*,.*[-.][Bb]eta[0-9]*,.*[-.][Aa]lpha[0-9]*,.*\.Dev[0-9]*</ignoredVersions>
@@ -486,7 +483,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.11.0</version>
+            <version>0.12.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>

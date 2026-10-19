@@ -44,7 +44,6 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -57,7 +56,6 @@ class VauHandshakeTest {
   private static final String TGR_FILENAME = "target/vau3traffic.tgr";
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

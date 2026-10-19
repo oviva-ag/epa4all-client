@@ -16,7 +16,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 class TrustStoreValidatorTest {
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

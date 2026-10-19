@@ -23,14 +23,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Epa4AllClientFactory implements AutoCloseable {
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

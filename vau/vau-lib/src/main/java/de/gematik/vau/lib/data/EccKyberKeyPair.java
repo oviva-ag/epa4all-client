@@ -36,11 +36,17 @@ import java.security.spec.X509EncodedKeySpec;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.bouncycastle.util.encoders.Hex;
 
 public class EccKyberKeyPair {
 
   private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
+
+  protected static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER =
+      Hex.decode("308204B2300B0609608648016503040402038204A100");
+
+  protected static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER =
+      Hex.decode("30820978020100300B06096086480165030404020482096404820960");
 
   private final KeyPair eccKeyPair;
   private final KeyPair kyberKeyPair;
@@ -89,8 +95,8 @@ public class EccKyberKeyPair {
   private static KeyPair readKyberKeypairFromPkcs8Pem(
       byte[] kyberPrivateKeyData, byte[] kyberPublicKeyData) {
     try {
-      final String keyType = "KYBER";
-      KeyFactory keyFactory = KeyFactory.getInstance(keyType, new BouncyCastlePQCProvider());
+      final String keyType = "ML-KEM";
+      KeyFactory keyFactory = KeyFactory.getInstance(keyType, BOUNCY_CASTLE_PROVIDER);
 
       X509EncodedKeySpec kyberPubKey =
           new X509EncodedKeySpec(
@@ -110,10 +116,10 @@ public class EccKyberKeyPair {
 
   public static KeyPair readEcdsaKeypairFromPkcs8Pem(byte[] eccPrivateKeyData) {
     try {
-      var factory = KeyFactory.getInstance("ECDSA", BOUNCY_CASTLE_PROVIDER);
+      var factory = KeyFactory.getInstance("ECDSA", EccKyberKeyPair.BOUNCY_CASTLE_PROVIDER);
       var privKeySpec = new PKCS8EncodedKeySpec(eccPrivateKeyData);
       final var privateKey = (BCECPrivateKey) factory.generatePrivate(privKeySpec);
-      var keyFactory = KeyFactory.getInstance("ECDSA", BOUNCY_CASTLE_PROVIDER);
+      var keyFactory = KeyFactory.getInstance("ECDSA", EccKyberKeyPair.BOUNCY_CASTLE_PROVIDER);
 
       var ecSpec = privateKey.getParameters();
       var q = ecSpec.getG().multiply(privateKey.getD());
