@@ -75,7 +75,7 @@ class ExceptionTest {
   }
 
   @Test
-  void testKyberGenerateEncryptionProviderException() {
+  void testKyberGenerateEncryption() {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     var publicKey = KyberEncoding.generateKeyPair().getPublic();
