@@ -70,7 +70,10 @@ class ExceptionTest {
   void testKyberGeneration() {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
+    // when
     var kp = KyberEncoding.generateKeyPair();
+
+    // then
     assertNotNull(kp);
   }
 
@@ -79,7 +82,11 @@ class ExceptionTest {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     var publicKey = KyberEncoding.generateKeyPair().getPublic();
+
+    // when
     var secret = KyberEncoding.pqcGenerateEncryptionKey(publicKey);
+
+    // then
     assertNotNull(secret);
   }
 
@@ -99,6 +106,7 @@ class ExceptionTest {
     byte[] ocspReponseAutCertificate =
         Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der"));
 
+    // when & then
     assertThatThrownBy(
             () ->
                 SignedPublicVauKeys.sign(
