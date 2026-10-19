@@ -7,7 +7,6 @@ import com.oviva.telematik.epa4all.client.Epa4AllClientFactoryBuilder;
 import java.net.InetSocketAddress;
 import java.security.Security;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.Test;
 class E2eEpa4AllClientImplTest {
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

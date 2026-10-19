@@ -33,7 +33,6 @@ import java.security.PrivateKey;
 import java.security.Security;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +43,7 @@ class DecryptVauMessageExceptionTest {
 
   @BeforeEach
   void doHandShake() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC", "SunEC");

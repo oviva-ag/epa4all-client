@@ -35,7 +35,6 @@ import java.util.*;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,6 @@ public class Main implements AutoCloseable {
 
   {
     Security.addProvider(new BouncyCastleProvider());
-    Security.addProvider(new BouncyCastlePQCProvider());
   }
 
   public static final String CONFIG_PREFIX = "EPA4ALL";

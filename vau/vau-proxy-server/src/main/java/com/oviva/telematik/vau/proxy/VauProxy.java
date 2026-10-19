@@ -15,7 +15,6 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import javax.net.ssl.SSLContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Signal;
@@ -25,7 +24,6 @@ public class VauProxy {
   private static final Logger log = LoggerFactory.getLogger(VauProxy.class);
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

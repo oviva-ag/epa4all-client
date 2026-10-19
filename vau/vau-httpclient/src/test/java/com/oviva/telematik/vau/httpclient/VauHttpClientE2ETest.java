@@ -11,7 +11,6 @@ import java.security.Security;
 import java.time.Duration;
 import java.util.List;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +18,6 @@ import org.junit.jupiter.api.Test;
 class VauHttpClientE2ETest {
 
   static {
-    Security.addProvider(new BouncyCastlePQCProvider());
     Security.addProvider(new BouncyCastleProvider());
   }
 

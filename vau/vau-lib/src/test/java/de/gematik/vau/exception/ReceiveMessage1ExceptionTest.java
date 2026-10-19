@@ -34,7 +34,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
 import java.util.Base64;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +44,7 @@ class ReceiveMessage1ExceptionTest {
 
   @BeforeEach
   void prepareStateMachines() throws Exception {
-    Security.addProvider(new BouncyCastlePQCProvider());
+
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC", "SunEC");
