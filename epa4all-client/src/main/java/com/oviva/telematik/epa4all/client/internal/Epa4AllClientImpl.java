@@ -96,7 +96,8 @@ public class Epa4AllClientImpl implements Epa4AllClient {
     try {
       return informationService
           .findAccountEndpoint(insurantId)
-          .orElseThrow(() -> new ClientException("ePA endpoint not found"));
+          .orElseThrow(
+              () -> new ClientException(Reason.RECORD_NOT_FOUND, "ePA endpoint not found"));
     } catch (InformationServiceException e) {
       throw switch (e.reason()) {
         case RECORD_UNAVAILABLE ->

@@ -17,6 +17,7 @@ import com.oviva.telematik.epa4all.restservice.problem.InformationServiceUnavail
 import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
 import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
 import com.oviva.telematik.epa4all.restservice.problem.Problem;
+import com.oviva.telematik.epa4all.restservice.problem.RecordNotFoundProblem;
 import com.oviva.telematik.epa4all.restservice.problem.RecordUnavailableProblem;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.MimeTypes;
 import io.undertow.Handlers;
@@ -373,6 +374,11 @@ public class Main implements AutoCloseable {
         exchange.getResponseHeaders().put(Headers.RETRY_AFTER, RECORD_UNAVAILABLE_RETRY_AFTER);
 
         sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
+      }
+      case RECORD_NOT_FOUND -> {
+        logger.atError().setCause(e).log("ePA record not found: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new RecordNotFoundProblem());
       }
       case INFORMATION_SERVICE_UNAVAILABLE -> {
         logger

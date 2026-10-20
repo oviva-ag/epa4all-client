@@ -15,6 +15,12 @@ public class ClientException extends RuntimeException {
      */
     RECORD_UNAVAILABLE,
 
+    /**
+     * None of the Aktensysteme holds an ePA record for the insurant, e.g. they opted out. Retrying
+     * won't help.
+     */
+    RECORD_NOT_FOUND,
+
     /** The ePA record status could not be determined, e.g. an Aktensystem was unreachable. */
     INFORMATION_SERVICE_UNAVAILABLE,
 

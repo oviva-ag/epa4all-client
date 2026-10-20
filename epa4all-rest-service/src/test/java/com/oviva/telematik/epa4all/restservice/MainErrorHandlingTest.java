@@ -120,8 +120,30 @@ class MainErrorHandlingTest {
   }
 
   @Test
+  void recordNotFound_returns404WithoutLeakingMessage() {
+    var baseUri =
+        start(
+            () ->
+                new ClientException(
+                    Reason.RECORD_NOT_FOUND, "endpoint for KVNR X123456789 not found"));
+
+    given()
+        .baseUri(baseUri)
+        .post("/documents")
+        .then()
+        .statusCode(404)
+        .header("Retry-After", nullValue())
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/epa-record-not-found"))
+        .body("title", equalTo("ePA Record Not Found"))
+        .body(
+            "detail",
+            equalTo("No ePA record was found for the patient, e.g. they opted out of the ePA"));
+  }
+
+  @Test
   void genericClientException_returns500WithoutLeakingMessage() {
-    var baseUri = start(() -> new ClientException("endpoint for KVNR X123456789 not found"));
+    var baseUri = start(() -> new ClientException("failed to write document for KVNR X123456789"));
 
     given()
         .baseUri(baseUri)

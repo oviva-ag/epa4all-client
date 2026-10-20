@@ -39,6 +39,8 @@ paths:
           $ref: '#/components/responses/UpsertDocumentResponse'
         "400":
           $ref: '#/components/responses/BadRequestResponse'
+        "404":
+          $ref: '#/components/responses/RecordNotFoundResponse'
         "409":
           $ref: '#/components/responses/ConflictResponse'
   /documents/{id}:
@@ -65,6 +67,8 @@ paths:
           $ref: '#/components/responses/UpsertDocumentResponse'
         "400":
           $ref: '#/components/responses/BadRequestResponse'
+        "404":
+          $ref: '#/components/responses/RecordNotFoundResponse'
 components:
   schemas:
     DocumentRequest:
@@ -100,6 +104,10 @@ components:
                 example: "ed498df6-fd0d-45b9-9964-157efb0f4f47"
     BadRequestResponse:
       description: Input data are missing and/or invalid
+    RecordNotFoundResponse:
+      description: |
+        No ePA record exists for the insurant in any Aktensystem, e.g. they opted out.
+        This is permanent, retrying won't help.
     ConflictResponse:
       description: |
         The resource already exists.
