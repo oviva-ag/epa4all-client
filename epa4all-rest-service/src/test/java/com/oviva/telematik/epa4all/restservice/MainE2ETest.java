@@ -58,7 +58,7 @@ class MainE2ETest {
         .then()
         .log()
         .ifValidationFails()
-        .statusCode(200);
+        .statusCode(201);
   }
 
   @Test
@@ -75,7 +75,7 @@ class MainE2ETest {
             .header("Content-Type", "application/json")
             .post("/documents")
             .then()
-            .statusCode(200)
+            .statusCode(201)
             .extract()
             .jsonPath()
             .get("id");
@@ -88,7 +88,7 @@ class MainE2ETest {
         .header("Content-Type", "application/json")
         .post("/documents/" + writtenDocumentId)
         .then()
-        .statusCode(200);
+        .statusCode(201);
   }
 
   public record CreateDocument(
