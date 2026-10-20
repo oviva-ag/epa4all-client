@@ -348,7 +348,7 @@ public class Main implements AutoCloseable {
       try {
         next.handleRequest(exchange);
       } catch (BadRequestException e) {
-        logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+        logger.atError().setCause(e).log("Bad request: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new BadRequestProblem());
       } catch (ClientException e) {
@@ -367,7 +367,7 @@ public class Main implements AutoCloseable {
     switch (e.reason()) {
       case RECORD_UNAVAILABLE -> {
         logger
-            .atDebug()
+            .atError()
             .setCause(e)
             .log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
 
@@ -382,7 +382,7 @@ public class Main implements AutoCloseable {
       }
       case INFORMATION_SERVICE_UNAVAILABLE -> {
         logger
-            .atDebug()
+            .atError()
             .setCause(e)
             .log(
                 "ePA Information Service failed: {}: {}",
@@ -407,12 +407,12 @@ public class Main implements AutoCloseable {
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
       case DUPLICATE_DOCUMENT -> {
-        logger.atDebug().setCause(e).log("Duplicate document: {}", e.getMessage());
+        logger.atError().setCause(e).log("Duplicate document: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
       }
       case NOT_AUTHORIZED -> {
-        logger.atDebug().setCause(e).log("Not entitled: {}", e.getMessage());
+        logger.atError().setCause(e).log("Not entitled: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new NotEntitledProblem());
       }
