@@ -18,6 +18,7 @@ import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
 import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
 import com.oviva.telematik.epa4all.restservice.problem.Problem;
 import com.oviva.telematik.epa4all.restservice.problem.RecordUnavailableProblem;
+import com.oviva.telematik.vau.epa4all.client.authz.internal.MimeTypes;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -311,10 +312,12 @@ public class Main implements AutoCloseable {
                               clientService.writeDocument(
                                   req.insurantId(), req.contentType(), req.content());
 
+                          ex.setStatusCode(201);
+                          ex.getResponseHeaders()
+                              .put(Headers.CONTENT_TYPE, MimeTypes.APPLICATION_JSON);
                           om.writeValue(
                               ex.getOutputStream(),
                               new WriteDocumentResponse(res.documentId().toString()));
-                          ex.setStatusCode(201);
                         })
                     .post(
                         "/documents/{document_id}",
@@ -328,10 +331,12 @@ public class Main implements AutoCloseable {
                               clientService.replaceDocument(
                                   req.insurantId(), req.contentType(), req.content(), documentId);
 
+                          ex.setStatusCode(201);
+                          ex.getResponseHeaders()
+                              .put(Headers.CONTENT_TYPE, MimeTypes.APPLICATION_JSON);
                           om.writeValue(
                               ex.getOutputStream(),
                               new WriteDocumentResponse(res.documentId().toString()));
-                          ex.setStatusCode(201);
                         }))));
   }
 
