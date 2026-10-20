@@ -332,7 +332,8 @@ public class Main implements AutoCloseable {
                                   req.insurantId(), req.contentType(), req.content(), documentId);
 
                           ex.setStatusCode(201);
-                          ex.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                          ex.getResponseHeaders()
+                              .put(Headers.CONTENT_TYPE, MimeTypes.APPLICATION_JSON);
                           om.writeValue(
                               ex.getOutputStream(),
                               new WriteDocumentResponse(res.documentId().toString()));
