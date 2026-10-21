@@ -17,6 +17,7 @@ import com.oviva.telematik.epa4all.restservice.problem.InformationServiceUnavail
 import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
 import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
 import com.oviva.telematik.epa4all.restservice.problem.Problem;
+import com.oviva.telematik.epa4all.restservice.problem.RecordNotFoundProblem;
 import com.oviva.telematik.epa4all.restservice.problem.RecordUnavailableProblem;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.MimeTypes;
 import io.undertow.Handlers;
@@ -347,7 +348,7 @@ public class Main implements AutoCloseable {
       try {
         next.handleRequest(exchange);
       } catch (BadRequestException e) {
-        logger.atWarn().setCause(e).log("Bad request: {}", e.getMessage());
+        logger.atError().setCause(e).log("Bad request: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new BadRequestProblem());
       } catch (ClientException e) {
@@ -366,7 +367,7 @@ public class Main implements AutoCloseable {
     switch (e.reason()) {
       case RECORD_UNAVAILABLE -> {
         logger
-            .atDebug()
+            .atError()
             .setCause(e)
             .log("ePA record unavailable: {}: {}", e.getMessage(), e.getCause().getMessage());
 
@@ -374,9 +375,14 @@ public class Main implements AutoCloseable {
 
         sendProblem(exchange, objectMapper, new RecordUnavailableProblem());
       }
+      case RECORD_NOT_FOUND -> {
+        logger.atError().setCause(e).log("ePA record not found: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new RecordNotFoundProblem());
+      }
       case INFORMATION_SERVICE_UNAVAILABLE -> {
         logger
-            .atDebug()
+            .atError()
             .setCause(e)
             .log(
                 "ePA Information Service failed: {}: {}",
@@ -401,12 +407,12 @@ public class Main implements AutoCloseable {
         sendProblem(exchange, objectMapper, new InternalErrorProblem());
       }
       case DUPLICATE_DOCUMENT -> {
-        logger.atDebug().setCause(e).log("Duplicate document: {}", e.getMessage());
+        logger.atError().setCause(e).log("Duplicate document: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new DuplicateDocumentProblem());
       }
       case NOT_AUTHORIZED -> {
-        logger.atDebug().setCause(e).log("Not entitled: {}", e.getMessage());
+        logger.atError().setCause(e).log("Not entitled: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new NotEntitledProblem());
       }

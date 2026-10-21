@@ -178,6 +178,7 @@ class Epa4AllClientImplTest {
 
     // Verify exception message
     assertEquals("ePA endpoint not found", exception.getMessage());
+    assertEquals(Reason.RECORD_NOT_FOUND, exception.reason());
   }
 
   @Test
@@ -194,6 +195,7 @@ class Epa4AllClientImplTest {
 
     // Verify exception message
     assertEquals("ePA endpoint not found", exception.getMessage());
+    assertEquals(Reason.RECORD_NOT_FOUND, exception.reason());
   }
 
   @Test

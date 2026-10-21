@@ -16,6 +16,7 @@ public abstract sealed class Problem
         DuplicateDocumentProblem,
         InternalErrorProblem,
         RecordUnavailableProblem,
+        RecordNotFoundProblem,
         InformationServiceUnavailableProblem {
 
   private final int status;
