@@ -1,11 +1,15 @@
 package com.oviva.telematik.epa4all.restservice;
 
 import static com.oviva.telematik.epa4all.restservice.Main.CONFIG_PREFIX;
+import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.oviva.telematik.epa4all.client.Environment;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
+import io.undertow.Undertow;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.BlockingHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -52,6 +56,7 @@ class MainTest {
     assertEquals(8080, result.port());
     assertEquals(Environment.PU, result.environment());
     assertNull(result.telematikId());
+    assertNull(result.maxBodyBytes());
   }
 
   @Test
@@ -109,6 +114,7 @@ class MainTest {
                 Map.entry("user.id", "u"),
                 Map.entry("address", "127.0.0.1"),
                 Map.entry("port", "9090"),
+                Map.entry("max.body.mb", "5"),
                 Map.entry("environment", "RU"),
                 Map.entry("telematik.id", "TID-123"),
                 Map.entry("author.specialty", "25^^^&1.3.6.1.4.1.19376.3.276.1.5.11&ISO")));
@@ -128,6 +134,7 @@ class MainTest {
     assertEquals(9090, result.port());
     assertEquals(Environment.RU, result.environment());
     assertEquals("TID-123", result.telematikId());
+    assertEquals(5L * 1024 * 1024, result.maxBodyBytes());
   }
 
   @Test
@@ -233,6 +240,56 @@ class MainTest {
     var proxy = (InetSocketAddress) proxyField.get(service);
 
     assertNull(proxy);
+  }
+
+  @Test
+  void buildServer_withoutMaxBodyBytes_acceptsBody() throws Exception {
+    var main = new Main(mapProvider(Map.of()));
+
+    assertEquals(200, postBodyOfSize(main, null, 1024));
+  }
+
+  @Test
+  void buildServer_withMaxBodyBytes_appliesLimit() throws Exception {
+    var main = new Main(mapProvider(Map.of()));
+
+    assertEquals(200, postBodyOfSize(main, 2048L, 1024));
+    assertEquals(413, postBodyOfSize(main, 512L, 1024));
+  }
+
+  private static int postBodyOfSize(Main main, Long maxBodyBytes, int size) throws Exception {
+    Method m =
+        Main.class.getDeclaredMethod(
+            "buildServer", String.class, int.class, Long.class, HttpHandler.class);
+    m.setAccessible(true);
+
+    HttpHandler readBody =
+        ex -> {
+          ex.startBlocking();
+          ex.getInputStream().readAllBytes();
+          ex.setStatusCode(200).endExchange();
+        };
+    var server =
+        (Undertow)
+            m.invoke(
+                main,
+                "127.0.0.1",
+                0,
+                maxBodyBytes,
+                new BlockingHandler(main.withErrorHandling(readBody)));
+    server.start();
+    try {
+      var port = ((InetSocketAddress) server.getListenerInfo().get(0).getAddress()).getPort();
+      return given()
+          .baseUri("http://127.0.0.1:" + port)
+          .body(new byte[size])
+          .post("/")
+          .then()
+          .extract()
+          .statusCode();
+    } finally {
+      server.stop();
+    }
   }
 
   private static ConfigProvider mapProvider(Map<String, String> values) {
