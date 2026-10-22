@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public abstract sealed class Problem
     permits BadRequestProblem,
+        PayloadTooLargeProblem,
         NotEntitledProblem,
         DuplicateDocumentProblem,
         InternalErrorProblem,

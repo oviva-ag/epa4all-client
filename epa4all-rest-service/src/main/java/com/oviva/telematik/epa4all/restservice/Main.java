@@ -16,14 +16,17 @@ import com.oviva.telematik.epa4all.restservice.problem.DuplicateDocumentProblem;
 import com.oviva.telematik.epa4all.restservice.problem.InformationServiceUnavailableProblem;
 import com.oviva.telematik.epa4all.restservice.problem.InternalErrorProblem;
 import com.oviva.telematik.epa4all.restservice.problem.NotEntitledProblem;
+import com.oviva.telematik.epa4all.restservice.problem.PayloadTooLargeProblem;
 import com.oviva.telematik.epa4all.restservice.problem.Problem;
 import com.oviva.telematik.epa4all.restservice.problem.RecordNotFoundProblem;
 import com.oviva.telematik.epa4all.restservice.problem.RecordUnavailableProblem;
 import com.oviva.telematik.vau.epa4all.client.authz.internal.MimeTypes;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.RequestTooBigException;
 import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.server.handlers.DisableCacheHandler;
 import io.undertow.util.Headers;
@@ -85,7 +88,7 @@ public class Main implements AutoCloseable {
     logger.atDebug().log("booting server at http://{}:{}/", host, port);
 
     var clientService = buildClientService(config);
-    server = buildServer(host, port, buildHandler(clientService));
+    server = buildServer(host, port, config.maxBodyBytes(), buildHandler(clientService));
     server.start();
 
     var actualPort = listenerAddress().getPort();
@@ -104,8 +107,12 @@ public class Main implements AutoCloseable {
     return (InetSocketAddress) server.getListenerInfo().get(0).getAddress();
   }
 
-  private Undertow buildServer(String host, int port, HttpHandler handler) {
-    return Undertow.builder().addHttpListener(port, host).setHandler(handler).build();
+  private Undertow buildServer(String host, int port, Long maxBodyBytes, HttpHandler handler) {
+    var builder = Undertow.builder().addHttpListener(port, host).setHandler(handler);
+    if (maxBodyBytes != null) {
+      builder.setServerOption(UndertowOptions.MAX_ENTITY_SIZE, maxBodyBytes);
+    }
+    return builder.build();
   }
 
   @Override
@@ -171,6 +178,7 @@ public class Main implements AutoCloseable {
       String userId,
       String address,
       int port,
+      Long maxBodyBytes,
       Environment environment,
       String telematikId,
       String authorSpecialty) {}
@@ -186,6 +194,9 @@ public class Main implements AutoCloseable {
 
     var address = configProvider.get("address").orElse("0.0.0.0");
     var port = configProvider.get("port").map(Integer::parseInt).orElse(8080);
+    // null keeps Undertow's default (2 MiB)
+    var maxBodyBytes =
+        configProvider.get("max.body.mb").map(mb -> Long.parseLong(mb) * 1024 * 1024).orElse(null);
 
     var uri = mustLoad("konnektor.uri").map(URI::create).orElseThrow();
 
@@ -263,6 +274,7 @@ public class Main implements AutoCloseable {
         user,
         address,
         port,
+        maxBodyBytes,
         environment,
         telematikId,
         authorSpecialty);
@@ -351,6 +363,10 @@ public class Main implements AutoCloseable {
         logger.atError().setCause(e).log("Bad request: {}", e.getMessage());
 
         sendProblem(exchange, objectMapper, new BadRequestProblem());
+      } catch (RequestTooBigException e) {
+        logger.atError().setCause(e).log("Request body too large: {}", e.getMessage());
+
+        sendProblem(exchange, objectMapper, new PayloadTooLargeProblem());
       } catch (ClientException e) {
         handleClientException(exchange, objectMapper, e);
       } catch (ApplicationException e) {
