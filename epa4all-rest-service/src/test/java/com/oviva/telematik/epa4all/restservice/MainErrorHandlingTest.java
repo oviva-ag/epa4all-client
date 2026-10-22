@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.*;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.ClientException.Reason;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.BlockingHandler;
 import java.net.InetSocketAddress;
@@ -172,6 +173,35 @@ class MainErrorHandlingTest {
             equalTo(
                 "The request is invalid, e.g. a required field is missing or a value has an"
                     + " invalid format"));
+  }
+
+  @Test
+  void requestBodyOverLimit_returns413() {
+    HttpHandler readingBody =
+        ex -> {
+          ex.startBlocking();
+          ex.getInputStream().readAllBytes();
+        };
+    server =
+        Undertow.builder()
+            .addHttpListener(0, "127.0.0.1")
+            .setServerOption(UndertowOptions.MAX_ENTITY_SIZE, 10L)
+            .setHandler(
+                new BlockingHandler(
+                    new Main(name -> Optional.empty()).withErrorHandling(readingBody)))
+            .build();
+    server.start();
+    var address = (InetSocketAddress) server.getListenerInfo().get(0).getAddress();
+
+    given()
+        .baseUri("http://127.0.0.1:" + address.getPort())
+        .body("this body is longer than ten bytes")
+        .post("/documents")
+        .then()
+        .statusCode(413)
+        .contentType("application/json")
+        .body("type", equalTo("/epa4all/payload-too-large"))
+        .body("title", equalTo("Payload Too Large"));
   }
 
   private String start(Supplier<RuntimeException> exception) {
