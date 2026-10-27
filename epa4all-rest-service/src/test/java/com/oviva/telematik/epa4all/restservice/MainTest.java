@@ -56,7 +56,7 @@ class MainTest {
     assertEquals(8080, result.port());
     assertEquals(Environment.PU, result.environment());
     assertNull(result.telematikId());
-    assertNull(result.maxBodyBytes());
+    assertEquals(4L * 1024 * 1024, result.maxBodyBytes());
   }
 
   @Test
@@ -243,13 +243,6 @@ class MainTest {
   }
 
   @Test
-  void buildServer_withoutMaxBodyBytes_acceptsBody() throws Exception {
-    var main = new Main(mapProvider(Map.of()));
-
-    assertEquals(200, postBodyOfSize(main, null, 1024));
-  }
-
-  @Test
   void buildServer_withMaxBodyBytes_appliesLimit() throws Exception {
     var main = new Main(mapProvider(Map.of()));
 
@@ -257,10 +250,10 @@ class MainTest {
     assertEquals(413, postBodyOfSize(main, 512L, 1024));
   }
 
-  private static int postBodyOfSize(Main main, Long maxBodyBytes, int size) throws Exception {
+  private static int postBodyOfSize(Main main, long maxBodyBytes, int size) throws Exception {
     Method m =
         Main.class.getDeclaredMethod(
-            "buildServer", String.class, int.class, Long.class, HttpHandler.class);
+            "buildServer", String.class, int.class, long.class, HttpHandler.class);
     m.setAccessible(true);
 
     HttpHandler readBody =

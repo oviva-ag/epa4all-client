@@ -8,6 +8,7 @@ import com.oviva.epa.client.konn.KonnektorConnectionFactory;
 import com.oviva.epa.client.konn.KonnektorConnectionFactoryBuilder;
 import com.oviva.telematik.epa4all.client.ClientException;
 import com.oviva.telematik.epa4all.client.Environment;
+import com.oviva.telematik.epa4all.client.Epa4AllClientFactoryBuilder;
 import com.oviva.telematik.epa4all.client.internal.TelematikTrustRoots;
 import com.oviva.telematik.epa4all.restservice.cfg.ConfigProvider;
 import com.oviva.telematik.epa4all.restservice.cfg.EnvConfigProvider;
@@ -107,12 +108,12 @@ public class Main implements AutoCloseable {
     return (InetSocketAddress) server.getListenerInfo().get(0).getAddress();
   }
 
-  private Undertow buildServer(String host, int port, Long maxBodyBytes, HttpHandler handler) {
-    var builder = Undertow.builder().addHttpListener(port, host).setHandler(handler);
-    if (maxBodyBytes != null) {
-      builder.setServerOption(UndertowOptions.MAX_ENTITY_SIZE, maxBodyBytes);
-    }
-    return builder.build();
+  private Undertow buildServer(String host, int port, long maxBodyBytes, HttpHandler handler) {
+    return Undertow.builder()
+        .addHttpListener(port, host)
+        .setHandler(handler)
+        .setServerOption(UndertowOptions.MAX_ENTITY_SIZE, maxBodyBytes)
+        .build();
   }
 
   @Override
@@ -134,7 +135,8 @@ public class Main implements AutoCloseable {
         proxySocket,
         config.environment(),
         config.telematikId(),
-        config.authorSpecialty());
+        config.authorSpecialty(),
+        config.maxBodyBytes());
   }
 
   private KonnektorService buildKonnektorService(
@@ -178,7 +180,7 @@ public class Main implements AutoCloseable {
       String userId,
       String address,
       int port,
-      Long maxBodyBytes,
+      long maxBodyBytes,
       Environment environment,
       String telematikId,
       String authorSpecialty) {}
@@ -194,9 +196,11 @@ public class Main implements AutoCloseable {
 
     var address = configProvider.get("address").orElse("0.0.0.0");
     var port = configProvider.get("port").map(Integer::parseInt).orElse(8080);
-    // null keeps Undertow's default (2 MiB)
     var maxBodyBytes =
-        configProvider.get("max.body.mb").map(mb -> Long.parseLong(mb) * 1024 * 1024).orElse(null);
+        configProvider
+            .get("max.body.mb")
+            .map(mb -> Long.parseLong(mb) * 1024 * 1024)
+            .orElse(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES);
 
     var uri = mustLoad("konnektor.uri").map(URI::create).orElseThrow();
 

@@ -59,7 +59,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
       InetSocketAddress konnektorProxyAddress,
       Environment environment,
       KeyStore tiTrustStore,
-      String telematikId) {
+      String telematikId,
+      long maxBodyBytes) {
 
     var telematikSslContext = SslContextBuilder.buildSslContext(tiTrustStore);
     var outerHttpClientTelematik =
@@ -68,7 +69,8 @@ public class Epa4AllClientFactory implements AutoCloseable {
     var informationService = buildInformationService(environment, outerHttpClientTelematik);
 
     var proxyServer =
-        buildVauProxy(environment, konnektorProxyAddress, tiTrustStore, telematikSslContext);
+        buildVauProxy(
+            environment, konnektorProxyAddress, tiTrustStore, telematikSslContext, maxBodyBytes);
 
     var serverInfo = proxyServer.start();
     var vauProxyServerListener = serverInfo.listenAddress();
@@ -161,13 +163,14 @@ public class Epa4AllClientFactory implements AutoCloseable {
       Environment environment,
       InetSocketAddress konnektorProxyAddress,
       KeyStore trustStore,
-      SSLContext sslContext) {
+      SSLContext sslContext,
+      long maxBodyBytes) {
 
     var isPu = environment == Environment.PU;
     var xUserAgent = isPu ? "GEMOvivepa4fA734EBIP/0.1.0" : "GEMOvivepa4fA1d5W8sR/0.1.0";
     return new VauProxy(
         new VauProxy.Configuration(
-            konnektorProxyAddress, 0, isPu, xUserAgent, sslContext, trustStore));
+            konnektorProxyAddress, 0, isPu, xUserAgent, sslContext, trustStore, maxBodyBytes));
   }
 
   private static InformationService buildInformationService(

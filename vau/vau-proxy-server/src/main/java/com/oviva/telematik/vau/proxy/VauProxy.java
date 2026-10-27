@@ -6,6 +6,7 @@ import com.oviva.telematik.vau.httpclient.internal.JavaHttpClient;
 import com.oviva.telematik.vau.httpclient.internal.LoggingHttpClient;
 import com.oviva.telematik.vau.httpclient.internal.cert.TrustStoreValidator;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.RequestDumpingHandler;
 import java.net.InetSocketAddress;
@@ -43,7 +44,8 @@ public class VauProxy {
       boolean isPu,
       String xUserAgent,
       SSLContext outerVauSslContext,
-      KeyStore trustStore) {}
+      KeyStore trustStore,
+      long maxBodyBytes) {}
 
   public record ServerInfo(InetSocketAddress listenAddress) {}
 
@@ -85,6 +87,7 @@ public class VauProxy {
             .setIoThreads(2)
             .setWorkerThreads(4)
             .setHandler(handler)
+            .setServerOption(UndertowOptions.MAX_ENTITY_SIZE, config.maxBodyBytes())
             .build();
 
     proxyServer.start();

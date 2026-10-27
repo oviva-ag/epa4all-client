@@ -53,7 +53,8 @@ class Epa4AllClientFactoryBuilderTest {
                       isNull(),
                       eq(Environment.RU),
                       eq(providedTrustStore),
-                      isNull()))
+                      isNull(),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
@@ -89,7 +90,8 @@ class Epa4AllClientFactoryBuilderTest {
                       isNull(),
                       eq(Environment.RU),
                       eq(ruTrustStore),
-                      isNull()))
+                      isNull(),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
@@ -122,7 +124,8 @@ class Epa4AllClientFactoryBuilderTest {
                       isNull(),
                       eq(Environment.PU),
                       eq(puTrustStore),
-                      isNull()))
+                      isNull(),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
@@ -152,7 +155,8 @@ class Epa4AllClientFactoryBuilderTest {
                       eq(proxy),
                       eq(Environment.RU),
                       eq(trustStore),
-                      eq(telematikId)))
+                      eq(telematikId),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
