@@ -27,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class Epa4allClientServiceTest {
 
+  private static final long MAX_BODY_BYTES = 4L * 1024 * 1024;
+
   private Epa4allClientService.KonnektorServiceFactory konnektorFactory;
 
   private InetSocketAddress proxy;
@@ -62,13 +64,14 @@ class Epa4allClientServiceTest {
       when(builder.konnektorService(konnektor)).thenReturn(builder);
       when(builder.environment(environment)).thenReturn(builder);
       when(builder.telematikId(telematikId)).thenReturn(builder);
+      when(builder.maxBodyBytes(MAX_BODY_BYTES)).thenReturn(builder);
       when(builder.build()).thenReturn(factory);
 
       when(factory.newClient()).thenReturn(client);
 
       var service =
           new Epa4allClientService(
-              konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+              konnektorFactory, proxy, environment, telematikId, authorSpecialty, MAX_BODY_BYTES);
 
       assertTrue(service.isHealthy());
     }
@@ -93,13 +96,14 @@ class Epa4allClientServiceTest {
       when(builder.konnektorService(konnektor)).thenReturn(builder);
       when(builder.environment(environment)).thenReturn(builder);
       when(builder.telematikId(telematikId)).thenReturn(builder);
+      when(builder.maxBodyBytes(MAX_BODY_BYTES)).thenReturn(builder);
       when(builder.build()).thenReturn(factory);
 
       when(factory.newClient()).thenReturn(client);
 
       var service =
           new Epa4allClientService(
-              konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+              konnektorFactory, proxy, environment, telematikId, authorSpecialty, MAX_BODY_BYTES);
 
       assertFalse(service.isHealthy());
     }
@@ -124,12 +128,13 @@ class Epa4allClientServiceTest {
       when(builder.konnektorService(konnektor)).thenReturn(builder);
       when(builder.environment(environment)).thenReturn(builder);
       when(builder.telematikId(telematikId)).thenReturn(builder);
+      when(builder.maxBodyBytes(MAX_BODY_BYTES)).thenReturn(builder);
       when(builder.build()).thenReturn(factory);
       when(factory.newClient()).thenReturn(client);
 
       var service =
           new Epa4allClientService(
-              konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+              konnektorFactory, proxy, environment, telematikId, authorSpecialty, MAX_BODY_BYTES);
 
       var kvnr = "X123456789";
       var mime = "text/plain";
@@ -163,12 +168,13 @@ class Epa4allClientServiceTest {
       when(builder.konnektorService(konnektor)).thenReturn(builder);
       when(builder.environment(environment)).thenReturn(builder);
       when(builder.telematikId(telematikId)).thenReturn(builder);
+      when(builder.maxBodyBytes(MAX_BODY_BYTES)).thenReturn(builder);
       when(builder.build()).thenReturn(factory);
       when(factory.newClient()).thenReturn(client);
 
       var service =
           new Epa4allClientService(
-              konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+              konnektorFactory, proxy, environment, telematikId, authorSpecialty, MAX_BODY_BYTES);
 
       var kvnr = "X123456789";
       var mime = "text/plain";
@@ -188,7 +194,7 @@ class Epa4allClientServiceTest {
   void writeDocument_shouldValidateInputs() {
     var service =
         new Epa4allClientService(
-            konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+            konnektorFactory, proxy, environment, telematikId, authorSpecialty, MAX_BODY_BYTES);
 
     assertThrows(BadRequestException.class, () -> service.writeDocument(null, "m", new byte[0]));
     assertThrows(BadRequestException.class, () -> service.writeDocument("kvnr", null, new byte[0]));
@@ -199,7 +205,7 @@ class Epa4allClientServiceTest {
   void replaceDocument_shouldValidateInputs() {
     var service =
         new Epa4allClientService(
-            konnektorFactory, proxy, environment, telematikId, authorSpecialty);
+            konnektorFactory, proxy, environment, telematikId, authorSpecialty, MAX_BODY_BYTES);
 
     assertThrows(
         BadRequestException.class,
