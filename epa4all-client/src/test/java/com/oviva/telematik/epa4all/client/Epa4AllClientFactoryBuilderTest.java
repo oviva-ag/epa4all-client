@@ -71,6 +71,39 @@ class Epa4AllClientFactoryBuilderTest {
   }
 
   @Test
+  void build_shouldPassConfiguredMaxBodyBytes() {
+    var konnektorService = mock(KonnektorService.class);
+    var providedTrustStore = mock(KeyStore.class);
+    var maxBodyBytes = 1024L;
+
+    try (MockedStatic<Epa4AllClientFactory> factoryMock =
+        Mockito.mockStatic(Epa4AllClientFactory.class)) {
+
+      factoryMock
+          .when(
+              () ->
+                  Epa4AllClientFactory.create(
+                      eq(konnektorService),
+                      isNull(),
+                      eq(Environment.RU),
+                      eq(providedTrustStore),
+                      isNull(),
+                      eq(maxBodyBytes)))
+          .thenReturn(mock(Epa4AllClientFactory.class));
+
+      var result =
+          Epa4AllClientFactoryBuilder.newBuilder()
+              .konnektorService(konnektorService)
+              .environment(Environment.RU)
+              .trustStore(providedTrustStore)
+              .maxBodyBytes(maxBodyBytes)
+              .build();
+
+      assertNotNull(result);
+    }
+  }
+
+  @Test
   void build_shouldLoadRuTruststoreWhenNotProvidedAndEnvRu() {
     var konnektorService = mock(KonnektorService.class);
     var ruTrustStore = mock(KeyStore.class);
