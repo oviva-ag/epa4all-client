@@ -26,6 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class Epa4AllClientFactoryTest {
 
+  private static final long MAX_BODY_BYTES = 4L * 1024 * 1024;
+
   @Mock private VauProxy mockVauProxy;
   @Mock private SoapClientFactory mockSoapClientFactory;
   @Mock private AuthorizationService mockAuthorizationService;
@@ -189,7 +191,9 @@ class Epa4AllClientFactoryTest {
       // When & Then
       assertThrows(
           Epa4AllClientException.class,
-          () -> Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, null));
+          () ->
+              Epa4AllClientFactory.create(
+                  ks, proxyAddr, Environment.RU, trustStore, null, MAX_BODY_BYTES));
     }
   }
 
@@ -216,7 +220,8 @@ class Epa4AllClientFactoryTest {
 
       // When
       var result =
-          Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, "test-id");
+          Epa4AllClientFactory.create(
+              ks, proxyAddr, Environment.RU, trustStore, "test-id", MAX_BODY_BYTES);
 
       // Then
       assertNotNull(result);
@@ -248,7 +253,9 @@ class Epa4AllClientFactoryTest {
           .thenReturn(SSLContext.getDefault());
 
       // When
-      var result = Epa4AllClientFactory.create(ks, proxyAddr, Environment.RU, trustStore, "id-2");
+      var result =
+          Epa4AllClientFactory.create(
+              ks, proxyAddr, Environment.RU, trustStore, "id-2", MAX_BODY_BYTES);
 
       // Then
       assertNotNull(result);

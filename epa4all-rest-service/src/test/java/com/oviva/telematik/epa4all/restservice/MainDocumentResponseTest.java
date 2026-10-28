@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.oviva.telematik.epa4all.client.Epa4AllClientFactoryBuilder;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import java.net.InetSocketAddress;
@@ -31,9 +32,13 @@ class MainDocumentResponseTest {
     when(clientService.writeDocument(any(), any(), any())).thenReturn(response);
     when(clientService.replaceDocument(any(), any(), any(), any())).thenReturn(response);
 
-    var buildHandler = Main.class.getDeclaredMethod("buildHandler", Epa4allClientService.class);
+    var buildHandler =
+        Main.class.getDeclaredMethod("buildHandler", Epa4allClientService.class, long.class);
     buildHandler.setAccessible(true);
-    var handler = (HttpHandler) buildHandler.invoke(new Main(null), clientService);
+    var handler =
+        (HttpHandler)
+            buildHandler.invoke(
+                new Main(null), clientService, Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES);
 
     server = Undertow.builder().addHttpListener(0, "127.0.0.1").setHandler(handler).build();
     server.start();

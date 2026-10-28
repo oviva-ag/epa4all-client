@@ -27,18 +27,21 @@ public class Epa4allClientService {
   private final Environment environment;
   private final String telematikId;
   private final String authorSpecialty;
+  private final long maxBodyBytes;
 
   public Epa4allClientService(
       KonnektorServiceFactory konnektorServiceProvider,
       InetSocketAddress tiProxyAddress,
       Environment environment,
       String telematikId,
-      String authorSpecialty) {
+      String authorSpecialty,
+      long maxBodyBytes) {
     this.konnektorServiceProvider = konnektorServiceProvider;
     this.tiProxyAddress = tiProxyAddress;
     this.environment = environment;
     this.telematikId = telematikId;
     this.authorSpecialty = authorSpecialty;
+    this.maxBodyBytes = maxBodyBytes;
   }
 
   public Epa4allClientService.WriteDocumentResponse writeDocument(
@@ -108,6 +111,7 @@ public class Epa4allClientService {
             .konnektorService(konnektorService)
             .environment(environment)
             .telematikId(telematikId)
+            .maxBodyBytes(maxBodyBytes)
             .build()) {
 
       var client = cf.newClient();

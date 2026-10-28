@@ -53,7 +53,8 @@ class Epa4AllClientFactoryBuilderTest {
                       isNull(),
                       eq(Environment.RU),
                       eq(providedTrustStore),
-                      isNull()))
+                      isNull(),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
@@ -66,6 +67,39 @@ class Epa4AllClientFactoryBuilderTest {
       assertNotNull(result);
 
       trustRoots.verifyNoInteractions();
+    }
+  }
+
+  @Test
+  void build_shouldPassConfiguredMaxBodyBytes() {
+    var konnektorService = mock(KonnektorService.class);
+    var providedTrustStore = mock(KeyStore.class);
+    var maxBodyBytes = 1024L;
+
+    try (MockedStatic<Epa4AllClientFactory> factoryMock =
+        Mockito.mockStatic(Epa4AllClientFactory.class)) {
+
+      factoryMock
+          .when(
+              () ->
+                  Epa4AllClientFactory.create(
+                      eq(konnektorService),
+                      isNull(),
+                      eq(Environment.RU),
+                      eq(providedTrustStore),
+                      isNull(),
+                      eq(maxBodyBytes)))
+          .thenReturn(mock(Epa4AllClientFactory.class));
+
+      var result =
+          Epa4AllClientFactoryBuilder.newBuilder()
+              .konnektorService(konnektorService)
+              .environment(Environment.RU)
+              .trustStore(providedTrustStore)
+              .maxBodyBytes(maxBodyBytes)
+              .build();
+
+      assertNotNull(result);
     }
   }
 
@@ -89,7 +123,8 @@ class Epa4AllClientFactoryBuilderTest {
                       isNull(),
                       eq(Environment.RU),
                       eq(ruTrustStore),
-                      isNull()))
+                      isNull(),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
@@ -122,7 +157,8 @@ class Epa4AllClientFactoryBuilderTest {
                       isNull(),
                       eq(Environment.PU),
                       eq(puTrustStore),
-                      isNull()))
+                      isNull(),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =
@@ -152,7 +188,8 @@ class Epa4AllClientFactoryBuilderTest {
                       eq(proxy),
                       eq(Environment.RU),
                       eq(trustStore),
-                      eq(telematikId)))
+                      eq(telematikId),
+                      eq(Epa4AllClientFactoryBuilder.DEFAULT_MAX_BODY_BYTES)))
           .thenReturn(mock(Epa4AllClientFactory.class));
 
       var result =

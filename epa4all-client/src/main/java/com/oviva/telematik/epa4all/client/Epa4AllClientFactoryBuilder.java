@@ -11,12 +11,19 @@ import java.util.Objects;
 /** Builder for Epa4AllClientFactory. */
 public class Epa4AllClientFactoryBuilder {
 
+  /*
+   * ePA rejects documents larger than 25 MB (A_14937, measured without transport encoding). The
+   * request body carries the document base64-encoded, so this keeps the document itself below that.
+   */
+  public static final long DEFAULT_MAX_BODY_BYTES = 25L * 1024 * 1024;
+
   private KonnektorService konnektorService;
   private InetSocketAddress konnektorProxyAddress;
   private KeyStore trustStore;
 
   private Environment environment;
   private String telematikId;
+  private long maxBodyBytes = DEFAULT_MAX_BODY_BYTES;
 
   private Epa4AllClientFactoryBuilder() {}
 
@@ -56,6 +63,11 @@ public class Epa4AllClientFactoryBuilder {
     return this;
   }
 
+  public Epa4AllClientFactoryBuilder maxBodyBytes(long maxBodyBytes) {
+    this.maxBodyBytes = maxBodyBytes;
+    return this;
+  }
+
   @NonNull
   public Epa4AllClientFactory build() {
     Objects.requireNonNull(konnektorService, "konnektorService must be set");
@@ -65,7 +77,12 @@ public class Epa4AllClientFactoryBuilder {
     Objects.requireNonNull(actualTrustStore, "trustStore must be set");
 
     return Epa4AllClientFactory.create(
-        konnektorService, konnektorProxyAddress, environment, actualTrustStore, telematikId);
+        konnektorService,
+        konnektorProxyAddress,
+        environment,
+        actualTrustStore,
+        telematikId,
+        maxBodyBytes);
   }
 
   private KeyStore determineTrustStore(boolean isPu, KeyStore providedTrustStore) {
