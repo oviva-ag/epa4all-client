@@ -56,7 +56,7 @@ class MainTest {
     assertEquals(8080, result.port());
     assertEquals(Environment.PU, result.environment());
     assertNull(result.telematikId());
-    assertEquals(4L * 1024 * 1024, result.maxBodyBytes());
+    assertEquals(25L * 1024 * 1024, result.maxBodyBytes());
   }
 
   @Test

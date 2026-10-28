@@ -69,7 +69,7 @@ docker run --rm \
 | `EPA4ALL_LOG_LEVEL`*                    | Log level for the entire application.                                                                                           | `INFO`                                     |
 | `EPA4ALL_ADDRESS`*                      | Address to bind the server to.                                                                                                  | `0.0.0.0`                                  |
 | `EPA4ALL_PORT`*                         | Port to bind the server to.                                                                                                     | `8080`                                     |
-| `EPA4ALL_MAX_BODY_MB`                   | Maximum accepted request body size in MiB, larger requests are rejected with `413`.                                              | `2` (Undertow default)                     |
+| `EPA4ALL_MAX_BODY_MB`                   | Maximum accepted request body size in MiB, larger requests are rejected with `413`.                                              | `25`                                       |
 | `EPA4ALL_KONNEKTOR_URI`*                | URI of the Konnektor to use, e.g. `https://10.1.2.3:443`.                                                                       |                                            |
 | `EPA4ALL_KONNEKTOR_SERVERNAME`          | The servername of the Konnektor as used and validated in its TLS certificate.                                                   | `konnektor.konlan`                         | 
 | `EPA4ALL_KONNEKTOR_TRUSTSTORE_PATH`     | The PKCS#12 keystore containing the TLS trust-anchors for the Konnektor server certificate.                                     | built-in trust-anchors from TSL            | 

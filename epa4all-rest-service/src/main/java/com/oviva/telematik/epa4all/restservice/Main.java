@@ -1,6 +1,8 @@
 package com.oviva.telematik.epa4all.restservice;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oviva.epa.client.KonnektorService;
 import com.oviva.epa.client.KonnektorServiceBuilder;
@@ -89,7 +91,9 @@ public class Main implements AutoCloseable {
     logger.atDebug().log("booting server at http://{}:{}/", host, port);
 
     var clientService = buildClientService(config);
-    server = buildServer(host, port, config.maxBodyBytes(), buildHandler(clientService));
+    server =
+        buildServer(
+            host, port, config.maxBodyBytes(), buildHandler(clientService, config.maxBodyBytes()));
     server.start();
 
     var actualPort = listenerAddress().getPort();
@@ -302,9 +306,9 @@ public class Main implements AutoCloseable {
     return new IllegalStateException("configuration for '%s' not valid".formatted(key));
   }
 
-  private HttpHandler buildHandler(Epa4allClientService clientService) {
+  private HttpHandler buildHandler(Epa4allClientService clientService, long maxBodyBytes) {
 
-    var om = new ObjectMapper();
+    var om = newRequestObjectMapper(maxBodyBytes);
     return new DisableCacheHandler(
         new BlockingHandler(
             withErrorHandling(
@@ -355,6 +359,18 @@ public class Main implements AutoCloseable {
                               ex.getOutputStream(),
                               new WriteDocumentResponse(res.documentId().toString()));
                         }))));
+  }
+
+  /**
+   * The document arrives as a single base64 string, which exceeds Jackson's default string length
+   * limit (20M chars) well before the body limit. Allow strings up to the body limit instead.
+   */
+  private static ObjectMapper newRequestObjectMapper(long maxBodyBytes) {
+    var constraints =
+        StreamReadConstraints.builder()
+            .maxStringLength((int) Math.min(maxBodyBytes, Integer.MAX_VALUE))
+            .build();
+    return new ObjectMapper(JsonFactory.builder().streamReadConstraints(constraints).build());
   }
 
   HttpHandler withErrorHandling(HttpHandler next) {

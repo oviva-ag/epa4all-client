@@ -11,7 +11,11 @@ import java.util.Objects;
 /** Builder for Epa4AllClientFactory. */
 public class Epa4AllClientFactoryBuilder {
 
-  public static final long DEFAULT_MAX_BODY_BYTES = 4L * 1024 * 1024;
+  /*
+   * ePA rejects documents larger than 25 MB (A_14937, measured without transport encoding). The
+   * request body carries the document base64-encoded, so this keeps the document itself below that.
+   */
+  public static final long DEFAULT_MAX_BODY_BYTES = 25L * 1024 * 1024;
 
   private KonnektorService konnektorService;
   private InetSocketAddress konnektorProxyAddress;

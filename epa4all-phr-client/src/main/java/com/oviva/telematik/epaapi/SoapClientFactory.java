@@ -73,7 +73,12 @@ public class SoapClientFactory {
 
     var httpClientPolicy = new HTTPClientPolicy();
     httpClientPolicy.setConnectionTimeout(Duration.ofSeconds(10).toMillis());
-    httpClientPolicy.setReceiveTimeout(Duration.ofSeconds(20).toMillis());
+
+    /*
+     * documents up to the body limit need time to pass through the VAU tunnel; must stay well below
+     * the caller's overall transaction timeout
+     */
+    httpClientPolicy.setReceiveTimeout(Duration.ofSeconds(60).toMillis());
 
     // our VAU tunnel cannot handle chunking :)
     httpClientPolicy.setAllowChunking(false);
